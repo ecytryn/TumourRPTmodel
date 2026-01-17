@@ -1,0 +1,434 @@
+package TumorRPT;
+
+import HAL.Tools.ODESolver.ODESolver;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+
+public class RadioBio {
+
+    public Grid grid;
+    public ODESolver solver;
+    
+    // Toggle between original O(nÂ²) and optimized O(n) methods
+    public static final boolean USE_OPTIMIZED = true;
+    
+    // Validation: run both methods and compare
+    public static final boolean VALIDATE_OPTIMIZATION = true;
+    
+    // Statistics for validation
+    private double maxDifference_Normoxic = 0.0;
+    private double maxDifference_Hypoxic = 0.0;
+    private double sumSquaredDiff_Normoxic = 0.0;
+    private double sumSquaredDiff_Hypoxic = 0.0;
+    private int comparisonCount = 0;
+    
+    // Timing statistics
+    private long totalTime_Original_ns = 0;
+    private long totalTime_Optimized_ns = 0;
+    
+    // ODE state class for each birth cohort
+    private class CohortODEState {
+        double D;       // Total dose accumulated since birth (Gy)
+        double A;       // Amplitude (accumulated effective damage)
+        double G_num;   // G-factor numerator
+        
+        CohortODEState() {
+            this.D = 0.0;
+            this.A = 0.0;
+            this.G_num = 0.0;
+        }
+    }
+    
+    // HashMap: key = birth time (hours), value = ODE state for that cohort
+    private HashMap<Integer, CohortODEState> cohortStates;
+    
+    private double mu;              // Repair rate (1/hour)
+
+    public RadioBio(Grid grid){
+        this.grid = grid;
+        this.solver = new ODESolver();
+        
+        // Initialize ODE state tracking by birth cohort
+        this.mu = SimParams.repairRate;  // 1/hour (already converted in SimParams)
+        this.cohortStates = new HashMap<>();
+        
+        // HashMap starts empty - will add cohorts as cells are born
+    }
+
+
+    public void RHS(double t, double[] currentValues, double[] derivatives) {
+
+    }
+
+
+    public void UpdateParams(){
+
+    }
+
+    public void Solve(double[] currentValues, double[] nextValues, double t_0, double t_f, double dtStart, double errorTol){
+        this.UpdateParams();
+        this.solver.Runge45(this::RHS, currentValues, nextValues, t_0, t_f,dtStart, errorTol);
+    }
+
+
+    /**
+     * Update ALL cohort ODE states with current hour's dose
+     * Called once per hour BEFORE calculating survival probabilities
+     * 
+     * This maintains the running ODE solution for each birth cohort:
+     *   dD/dt = doseRate(t)
+     *   dA/dt = doseRate(t) - mu*A(t)
+     *   dG_num/dt = doseRate(t) * A(t)
+     */
+    private void updateAllCohortStates() {
+        double dt_hours = 1.0;  // Time step in hours
+        int globalTime = SimParams.globalTime;
+        
+        // Get current dose rate (Gy/h)
+        double currentDoseRate = 0.0;
+        if (globalTime < grid.DoseRateList.size()) {
+            double[] doseData = grid.DoseRateList.get(globalTime);
+            if (doseData.length > 0) {
+                currentDoseRate = doseData[0]; // Already in Gy/h
+            }
+        }
+        
+        // Update EVERY cohort with this hour's dose
+        for (Integer birthTime : cohortStates.keySet()) {
+            CohortODEState state = cohortStates.get(birthTime);
+            
+            // 1. Total dose: D(t+dt) = D(t) + doseRate * dt
+            state.D += currentDoseRate * dt_hours;
+            
+            // 2. Amplitude: A(t+dt) = exp(-mu*dt)*A(t) + doseRate*(1-exp(-mu*dt))/mu
+            //    Use exact analytical solution for numerical accuracy
+            double decay = Math.exp(-mu * dt_hours);
+            if (mu > 1e-10) {
+                // Exact solution
+                state.A = decay * state.A + currentDoseRate * (1.0 - decay) / mu;
+            } else {
+                // If mu very small, use simple Euler (avoids division by zero)
+                state.A = decay * state.A + currentDoseRate * dt_hours;
+            }
+            
+            // 3. G-numerator: G_num(t+dt) = G_num(t) + doseRate * A(t+dt) * dt
+            //    Use updated A value (semi-implicit scheme for stability)
+            state.G_num += currentDoseRate * state.A * dt_hours;
+        }
+    }
+
+
+    public ArrayList<double[]> SurvivalProbLookupTableCalc(int currentDay, int currentHour){
+        // Calculates survival probability
+        // Input: DoseRateList.
+        // Output: Survival probability lookup table
+
+        // FIRST: Update all cohort ODE states with current hour's dose
+        updateAllCohortStates();
+
+        ArrayList<double[]> survivalProbLookupTable = new ArrayList<>();
+        int maxLookupAge = SimParams.maxLookupAge;
+
+        if (currentDay < maxLookupAge){
+            if (currentDay == 0){
+                double[] SF = {1.0, 1.0};
+                survivalProbLookupTable.add(SF);
+                return survivalProbLookupTable;
+            }
+            else{
+                maxLookupAge = currentDay;
+            }
+        }
+		// CSV header for easy plotting (only print once per call)
+		System.out.println("CSV_DATA:age,SF_norm_orig,SF_hypo_orig,SF_norm_opt,SF_hypo_opt");
+//		System.out.printf("SurvivalProbLookUpTableCalc accessed.");
+
+        // Calculate the lookup table elements
+        for (int age = 1; age <= maxLookupAge ; age++) {
+            double[] SF_toUse;
+            
+            if (VALIDATE_OPTIMIZATION) {
+                // Run BOTH methods and compare
+                
+                // Time original method
+                long t1 = System.nanoTime();
+                int sliceLength = age * 24;
+                int lastSliceIndex = SimParams.globalTime;
+                int firstSliceIndex = lastSliceIndex - sliceLength;
+                firstSliceIndex = Math.max(0, firstSliceIndex);
+                lastSliceIndex = Math.min(this.grid.DoseRateList.size(), lastSliceIndex);
+                List<double[]> TempDoseRateList = this.grid.DoseRateList.subList(firstSliceIndex, lastSliceIndex);
+                ArrayList<double[]> slicedDoseRate = new ArrayList<>(TempDoseRateList);
+                double[] SF_original = CalculateSF_Original(slicedDoseRate);
+                totalTime_Original_ns += System.nanoTime() - t1;
+                
+                // Time optimized method
+                long t2 = System.nanoTime();
+                double[] SF_optimized = CalculateSF_ODE(age, currentDay, currentHour);
+                totalTime_Optimized_ns += System.nanoTime() - t2;
+                
+                // Compare results
+                double diff_normoxic = Math.abs(SF_original[0] - SF_optimized[0]);
+                double diff_hypoxic = Math.abs(SF_original[1] - SF_optimized[1]);
+                
+                // Print first few mismatches for debugging
+                if (comparisonCount < 20 && (diff_normoxic > 1e-6 || diff_hypoxic > 1e-6)) {
+                    System.out.printf("\n=== MISMATCH #%d (Age %d days, Day %d, Hour %d) ===\n", 
+                                     comparisonCount, age, currentDay, currentHour);
+                    System.out.printf("  Original:  SF_norm=%.6f, SF_hypo=%.6f\n", 
+                                     SF_original[0], SF_original[1]);
+                    System.out.printf("  Optimized: SF_norm=%.6f, SF_hypo=%.6f\n", 
+                                     SF_optimized[0], SF_optimized[1]);
+                    System.out.printf("  Difference: Î”norm=%.6e, Î”hypo=%.6e\n", 
+                                     diff_normoxic, diff_hypoxic);
+                    
+                    
+                    // Also check intermediate ODE state values
+                    int birthTime = SimParams.globalTime - (age * 24);
+                    if (cohortStates.containsKey(birthTime)) {
+                        CohortODEState state = cohortStates.get(birthTime);
+                        System.out.printf("  Birth time: %d hours (age %d days)\n", birthTime, age);
+                        System.out.printf("  ODE state D: %.6e Gy\n", state.D);
+                        System.out.printf("  ODE state A: %.6e\n", state.A);
+                        System.out.printf("  ODE state G_num: %.6e\n", state.G_num);
+                    }
+                }
+//				System.out.printf("  Original:  SF_norm=%.6f, SF_hypo=%.6f\n", 
+//								 SF_original[0], SF_original[1]);
+//				System.out.printf("  Optimized: SF_norm=%.6f, SF_hypo=%.6f\n", 
+//								 SF_optimized[0], SF_optimized[1]);
+				// CSV format for easy plotting
+				System.out.printf("CSV_DATA:%d,%.8f,%.8f,%.8f,%.8f\n",
+								 age, SF_original[0], SF_original[1], 
+								 SF_optimized[0], SF_optimized[1]);
+                
+                maxDifference_Normoxic = Math.max(maxDifference_Normoxic, diff_normoxic);
+                maxDifference_Hypoxic = Math.max(maxDifference_Hypoxic, diff_hypoxic);
+                sumSquaredDiff_Normoxic += diff_normoxic * diff_normoxic;
+                sumSquaredDiff_Hypoxic += diff_hypoxic * diff_hypoxic;
+                comparisonCount++;
+                
+                // Use the selected method's result
+                SF_toUse = USE_OPTIMIZED ? SF_optimized : SF_original;
+                
+            } else if (USE_OPTIMIZED) {
+                // Use only optimized method
+                SF_toUse = CalculateSF_ODE(age, currentDay, currentHour);
+            } else {
+                // Use only original method
+                int sliceLength = age * 24;
+                int lastSliceIndex = SimParams.globalTime;
+                int firstSliceIndex = lastSliceIndex - sliceLength;
+                firstSliceIndex = Math.max(0, firstSliceIndex);
+                lastSliceIndex = Math.min(this.grid.DoseRateList.size(), lastSliceIndex);
+                List<double[]> TempDoseRateList = this.grid.DoseRateList.subList(firstSliceIndex, lastSliceIndex);
+                ArrayList<double[]> slicedDoseRate = new ArrayList<>(TempDoseRateList);
+                SF_toUse = CalculateSF_Original(slicedDoseRate);
+            }
+
+            survivalProbLookupTable.add(SF_toUse);
+        }
+
+        return survivalProbLookupTable;
+    }
+    
+    /**
+     * Print validation statistics (call at end of simulation)
+     */
+    public void printValidationReport() {
+        if (!VALIDATE_OPTIMIZATION || comparisonCount == 0) {
+            return;
+        }
+        
+        System.out.println("\n" + "=".repeat(70));
+        System.out.println("RADIOBIOLOGY OPTIMIZATION VALIDATION REPORT");
+        System.out.println("=".repeat(70));
+        
+        double rmse_normoxic = Math.sqrt(sumSquaredDiff_Normoxic / comparisonCount);
+        double rmse_hypoxic = Math.sqrt(sumSquaredDiff_Hypoxic / comparisonCount);
+        
+        System.out.printf("\nAccuracy (Survival Fraction differences):\n");
+        System.out.printf("  Normoxic cells:\n");
+        System.out.printf("    Max difference:  %.6e\n", maxDifference_Normoxic);
+        System.out.printf("    RMSE:            %.6e\n", rmse_normoxic);
+        System.out.printf("  Hypoxic cells:\n");
+        System.out.printf("    Max difference:  %.6e\n", maxDifference_Hypoxic);
+        System.out.printf("    RMSE:            %.6e\n", rmse_hypoxic);
+        
+        System.out.printf("\nPerformance (total time over %d comparisons):\n", comparisonCount);
+        System.out.printf("  Original method:  %.3f s\n", totalTime_Original_ns / 1e9);
+        System.out.printf("  Optimized method: %.3f s\n", totalTime_Optimized_ns / 1e9);
+        
+        if (totalTime_Optimized_ns > 0) {
+            double speedup = (double) totalTime_Original_ns / totalTime_Optimized_ns;
+            System.out.printf("  Speedup:          %.1fÃƒâ€”\n", speedup);
+        }
+        
+        // Assessment
+        System.out.println("\nAssessment:");
+        boolean accurate = (maxDifference_Normoxic < 1e-6 && maxDifference_Hypoxic < 1e-6);
+        if (accurate) {
+            System.out.println("EXCELLENT: Methods agree to within machine precision");
+            System.out.println("Safe to use optimized method in production");
+        } else if (maxDifference_Normoxic < 1e-3 && maxDifference_Hypoxic < 1e-3) {
+            System.out.println("GOOD: Methods agree to within 0.1% (acceptable)");
+        } else {
+            System.out.println("WARNING: Significant differences detected!");
+            System.out.println("Review optimized method implementation");
+        }
+        
+        System.out.println("=".repeat(70) + "\n");
+    }
+
+
+    /**
+     * OPTIMIZED ODE METHOD: Calculate SF using ODE formulation of Lea-Catcheside
+     * 
+     * Looks up ODE state for the birth cohort and computes SF.
+     * States are maintained by birth time (not age) and updated once per hour
+     * by updateAllCohortStates().
+     * 
+     * @param age Age of cells in days
+     * @param currentDay Current simulation day
+     * @param currentHour Current hour (0-23)
+     * @return Array [SF_normoxic, SF_hypoxic]
+     */
+    private double[] CalculateSF_ODE(int age, int currentDay, int currentHour) {
+        int globalTime = SimParams.globalTime;
+        
+        // Calculate birth time for cells of this age
+        int birthTime = globalTime - (age * 24);  // age is in days, convert to hours
+        
+        // Get or create state for this birth cohort
+        if (!cohortStates.containsKey(birthTime)) {
+            // First time seeing cells from this birth time - create new state
+            cohortStates.put(birthTime, new CohortODEState());
+        }
+        
+        CohortODEState state = cohortStates.get(birthTime);
+        
+        // Compute G-factor from current state
+        double D = state.D;
+        double G_num = state.G_num;
+        double G_Factor = 0.0;
+        
+        if (D > 1e-10) {
+            G_Factor = 2.0 * G_num / (D * D);
+            // Clamp G to physically meaningful range [0, 1]
+            G_Factor = Math.max(0.0, Math.min(1.0, G_Factor));
+        }
+        
+        // Calculate survival fractions for normoxic and hypoxic cells
+        double[] SF_Values = new double[2];
+        for (int i = 0; i < 2; i++) {
+            SF_Values[i] = Math.exp(-SimParams.alphaValues[i] * D 
+                                   - SimParams.betaValues[i] * D * D * G_Factor);
+        }
+        
+        return SF_Values;
+    }
+
+    /**
+     * ORIGINAL METHOD: Calculate SF with O(nÂ²) nested loop
+     * Kept for validation - rename from CalculateSF to CalculateSF_Original
+     */
+    public double[] CalculateSF_Original(ArrayList<double[]> slicedDose){
+
+        double dt = SimParams.TIME_STEP;  // seconds
+        double dt_hours = dt / 3600.0;    // hours
+        // NOTE: arr[0] is in Gy/hour (from DoseRateList), need to convert to Gy
+        double Dose = 0;
+        for (double[] arr : slicedDose) {
+            if (arr.length > 0) {
+                Dose += arr[0] * dt_hours;  // (Gy/h) Ã— h = Gy
+            }
+        }
+
+        double G_Factor = 0;
+        int t = 0;
+        for (double[] arr : slicedDose) {
+            double amplitude = 0;
+            for (int tp = 0; tp < t; tp++) {
+                amplitude += slicedDose.get(tp)[0] * Math.exp(-SimParams.repairRate*(t-tp)) * dt_hours;
+            }
+            G_Factor += arr[0] * amplitude * dt_hours;
+            t += 1;
+        }
+        G_Factor *= 2/(Dose*Dose+0.0000001);
+//        System.out.println("G_Factor is: "+ G_Factor);
+
+        double[] SF_Values = {0.0, 0.0};
+
+        // First one for the normal and the second one for the hypo
+        for (int i = 0; i < 2; i++) {
+            SF_Values[i] = Math.exp(-SimParams.alphaValues[i]*Dose - SimParams.betaValues[i]*Dose*Dose*G_Factor);
+        }
+//        System.out.println("current G is: ");
+        return SF_Values;
+    }
+
+
+
+
+
+    public double[] calculateSurvivalProb(ArrayList<double[]> localDoseRate){
+        // the first element is the survival probability of NormalTCell and the second element is the survival probability of
+        // HypoTCell
+        double[] perCellTypeSurvivalProb = {0.6,0.2}; // the first element is for normal and the second element hypoxia
+        return perCellTypeSurvivalProb;
+    }
+
+}
+
+
+
+//    public ArrayList<double[]> SurvivalProbLookupTableCalc_OLD(int currentDay, int localCurrentHour){
+//        // Calculates survival probability
+//        // Input: DoseRateList.
+//        // Output: Survival probability lookup table
+//
+//        ArrayList<double[]> survivalProbLookupTable = new ArrayList<>();
+//
+//
+//        if (localCurrentHour == 24){
+//            System.out.println("here");
+//        }
+//        if (currentDay ==0){
+//            // will have 1 survival probability.
+//            survivalProbLookupTable.add(new double[]{1,1});
+//            return survivalProbLookupTable;
+//        }
+//
+//
+//
+//        int currentGlobalHour = (int) (currentDay * SimParams.MinorLoop_PER_MajorLoop() + localCurrentHour);
+//
+//        int maxLookupAge = SimParams.maxLookupAge;
+//        if (currentDay < SimParams.maxLookupAge){
+//            maxLookupAge = currentDay;
+////            maxLookupAge = Math.floorDiv(currentGlobalHour, 24);
+//        }
+//
+//        for (int lookupAge = 1; lookupAge < maxLookupAge; lookupAge++) {
+//            System.out.println((int)(currentGlobalHour- maxLookupAge *SimParams.MinorLoop_PER_MajorLoop()) + "TO " + (currentGlobalHour-1) );
+//            List<double[]> localDoseRateList = this.grid.DoseRateList.subList((int)(currentGlobalHour- lookupAge *SimParams.MinorLoop_PER_MajorLoop()),currentGlobalHour-1);
+//            ArrayList<double[]> slicedDoseRate = new ArrayList<>(localDoseRateList);
+//            double[] perCellTypeSurvivalProb = calculateSurvivalProb(slicedDoseRate);
+//            survivalProbLookupTable.add(perCellTypeSurvivalProb);
+//        }
+//        return survivalProbLookupTable;
+//        // this is the simplest approach!!
+////        if (this.cell.type == SimParams.NORMAL){
+////            this.cell.survivalProb = 0.6;
+//////            this.cell.survivalProb = 0.5+(this.cell.birthTime)/(100 + this.cell.birthTime);
+////        }
+////        if (this.cell.type == SimParams.HYPOXIC){
+////            this.cell.survivalProb = 0.7 ;
+//////            this.cell.survivalProb = 0.5+(this.cell.birthTime)/(100 + this.cell.birthTime);
+////        }
+//    }
+

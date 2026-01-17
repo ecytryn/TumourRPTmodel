@@ -1,0 +1,240 @@
+CLEAN REBUILD PLAN - TUMOR RPT MODEL
+=====================================
+
+GOAL: Create a minimal, clean codebase with:
+1. All parameters in SI units (seconds, meters, moles)
+2. Clear, documented parameter definitions
+3. No unit conversion maze
+4. Only essential files
+
+=============================================================================
+PHASE 1: IDENTIFY WHAT WE ACTUALLY NEED
+=============================================================================
+
+CORE SIMULATION FILES (keep & review):
+--------------------------------------
+✓ Main.java              - Main simulation loop
+✓ Grid.java              - Spatial grid, vessel management
+✓ PK.java                - PK ODE solver
+✓ ParameterSweep.java    - Parameter sweep framework
+
+NEED TO FIND:
+-------------
+? Cell.java              - Individual cell class
+? CellBiology.java       - Cell division/death rules
+? RadioBio.java          - Radiation survival calculations
+? Oxygen.java            - Oxygen diffusion solver
+? FSM_*.java             - Finite state machine for cell cycle
+? DaVinci.java           - Visualization
+? DataLogger.java        - Output logging
+? VesselConfigConvertor.java - Loads vessel data
+? MyUtils.java           - Utility functions
+? OxygenCrossSectionPlotter.java - Oxygen visualization
+
+DEPENDENCIES:
+-------------
+✓ HAL library            - GridsAndAgents, Rand, ODESolver, Util
+  (This is external, keep as dependency)
+
+DATA FILES:
+-----------
+? Vasculature/uniform.csv - Vessel positions
+? Any other config files
+
+BUILD FILES:
+------------
+? build.gradle
+? settings.gradle
+? gradlew, gradlew.bat
+
+=============================================================================
+PHASE 2: CREATE NEW PARAMETER FILE
+=============================================================================
+
+NEW FILE: SimParams.java
+------------------------
+Will contain ALL parameters in clear SI units:
+
+/** All simulation parameters in SI units
+ * 
+ * UNITS USED THROUGHOUT:
+ * - Time: seconds (s)
+ * - Length: meters (m)
+ * - Amount: moles (mol)
+ * - Concentration: mol/m³
+ * - Pressure: Pascals (Pa)
+ * - Mass: kilograms (kg)
+ * - Energy: Joules (J)
+ * 
+ * NO UNIT CONVERSIONS IN CODE!
+ */
+public class SimParams {
+    
+    // =================================================================
+    // DOMAIN & DISCRETIZATION
+    // =================================================================
+    public static final double CELL_LENGTH = 10e-6;  // m (10 μm)
+    public static final int GRID_SIZE_CELLS = 400;   // cells
+    public static final double DOMAIN_SIZE = GRID_SIZE_CELLS * CELL_LENGTH;  // m
+    public static final double TIME_STEP = 3600.0;   // s (1 hour)
+    
+    // =================================================================
+    // PHARMACOKINETICS
+    // =================================================================
+    public static final double LAMBDA_BIO = 1.6e-4 / 60.0;      // 1/s
+    public static final double LAMBDA_DECAY = 7.14e-5 / 60.0;   // 1/s (Lu-177)
+    public static final double K_ON = 0.046 / 60.0 / 1000.0;    // m³/(mol·s)
+    public static final double K_OFF = 0.046 / 60.0;            // 1/s
+    public static final double K_INT = 0.001 / 60.0;            // 1/s
+    public static final double K_REL = 2e-4 / 60.0;             // 1/s
+    
+    public static final double V_CENTRAL = 0.458e-3;            // m³ (0.458 L)
+    public static final double INTERSTITIAL_FRACTION = 0.4;     // dimensionless
+    
+    // Per vessel parameters
+    public static final double VESSEL_VOLUME = 1e-6 * 1e-6 * 4000e-6;  // m³
+    public static final double VESSEL_FLOW = 5e-9 / 1000.0;     // m³/s (5 nL/s)
+    public static final double VESSEL_PS = 6.0 / 5.0 * VESSEL_FLOW;  // m³/s
+    
+    // =================================================================
+    // CELL BIOLOGY
+    // =================================================================
+    public static final double RECEPTORS_PER_CELL = 5e5;        // count
+    public static final double AVOGADRO = 6.022e23;             // 1/mol
+    public static final double CELL_CYCLE_DURATION = 86400.0;   // s (1 day)
+    
+    // =================================================================
+    // OXYGEN DIFFUSION
+    // =================================================================
+    public static final double D_O2 = 2e-5 * 1e-4;              // m²/s (2e-5 cm²/s)
+    public static final double P_O2_VESSEL = 100.0 * 133.322;   // Pa (100 mmHg)
+    public static final double P_O2_VEIN = 30.0 * 133.322;      // Pa (30 mmHg)
+    public static final double HENRY_O2 = 1.3e-3 / 760.0 * 1e9 / 1e-15;  // mol/(m³·Pa)
+    
+    public static final double HYPOXIC_THRESHOLD = 10.0 * 133.322;   // Pa
+    public static final double NECROTIC_THRESHOLD = 0.5 * 133.322;   // Pa
+    
+    // Consumption rates (mol/(s·cell))
+    public static final double CONSUMPTION_HEALTHY = 500.0 * SOME_CONVERSION;
+    public static final double CONSUMPTION_NORMAL = 6000.0 * SOME_CONVERSION;
+    // ... etc
+    
+    // =================================================================
+    // RADIOBIOLOGY
+    // =================================================================
+    public static final double ALPHA_NORMAL = 0.15;             // Gy⁻¹
+    public static final double ALPHA_HYPOXIC = 0.0107;          // Gy⁻¹
+    public static final double BETA_NORMAL = 0.048;             // Gy⁻²
+    public static final double BETA_HYPOXIC = 0.0024;           // Gy⁻²
+    public static final double REPAIR_RATE = 0.3 / 3600.0;      // 1/s (0.3/hr)
+    
+    public static final double E_BETA = 2.14e-14;               // J (Lu-177 beta)
+    
+    // =================================================================
+    // INJECTION PROTOCOL (defaults)
+    // =================================================================
+    public static final double DOSE_PER_INJECTION = 100e-9;     // mol (100 nmol)
+    public static final double HOT_FRACTION = 0.1;              // dimensionless
+    public static final int[] INJECTION_DAYS = {5, 35, 65, 95}; // days
+    
+    // =================================================================
+    // CELL TYPES
+    // =================================================================
+    public static final int HEALTHY = 0;
+    public static final int NORMAL = 1;
+    public static final int HYPOXIC = 2;
+    public static final int NECROTIC = 3;
+    public static final int APOPTOTIC = 4;
+    public static final int VESSEL = 5;
+    
+    // =================================================================
+    // COMPUTED PARAMETERS (derived from above)
+    // =================================================================
+    public static double computeTumorVolume(int cellCount) {
+        return cellCount * Math.pow(CELL_LENGTH, 3);
+    }
+    
+    public static double computeReceptorMoles(int cellCount) {
+        return cellCount * RECEPTORS_PER_CELL / AVOGADRO;
+    }
+}
+
+REMOVE THESE FILES:
+-------------------
+✗ Params.java           - Delete (replaced by SimParams.java)
+✗ ParamsPBPK.java       - Delete (merged into SimParams.java)
+✗ RealWorldParams.java  - Delete (was already in real units!)
+
+=============================================================================
+PHASE 3: MODIFY CODE TO USE NEW PARAMETERS
+=============================================================================
+
+CHANGES NEEDED IN EACH FILE:
+-----------------------------
+
+Main.java:
+  - Replace: Params.LoadClass() → Remove
+  - Replace: ParamsPBPK.LoadClass() → Remove
+  - Replace: Params.xDim → SimParams.GRID_SIZE_CELLS
+  - Replace: All Params.* → SimParams.*
+  - Replace: All ParamsPBPK.* → SimParams.*
+
+Grid.java:
+  - Same pattern: Params.* → SimParams.*
+  - No unit conversions needed!
+
+PK.java:
+  - Replace: ParamsPBPK.lambda_bio → SimParams.LAMBDA_BIO
+  - Replace: All parameter references
+  - TIME IS IN SECONDS NOW (not hours!)
+  - Check all derivative equations
+
+ParameterSweep.java:
+  - Update parameter references
+  - Update injection schedule handling
+
+=============================================================================
+PHASE 4: EXECUTION PLAN
+=============================================================================
+
+STEP 1: Find all missing files
+  [ ] Search current codebase for Cell.java, Oxygen.java, etc.
+  [ ] Create list of found files
+
+STEP 2: Create new directory structure
+  NewModel/
+    src/main/java/TumorRPT/
+      SimParams.java          (NEW - clean parameters)
+      Main.java               (MODIFIED - updated imports)
+      Grid.java               (MODIFIED - updated imports)
+      Cell.java               (MODIFIED - updated imports)
+      PK.java                 (MODIFIED - updated imports)
+      ... (other found files, modified)
+    src/main/resources/
+      vasculature/
+        uniform.csv
+    build.gradle              (UPDATED - simpler)
+    settings.gradle
+
+STEP 3: Test compilation
+  [ ] Does it compile?
+  [ ] Fix any missing dependencies
+
+STEP 4: Test small simulation
+  [ ] Run 1 day with frozen tumor
+  [ ] Compare PK curves to analytical model
+  [ ] Should match exactly now!
+
+STEP 5: Full validation
+  [ ] Run full parameter sweep
+  [ ] Generate comparison figures
+
+=============================================================================
+NEXT ACTIONS
+=============================================================================
+
+1. Find all missing Java files - need your help to locate them
+2. Create SimParams.java
+3. Start migrating files one by one
+
+Ready to proceed?

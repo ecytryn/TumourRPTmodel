@@ -1,0 +1,415 @@
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/HAL/Tools/Internal/SplittableRN.java:240: warning: [removal] AccessController in java.security has been deprecated and marked for removal
+        if (java.security.AccessController.doPrivileged(
+                         ^
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:25: error: cannot find symbol
+        if (this.cell.isAlive == true && this.cell.type != SimParams.VESSEL_TYPE){
+                                                                    ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:26: error: cannot find symbol
+            double NecroThreshold = SimParams.NECROTIC_THRESHOLD * this.cell.G.rng.Gaussian(1,0.2);
+                                             ^
+  symbol:   variable NECROTIC_THRESHOLD
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:28: error: cannot find symbol
+                this.cell.ChangeType(SimParams.NECRO_TCELL_TYPE);
+                                              ^
+  symbol:   variable NECRO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:31: error: cannot find symbol
+                double hypoThreshold = SimParams.HYPOXIC_THRESHOLD * this.cell.G.rng.Gaussian(1,0.2);
+                                                ^
+  symbol:   variable HYPOXIC_THRESHOLD
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:34: error: cannot find symbol
+                    this.cell.ChangeType(SimParams.HYPO_TCELL_TYPE);
+                                                  ^
+  symbol:   variable HYPO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:36: error: cannot find symbol
+                    this.cell.ChangeType(SimParams.NORMAL_TCELL_TYPE);
+                                                  ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:40: error: cannot find symbol
+                    this.cell.ChangeType(SimParams.APOP_TCELL_TYPE);
+                                                  ^
+  symbol:   variable APOP_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:54: error: cannot find symbol
+        if (this.cell.type == SimParams.APOP_TCELL_TYPE){
+                                       ^
+  symbol:   variable APOP_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:55: error: cannot find symbol
+            if(this.cell.G.rng.Double()<SimParams.APOP_REMOVAL_PROB){
+                                                 ^
+  symbol:   variable APOP_REMOVAL_PROB
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:58: error: cannot find symbol
+                if (this.cell.howManyDaysDead >= SimParams.strictRemovalCoeff * SimParams.ApopRemovalTime){
+                                                          ^
+  symbol:   variable strictRemovalCoeff
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:58: error: cannot find symbol
+                if (this.cell.howManyDaysDead >= SimParams.strictRemovalCoeff * SimParams.ApopRemovalTime){
+                                                                                         ^
+  symbol:   variable ApopRemovalTime
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/FSM_DIVCHECK.java:88: error: cannot find symbol
+        if (this.cell.type != SimParams.VESSEL_TYPE) {
+                                       ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:40: error: cannot find symbol
+        if (type== SimParams.VESSEL_TYPE && currentTime == 0){
+                            ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:63: error: cannot find symbol
+        this.color = SimParams.COLORLIST[type];
+                              ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:65: error: cannot find symbol
+        if (type == SimParams.NECRO_TCELL_TYPE || type==SimParams.APOP_TCELL_TYPE){
+                             ^
+  symbol:   variable NECRO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:65: error: cannot find symbol
+        if (type == SimParams.NECRO_TCELL_TYPE || type==SimParams.APOP_TCELL_TYPE){
+                                                                 ^
+  symbol:   variable APOP_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:97: error: cannot find symbol
+            int emptySites = MapEmptyHood(SimParams.divHood);
+                                                   ^
+  symbol:   variable divHood
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:100: error: cannot find symbol
+                int newAgentSiteIndex = SimParams.divHood[selectedSiteIndex];
+                                                 ^
+  symbol:   variable divHood
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:101: error: cannot find symbol
+                G.NewAgentSQ(newAgentSiteIndex).Init(type, SimParams.globalTime);
+                                                                    ^
+  symbol:   variable globalTime
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:112: error: cannot find symbol
+        int lookUpTableAge = (int) (  Math.floorDiv(SimParams.globalTime - birthTime, (int) SimParams.T_PER_Major())  );
+                                                             ^
+  symbol:   variable globalTime
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:112: error: cannot find symbol
+        int lookUpTableAge = (int) (  Math.floorDiv(SimParams.globalTime - birthTime, (int) SimParams.T_PER_Major())  );
+                                                                                                     ^
+  symbol:   method T_PER_Major()
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:122: error: cannot find symbol
+        if (lookUpTableAge > SimParams.maxLookupAge){
+                                      ^
+  symbol:   variable maxLookupAge
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:123: error: cannot find symbol
+            lookUpTableAge = SimParams.maxLookupAge;
+                                      ^
+  symbol:   variable maxLookupAge
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:126: error: cannot find symbol
+        if (this.type == SimParams.NORMAL_TCELL_TYPE) {
+                                  ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Cell.java:129: error: cannot find symbol
+        if (this.type == SimParams.HYPO_TCELL_TYPE){
+                                  ^
+  symbol:   variable HYPO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Grid.java:250: error: cannot find symbol
+        InputStream testStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        ^
+  symbol:   class InputStream
+  location: class Grid
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:18: error: cannot find symbol
+        if (this.cell.type == SimParams.HYPO_TCELL_TYPE){
+                                       ^
+  symbol:   variable HYPO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:19: error: cannot find symbol
+            this.cell.divisionProb = SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.VESSEL_OXYGEN_CONCENTRATION;
+                                              ^
+  symbol:   variable DIVISON_PROB_MAX
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:19: error: cannot find symbol
+            this.cell.divisionProb = SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.VESSEL_OXYGEN_CONCENTRATION;
+                                                                                            ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:21: error: cannot find symbol
+        if (this.cell.type == SimParams.NORMAL_TCELL_TYPE){
+                                       ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:23: error: cannot find symbol
+            this.cell.divisionProb = 10*SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.VESSEL_OXYGEN_CONCENTRATION;
+                                                 ^
+  symbol:   variable DIVISON_PROB_MAX
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/CellBiology.java:23: error: cannot find symbol
+            this.cell.divisionProb = 10*SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.VESSEL_OXYGEN_CONCENTRATION;
+                                                                                               ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:24: error: cannot find symbol
+        this.r_max = SimParams.r_max;
+                              ^
+  symbol:   variable r_max
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:146: error: cannot find symbol
+        return c.type == SimParams.NORMAL_TCELL_TYPE || c.type == SimParams.HYPO_TCELL_TYPE;
+                                  ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:146: error: cannot find symbol
+        return c.type == SimParams.NORMAL_TCELL_TYPE || c.type == SimParams.HYPO_TCELL_TYPE;
+                                                                           ^
+  symbol:   variable HYPO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:176: error: cannot find symbol
+            oxygenAmp = SimParams.VESSEL_OXYGEN_CONCENTRATION * 
+                                 ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:192: error: cannot find symbol
+        double[] cellStats = new double[SimParams.NUMBER_OF_CELL_TYPES];
+                                                 ^
+  symbol:   variable NUMBER_OF_CELL_TYPES
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:196: error: cannot find symbol
+                cellType_AUX = SimParams.HEALTHY_CELL_TYPE;
+                                        ^
+  symbol:   variable HEALTHY_CELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:203: error: cannot find symbol
+        for (int i = 0; i < SimParams.NUMBER_OF_CELL_TYPES; i++) {
+                                     ^
+  symbol:   variable NUMBER_OF_CELL_TYPES
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/Oxygen.java:204: error: cannot find symbol
+            alpha_eff += cellStats[i] / SShoodCount * SimParams.CELLS_CONSUMPTION_RATE_LIST[i];
+                                                               ^
+  symbol:   variable CELLS_CONSUMPTION_RATE_LIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:44: error: cannot find symbol
+        int maxLookupAge = SimParams.maxLookupAge;
+                                    ^
+  symbol:   variable maxLookupAge
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:59: error: cannot find symbol
+            int T_PER_MAJOR = (int)(SimParams.T_PER_Major());
+                                             ^
+  symbol:   method T_PER_Major()
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:61: error: cannot find symbol
+            int lastSliceIndex = SimParams.globalTime ;
+                                          ^
+  symbol:   variable globalTime
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:84: error: cannot find symbol
+        double dt = SimParams.T_PER_Minor() * 3600;  // makes sure that the units of dt is seconds
+                             ^
+  symbol:   method T_PER_Minor()
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:99: error: cannot find symbol
+                amplitude += slicedDose.get(tp)[0] * Math.exp(-SimParams.repairRate*(t-tp)) * dt;
+                                                                        ^
+  symbol:   variable repairRate
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:111: error: cannot find symbol
+            SF_Values[i] = Math.exp(-SimParams.alphaValues[i]*Dose - SimParams.betaValues[i]*Dose*Dose*G_Factor);
+                                              ^
+  symbol:   variable alphaValues
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/RadioBio.java:111: error: cannot find symbol
+            SF_Values[i] = Math.exp(-SimParams.alphaValues[i]*Dose - SimParams.betaValues[i]*Dose*Dose*G_Factor);
+                                                                              ^
+  symbol:   variable betaValues
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:28: error: cannot find symbol
+            this.gridWin    = new GridWindow("my nice simulation", SimParams.xDim, SimParams.yDim, 2);
+                                                                            ^
+  symbol:   variable xDim
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:28: error: cannot find symbol
+            this.gridWin    = new GridWindow("my nice simulation", SimParams.xDim, SimParams.yDim, 2);
+                                                                                            ^
+  symbol:   variable yDim
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:29: error: cannot find symbol
+            this.gridWinAge = new GridWindow("Age", SimParams.xDim, SimParams.yDim, 2);
+                                                             ^
+  symbol:   variable xDim
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:29: error: cannot find symbol
+            this.gridWinAge = new GridWindow("Age", SimParams.xDim, SimParams.yDim, 2);
+                                                                             ^
+  symbol:   variable yDim
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:67: error: cannot find symbol
+                        1.5 * SimParams.VESSEL_OXYGEN_CONCENTRATION));
+                                       ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:73: error: cannot find symbol
+            if (c.type == SimParams.VESSEL_TYPE) {
+                                   ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:79: error: cannot find symbol
+                            oxygenConc, 0, 1.5 * SimParams.VESSEL_OXYGEN_CONCENTRATION));
+                                                          ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:82: error: cannot find symbol
+                    if (maskList[SimParams.VESSEL_TYPE]) {
+                                          ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:112: error: cannot find symbol
+                        1.5 * SimParams.VESSEL_OXYGEN_CONCENTRATION));
+                                       ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:117: error: cannot find symbol
+            if (c.type == SimParams.VESSEL_TYPE) {
+                                   ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:124: error: cannot find symbol
+                    if (maskList[SimParams.VESSEL_TYPE]) {
+                                          ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DaVinci.java:132: error: cannot find symbol
+                double ageDays = (SimParams.globalTime - c.birthTime)/24.0;
+                                           ^
+  symbol:   variable globalTime
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:157: error: cannot find symbol
+        colors[1] = new Color(SimParams.COLORLIST[SimParams.NORMAL_TCELL_TYPE]);   // Pink/magenta
+                                       ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:157: error: cannot find symbol
+        colors[1] = new Color(SimParams.COLORLIST[SimParams.NORMAL_TCELL_TYPE]);   // Pink/magenta
+                                                           ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:158: error: cannot find symbol
+        colors[2] = new Color(SimParams.COLORLIST[SimParams.HYPO_TCELL_TYPE]);     // Purple
+                                       ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:158: error: cannot find symbol
+        colors[2] = new Color(SimParams.COLORLIST[SimParams.HYPO_TCELL_TYPE]);     // Purple
+                                                           ^
+  symbol:   variable HYPO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:159: error: cannot find symbol
+        colors[3] = new Color(SimParams.COLORLIST[SimParams.NECRO_TCELL_TYPE]);    // Gray
+                                       ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:159: error: cannot find symbol
+        colors[3] = new Color(SimParams.COLORLIST[SimParams.NECRO_TCELL_TYPE]);    // Gray
+                                                           ^
+  symbol:   variable NECRO_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:160: error: cannot find symbol
+        colors[4] = new Color(SimParams.COLORLIST[SimParams.APOP_TCELL_TYPE]);     // Yellow
+                                       ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:160: error: cannot find symbol
+        colors[4] = new Color(SimParams.COLORLIST[SimParams.APOP_TCELL_TYPE]);     // Yellow
+                                                           ^
+  symbol:   variable APOP_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:161: error: cannot find symbol
+        colors[5] = new Color(SimParams.COLORLIST[SimParams.VESSEL_TYPE]);         // Cyan
+                                       ^
+  symbol:   variable COLORLIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:161: error: cannot find symbol
+        colors[5] = new Color(SimParams.COLORLIST[SimParams.VESSEL_TYPE]);         // Cyan
+                                                           ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/DataLogger.java:250: error: cannot find symbol
+        double barLength_um = barLength_cells * SimParams.cellLength;
+                                                         ^
+  symbol:   variable cellLength
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:45: error: cannot find symbol
+        this.h_real = SimParams.L_PER_um(); // actual spacing in um (1 cell length = 10um)
+                               ^
+  symbol:   method L_PER_um()
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:49: error: cannot find symbol
+        this.u_B = SimParams.VESSEL_OXYGEN_CONCENTRATION;
+                            ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:59: error: cannot find symbol
+        double C_typical = SimParams.CELLS_CONSUMPTION_RATE_LIST[SimParams.NORMAL_TCELL_TYPE];
+                                    ^
+  symbol:   variable CELLS_CONSUMPTION_RATE_LIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:59: error: cannot find symbol
+        double C_typical = SimParams.CELLS_CONSUMPTION_RATE_LIST[SimParams.NORMAL_TCELL_TYPE];
+                                                                          ^
+  symbol:   variable NORMAL_TCELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:97: error: cannot find symbol
+                        u_boundary = 0.5 * (SimParams.VESSEL_OXYGEN_CONCENTRATION + SimParams.Vein_OXYGEN_CONCENTRATION);
+                                                     ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:97: error: cannot find symbol
+                        u_boundary = 0.5 * (SimParams.VESSEL_OXYGEN_CONCENTRATION + SimParams.Vein_OXYGEN_CONCENTRATION);
+                                                                                             ^
+  symbol:   variable Vein_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:206: error: cannot find symbol
+                cellType = SimParams.HEALTHY_CELL_TYPE;
+                                    ^
+  symbol:   variable HEALTHY_CELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:207: error: cannot find symbol
+            } else if (cell.type == SimParams.VESSEL_TYPE) {
+                                             ^
+  symbol:   variable VESSEL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:209: error: cannot find symbol
+                cellType = SimParams.HEALTHY_CELL_TYPE; // Could also set to 0
+                                    ^
+  symbol:   variable HEALTHY_CELL_TYPE
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:215: error: cannot find symbol
+            double consumptionRate = SimParams.CELLS_CONSUMPTION_RATE_LIST[cellType];
+                                              ^
+  symbol:   variable CELLS_CONSUMPTION_RATE_LIST
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:279: error: cannot find symbol
+        double initialBC = 0.5 * (SimParams.VESSEL_OXYGEN_CONCENTRATION + SimParams.Vein_OXYGEN_CONCENTRATION);
+                                           ^
+  symbol:   variable VESSEL_OXYGEN_CONCENTRATION
+  location: class SimParams
+/Users/cytryn/Library/CloudStorage/OneDrive-UBC/Documents/Research/GitHub/HAL_RPT/TumourRPTModel/src/main/java/TumourRPT/OxygenDiffusionSolver.java:279: error: cannot find symbol
+        double initialBC = 0.5 * (SimParams.VESSEL_OXYGEN_CONCENTRATION + SimParams.Vein_OXYGEN_CONCENTRATION);
+                                                                                   ^
+  symbol:   variable Vein_OXYGEN_CONCENTRATION
+  location: class SimParams
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.

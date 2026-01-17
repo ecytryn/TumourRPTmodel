@@ -1,0 +1,63 @@
+# Compiled class files
+*.class
+*.jar
+*.war
+*.ear
+
+# Build directories
+build/
+target/
+out/
+bin/
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Simulation outputs
+results/
+Results/
+*.csv
+*.png
+*.pdf
+!TumourRPT_SupplementalMaterial.pdf
+
+# Logs
+*.log
+PBPK_log.csv
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
