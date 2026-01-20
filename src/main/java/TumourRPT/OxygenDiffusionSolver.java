@@ -13,8 +13,7 @@ public class OxygenDiffusionSolver {
     
     private Grid grid;
     private int xDim, yDim;
-    private double h; // grid spacing in computational units
-//    private double h_real; // grid spacing in real units (um)
+    private double h; // grid spacing 
     
     // PDE parameters
     private double D; // diffusion coefficient (converted to grid units²/time)
@@ -170,7 +169,8 @@ public class OxygenDiffusionSolver {
         }
         
         // Save oxygen field visualization every N days
-        if (currentDay % 10 == 0) {
+		int currentHour = SimParams.globalTime % 24;
+        if (currentDay % 10 == 0 && currentHour == 0) {
             saveOxygenFieldImage(oxygenGrid, currentDay);
         }
         
@@ -316,7 +316,7 @@ public class OxygenDiffusionSolver {
      * Uses fixed scale: 0 to 2.5 1/s (to capture healthy=0.42, normal=2.08)
      */
     private void saveConsumptionFieldImage(Grid2Ddouble C, int buildNumber) {
-        if (SimParams.VISUALIZE_CONSUMP) {
+        if (SimParams.EXPORT_CONSUMP_IMAGES) {
             // Only save if visualization is enabled
             try {
                 String filename = String.format("results/single_runs/consumption_field_%d.png", buildNumber);
@@ -542,13 +542,13 @@ public class OxygenDiffusionSolver {
      * Uses fixed scale: 0 to 15000 Pa (0 to ~112 mmHg) to show full range
      */
     private void saveOxygenFieldImage(Grid2Ddouble oxygenGrid, int day) {
-        if (SimParams.VISUALIZE_OX) {
+        if (SimParams.EXPORT_OX_IMAGES) {
             try {
                 String filename;
                 if (day == -1) {
-                    filename = "results/single_runs/oxygen_field_calibration.png";
+                    filename = String.format("%s/oxygen_field_calibration.png",SimParams.OUTPUT_DIR_OXYGEN_IMAGES);
                 } else {
-                    filename = String.format("results/single_runs/oxygen_field_day%d.png", day);
+                    filename = String.format("%s/oxygen_field_day%d.png", SimParams.OUTPUT_DIR_OXYGEN_IMAGES, day);
                 }
                 
                 // Create buffered image with extra space for color bar
@@ -556,7 +556,13 @@ public class OxygenDiffusionSolver {
                 int imageHeight = yDim;
                 java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
                     imageWidth, imageHeight, java.awt.image.BufferedImage.TYPE_INT_RGB);
-                
+
+                // Fill entire image with white background first
+                java.awt.Graphics2D g2d_bg = img.createGraphics();
+                g2d_bg.setColor(java.awt.Color.WHITE);
+                g2d_bg.fillRect(0, 0, imageWidth, imageHeight);
+                g2d_bg.dispose();
+                                
                 // Fixed color scale: 0 to 15000 Pa (0 to ~112 mmHg)
                 double minScale = 0.0;
                 double maxScale = 15000.0;  // Above vessel pressure
@@ -595,20 +601,38 @@ public class OxygenDiffusionSolver {
                 java.awt.Graphics2D g2d = img.createGraphics();
                 g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
                                     java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12));
-                
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                                                    
                 // Title
-                g2d.setColor(java.awt.Color.WHITE);
                 String title;
                 if (day == -1) {
                     title = "Oxygen Field (Calibration)";
                 } else {
-                    title = String.format("Oxygen Field (Day %d)", day);
+                    title = String.format("Day %d", day);
                 }
-                g2d.drawString(title, 10, 20);
+                
+                // Use larger, bold font
+                java.awt.Font titleFont = new java.awt.Font("Arial", java.awt.Font.BOLD, 18);
+                g2d.setFont(titleFont);
+                
+                int titleX = 15;
+                int titleY = 25;
+                
+                // Draw black outline first for contrast
                 g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawString(title, 9, 19);
-                g2d.drawString(title, 11, 19);
+                for (int dx = -2; dx <= 2; dx++) {
+                    for (int dy = -2; dy <= 2; dy++) {
+                        if (dx != 0 || dy != 0) {
+                            g2d.drawString(title, titleX + dx, titleY + dy);
+                        }
+                    }
+                }
+                
+                // Draw white text on top
+                g2d.setColor(java.awt.Color.WHITE);
+                g2d.drawString(title, titleX, titleY);
+                // ======================================
                 
                 // Color bar labels
                 g2d.setColor(java.awt.Color.BLACK);

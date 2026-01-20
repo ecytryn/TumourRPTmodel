@@ -248,9 +248,9 @@ public class ParameterSweep {
                     double[] currentPK = model.PKStateVariables.get(model.PKStateVariables.size() - 1);
                     
                     // Inject into central compartment
-                    // Index 0 = C_cen_hot, Index 1 = C_cen_cold
-                    currentPK[0] += hotDose / SimParams.V_CENTRAL;   // mol / m³ = mol/m³
-                    currentPK[1] += coldDose / SimParams.V_CENTRAL;
+                    // Index 0 = N_cen_hot, Index 1 = N_cen_cold
+                    currentPK[0] += hotDose;   // mol
+                    currentPK[1] += coldDose;
                     
                     // Update QSS compartments (indices 2-9)
                     // These will be recalculated in next PK step

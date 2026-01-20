@@ -33,7 +33,7 @@ public class Grid extends AgentGrid2D<Cell> {
     
     public Grid2Ddouble oxygenGrid;
     public RadioBio radioBio;
-    
+        
     // Data collection
     public ArrayList<double[]> DoseRateList = new ArrayList<>();
     public ArrayList<double[]> PKStateVariables = new ArrayList<>();
@@ -61,7 +61,6 @@ public class Grid extends AgentGrid2D<Cell> {
         this.PBPK = new PK(this);
         this.radioBio = new RadioBio(this);
         this.oxygenGrid = new Grid2Ddouble(xDim, yDim);
-//        this.oxygenPlotter = new OxygenCrossSectionPlotter(this);
     }
 
     /**
@@ -92,8 +91,8 @@ public class Grid extends AgentGrid2D<Cell> {
         this.oxygen.UpdateSteadyStateOxygen(currentDay, r_average);
 
         // Initialize PK state vector
-        // [C_cen_hot, C_cen_cold, C_v_hot, C_v_cold, C_ec_hot, C_ec_cold, 
-        //  C_b_hot, C_b_cold, C_ic_hot, C_ic_cold, A_blob]
+        // [N_cen_hot, N_cen_cold, N_v_hot, N_v_cold, N_ec_hot, N_ec_cold, 
+        //  N_b_hot, N_b_cold, N_ic_hot, N_ic_cold, A_blob]
         PKStateVariables.add(new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
                                          0.0, 0.0, 0.0, 0.0, 1.0}); 
         DoseRateList.add(new double[]{0.0});
@@ -440,10 +439,10 @@ public class Grid extends AgentGrid2D<Cell> {
 		// PK state (if relevant)
 		if (PKStateVariables.size() > 0) {
 			double[] pk = PKStateVariables.get(PKStateVariables.size() - 1);
-			double C_cen_total = (pk[0] + pk[1]) * 1e9;  // nmol/L
-			double C_ic_total = (pk[8] + pk[9]) * 1e9;
-			System.out.printf("PK: C_cen=%.2e nmol/L, C_ic=%.2e nmol/L%n",
-							 C_cen_total, C_ic_total);
+			double N_cen_total = (pk[0] + pk[1]) * 1e9;  // nmol
+			double N_ic_total = (pk[8] + pk[9]) * 1e9;
+			System.out.printf("PK: N_cen=%.2e nmol, N_ic=%.2e nmol%n",
+							 N_cen_total, N_ic_total);
 		}
 		
 		// Oxygen statistics

@@ -36,17 +36,13 @@ public class DataLogger {
      * @param showLegend If true, adds a color legend to the image
      */
     public void saveFigureTotal(String fileName, DaVinci drawer, int dayCount, boolean showLegend) {   
-        // Skip if running in headless mode
-        if (drawer.gridWin == null) {
-            return;
-        }
+        // Works in both live and headless modes
+        BufferedImage img = new BufferedImage(drawer.xDim, drawer.yDim, BufferedImage.TYPE_INT_RGB);
         
-        BufferedImage img = new BufferedImage(drawer.gridWin.xDim, drawer.gridWin.yDim, BufferedImage.TYPE_INT_RGB);
-        
-        // Copy pixels from GridWindow
-        for (int x = 0; x < drawer.gridWin.xDim; x++) {
-            for (int y = 0; y < drawer.gridWin.yDim; y++) {
-                int color = drawer.gridWin.GetPix(x,y);
+        // Copy pixels using DaVinci's GetPix method
+        for (int x = 0; x < drawer.xDim; x++) {
+            for (int y = 0; y < drawer.yDim; y++) {
+                int color = drawer.GetPix(x, y);
                 img.setRGB(x, y, color);
             }
         }
@@ -62,7 +58,7 @@ public class DataLogger {
         String timestamp = String.format("Day %d", dayCount);
         
         // Font settings - adjust size based on image dimensions
-        int fontSize = Math.max(12, drawer.gridWin.xDim / 20);  // Scale with image size
+        int fontSize = Math.max(12, drawer.xDim / 20);  // Scale with image size
         Font font = new Font("Arial", Font.BOLD, fontSize);
         g2d.setFont(font);
         
@@ -188,15 +184,11 @@ public class DataLogger {
      * Original method without timestamp (kept for backward compatibility)
      */
     public void saveFigureTotal(String fileName, DaVinci drawer) {
-        // Skip if running in headless mode
-        if (drawer.gridWin == null) {
-            return;
-        }        
-        
-        BufferedImage img = new BufferedImage(drawer.gridWin.xDim, drawer.gridWin.yDim, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < drawer.gridWin.xDim; x++) {
-            for (int y = 0; y < drawer.gridWin.yDim; y++) {
-                int color = drawer.gridWin.GetPix(x,y);
+        // Works in both live and headless modes
+        BufferedImage img = new BufferedImage(drawer.xDim, drawer.yDim, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < drawer.xDim; x++) {
+            for (int y = 0; y < drawer.yDim; y++) {
+                int color = drawer.GetPix(x, y);
                 img.setRGB(x, y, color);
             }
         }
@@ -211,15 +203,11 @@ public class DataLogger {
     }
 
     public void saveVessel(String fileName, DaVinci drawer) {
-        // Skip if running in headless mode
-        if (drawer.gridWin == null) {
-            return;
-        }
-
-        BufferedImage img = new BufferedImage(drawer.gridWin.xDim, drawer.gridWin.yDim, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < drawer.gridWin.xDim; x++) {
-            for (int y = 0; y < drawer.gridWin.yDim; y++) {
-                int color = drawer.gridWin.GetPix(x,y);
+        // Works in both live and headless modes
+        BufferedImage img = new BufferedImage(drawer.xDim, drawer.yDim, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < drawer.xDim; x++) {
+            for (int y = 0; y < drawer.yDim; y++) {
+                int color = drawer.GetPix(x, y);
                 img.setRGB(x, y, color);
             }
         }
@@ -247,7 +235,7 @@ public class DataLogger {
     private void drawScaleBar(Graphics2D g2d, int imgWidth, int imgHeight) {
         // Scale bar parameters
         int barLength_cells = 50;  // 50 cells = 500 um
-        double barLength_um = barLength_cells * SimParams.CELL_LENGTH;
+        double barLength_um = barLength_cells * SimParams.CELL_LENGTH * 1e6;
         
         int barHeight = 8;
         int padding = 15;

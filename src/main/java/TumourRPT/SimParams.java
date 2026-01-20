@@ -1,5 +1,17 @@
 package TumorRPT;
 
+// File I/O for writing reports
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+// Timestamps
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+// Array formatting
+import java.util.Arrays;
+
 /**
  * All simulation parameters in SI units
  * 
@@ -17,6 +29,40 @@ package TumorRPT;
  * All parameters are already in the correct SI units.
  */
 public class SimParams {
+
+	// Define the output string using the purpose of the run	
+	private static final String EXPERIMENT_NAME_RAW = "";  // ← Set this for real runs
+	private static final String EXPERIMENT_DESCRIPTION_RAW = "";
+//	private static final String EXPERIMENT_NAME_RAW = "RPTonNormoxicTumour";  // ← Set this for real runs
+//	private static final String EXPERIMENT_DESCRIPTION_RAW = "This is the first run of a two-run experiment. Here, I hit the tumour with a dose of RPT at Day 5 when the tumour is mostly normoxic.";
+//	private static final String EXPERIMENT_NAME_RAW = "RPTonHypoxicTumour";  // ← Set this for real runs
+//	private static final String EXPERIMENT_DESCRIPTION_RAW = "This is the second run of a two-run experiment. Here, I hit the tumour with a dose of RPT at Day 35 when a large portion of the tumour is hypoxic.";
+
+	// Auto-default to "testing_run" if empty
+	public static final String EXPERIMENT_NAME = 
+		EXPERIMENT_NAME_RAW.isEmpty() ? "testing_run" : EXPERIMENT_NAME_RAW;
+	
+	public static final String EXPERIMENT_DESCRIPTION = 
+		EXPERIMENT_DESCRIPTION_RAW.isEmpty() 
+			? "Quick test/debug run" 
+			: EXPERIMENT_DESCRIPTION_RAW;
+
+    // Output directories (set by Main at startup)
+    public static String OUTPUT_DIR_BASE = "";
+    public static String OUTPUT_DIR_TUMOUR_IMAGES = "";
+    public static String OUTPUT_DIR_OXYGEN_IMAGES = "";
+    
+    // =================================================================
+    // RUNTIME CONFIGURATION
+    // =================================================================
+    public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
+    public static final boolean EXPORT_OX_IMAGES = true;  // Set true for exporting oxygen images
+    public static final boolean EXPORT_CONSUMP_IMAGES = false;  // Set true for exporting consumption images
+    public static final boolean EXPORT_TUMOUR_OX_IMAGES = true; // Set true for exporting tumour/oxygen images
+    public static final boolean PLOT_LIVE_IMAGES = false;  // Set true to pop up images during the run
+    public static final boolean ENABLE_PBPK_LOGGING = false;   // Set true for PK debugging
+	public static final boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
+	public static final boolean USE_CALIBRATED_BC = true;  // true --> use a BC for the O2 PDE that is calibrated to average O2 levels in healthy tissue
     
     // =================================================================
     // PHYSICAL CONSTANTS
@@ -131,7 +177,7 @@ public class SimParams {
 //    public static final double BETA_HYPOXIC = 0.0024;         // Gy⁻² (10× less sensitive)
 //    public static final double REPAIR_RATE = 0.3 / 3600.0;    // 1/s (0.3 per hour)
 
-	public static final double ALPHA_NORMAL = 0.15;           // Gy⁻¹
+	public static final double ALPHA_NORMAL = 0.9 * 0.15;           // Gy⁻¹
     public static final double ALPHA_HYPOXIC = 0.06;          // Gy⁻¹ (0.15/2.5, OER=2.5)
     public static final double BETA_NORMAL = 0.048;           // Gy⁻²
     public static final double BETA_HYPOXIC = 0.019;          // Gy⁻² (0.048/2.5, OER=2.5)
@@ -170,18 +216,7 @@ public class SimParams {
     public static final int APOPTOTIC = 4;
     public static final int VESSEL = 5;
     public static final int NUM_CELL_TYPES = 6;
-    
-    // =================================================================
-    // RUNTIME CONFIGURATION
-    // =================================================================
-    public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
-    public static final boolean VISUALIZE_OX = false;  // Set true for exporting oxygen images
-    public static final boolean VISUALIZE_CONSUMP = false;  // Set true for exporting consumption images
-    public static final boolean VISUALIZATION_ON = true;  // Set true for single runs
-    public static final boolean ENABLE_PBPK_LOGGING = false;   // Set true for debugging
-	public static final boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
-	public static final boolean USE_CALIBRATED_BC = true;  // true --> use a BC for the O2 PDE that is calibrated to average O2 levels in healthy tissue
-	
+    	
     // Vessel density configuration
     // Possibilities: "uniform", "sparse", "dense", "heterogeneous", etc.
     // Corresponds to CSV files in src/main/resources/vasculature/
@@ -257,7 +292,118 @@ public class SimParams {
 			0xFF90EE90,  // 1: Normal tumor (light green)
 			0xFF228B22,  // 2: Hypoxic (forest green)
 			0xFF006400,  // 3: Necrotic (dark green)
-			0xFFFFD700,  // 4: Apoptotic (gold)
+			0xFF800080,  // 4: Apoptotic (purple)
 			0xFFFF6347   // 5: Vessel (tomato red)
-		};	
+	};	
+
+	/**
+	 * Export an md file for human readable parameter summary
+	 */
+	public static void generateParameterReport(String filepath) throws IOException {
+		try (PrintWriter out = new PrintWriter(new FileWriter(filepath))) {
+			out.println("# Simulation Parameters Report");
+			out.println();
+			out.println("**Experiment:** " + EXPERIMENT_NAME);
+			out.println("**Date:** " + java.time.LocalDateTime.now());
+			out.println("**Description:** " + EXPERIMENT_DESCRIPTION);
+			out.println();
+			
+			out.println("## Injection Protocol");
+			out.println("| Parameter | Value |");
+			out.println("|-----------|-------|");
+			out.println("| Days | " + java.util.Arrays.toString(DEFAULT_INJECTION_DAYS) + " |");
+			out.println("| Dose | " + (DOSE_PER_INJECTION * 1e9) + " nmol |");
+			out.println("| Hot fraction | " + (HOT_FRACTION * 100) + "% |");
+			out.println();
+			
+			out.println("## Domain");
+			out.println("| Parameter | Value |");
+			out.println("|-----------|-------|");
+			out.println("| Grid size | " + GRID_SIZE + " cells |");
+			out.println("| Cell length | " + (CELL_LENGTH * 1e6) + " μm |");
+			out.println("| Domain size | " + (DOMAIN_SIZE * 1e3) + " mm |");
+			out.println();
+			
+			out.println("## Pharmacokinetics");
+			out.println("| Parameter | Value | Description |");
+			out.println("|-----------|-------|-------------|");
+			out.println("| λ_bio | " + (LAMBDA_BIO * 3600) + " hr⁻¹ | Biological clearance |");
+			out.println("| λ_decay | " + (LAMBDA_DECAY * 3600) + " hr⁻¹ | Lu-177 decay |");
+			out.println("| k_on | " + (K_ON / 1e6 * 60) + " L/(nmol·min) | Binding rate |");
+			out.println("| k_off | " + (K_OFF * 60) + " min⁻¹ | Unbinding rate |");
+			out.println("| k_int | " + (K_INT * 60) + " min⁻¹ | Internalization |");
+			out.println();
+			
+			out.println("## Radiobiology");
+			out.println("| Cell Type | α (Gy⁻¹) | β (Gy⁻²) |");
+			out.println("|-----------|----------|----------|");
+			out.println("| Normoxic | " + ALPHA_NORMAL + " | " + BETA_NORMAL + " |");
+			out.println("| Hypoxic | " + ALPHA_HYPOXIC + " | " + BETA_HYPOXIC + " |");
+			out.println("| Repair rate | " + (REPAIR_RATE * 3600) + " hr⁻¹ | |");
+			out.println();
+			
+			out.println("## Oxygen");
+			out.println("| Threshold | Value (mmHg) |");
+			out.println("|-----------|--------------|");
+			out.println("| Vessel | " + (P_O2_VESSEL / MMHG_TO_PA) + " |");
+			out.println("| Hypoxic | " + (P_O2_HYPOXIC / MMHG_TO_PA) + " |");
+			out.println("| Necrotic | " + (P_O2_NECROTIC / MMHG_TO_PA) + " |");
+			
+			System.out.println("Parameter report generated: " + filepath);
+		}
+	}
+   
+
+   
+	/**
+	 * Export key simulation parameters to CSV for reproducibility
+	 */
+	public static void exportParametersToCSV(String filepath) throws IOException {
+		try (PrintWriter out = new PrintWriter(new FileWriter(filepath))) {
+			out.println("parameter,value,units,description");
+			
+			// Experiment metadata
+			out.println("experiment_name," + EXPERIMENT_NAME + ",,Experiment identifier");
+			out.println("experiment_date," + java.time.LocalDateTime.now() + ",,Run timestamp");
+			
+			// Injection protocol
+			out.println("injection_days," + java.util.Arrays.toString(DEFAULT_INJECTION_DAYS) + ",days,");
+			out.println("dose_per_injection," + DOSE_PER_INJECTION * 1e9 + ",nmol,");
+			out.println("hot_fraction," + HOT_FRACTION + ",,");
+			
+			// Grid
+			out.println("grid_size," + GRID_SIZE + ",cells,");
+			out.println("cell_length," + CELL_LENGTH * 1e6 + ",um,");
+			out.println("domain_size," + DOMAIN_SIZE * 1e3 + ",mm,");
+			
+			// PK
+			out.println("lambda_bio," + LAMBDA_BIO * 3600 + ",1/hr,Biological clearance");
+			out.println("lambda_decay," + LAMBDA_DECAY * 3600 + ",1/hr,Lu-177 decay");
+			out.println("k_on," + K_ON / 1e6 * 60 + ",L/(nmol*min),Binding rate");
+			out.println("k_off," + K_OFF * 60 + ",1/min,Unbinding rate");
+			out.println("k_int," + K_INT * 60 + ",1/min,Internalization rate");
+			out.println("v_central," + V_CENTRAL * 1e3 + ",L,Central volume");
+			
+			// Radiobiology
+			out.println("alpha_normoxic," + ALPHA_NORMAL + ",Gy^-1,");
+			out.println("beta_normoxic," + BETA_NORMAL + ",Gy^-2,");
+			out.println("alpha_hypoxic," + ALPHA_HYPOXIC + ",Gy^-1,");
+			out.println("beta_hypoxic," + BETA_HYPOXIC + ",Gy^-2,");
+			out.println("repair_rate," + REPAIR_RATE * 3600 + ",1/hr,");
+			
+			// Oxygen
+			out.println("p_o2_vessel," + P_O2_VESSEL / MMHG_TO_PA + ",mmHg,");
+			out.println("p_o2_hypoxic," + P_O2_HYPOXIC / MMHG_TO_PA + ",mmHg,");
+			out.println("p_o2_necrotic," + P_O2_NECROTIC / MMHG_TO_PA + ",mmHg,");
+			out.println("d_o2," + D_O2 * 1e4 + ",cm^2/s,");
+			
+			// Cell biology
+			out.println("receptors_per_cell," + RECEPTORS_PER_CELL + ",,");
+			out.println("cell_cycle," + CELL_CYCLE / 3600 + ",hours,");
+			
+			System.out.println("Parameters exported to: " + filepath);
+		}
+	}
+
+
 }

@@ -1,7 +1,18 @@
 package TumorRPT;
 
 import HAL.Rand;
+
+// File operations
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+
+// Timestamps
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Minimal test harness for frozen tumor PK validation
@@ -26,11 +37,30 @@ public class Main {
         DataLogger logger = new DataLogger();
 
         // Visualization settings
-        DaVinci drawer = new DaVinci(model);
+		DaVinci drawer = new DaVinci(model);
+	    
         boolean[] visualizationMaskList = {true, true, true, true, true, true, true};
+
 		// Define output dir
-		String outputDir = String.format("results/single_runs");
-                
+		String timestamp = LocalDateTime.now().format(
+		   DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+		String outputDir = String.format("results/single_runs/%s_%s",
+									   SimParams.EXPERIMENT_NAME, timestamp);
+		new File(outputDir).mkdirs();
+
+		// Store in SimParams for global access
+		SimParams.OUTPUT_DIR_BASE = outputDir;
+		SimParams.OUTPUT_DIR_TUMOUR_IMAGES = outputDir + "/tumour_images";
+		SimParams.OUTPUT_DIR_OXYGEN_IMAGES = outputDir + "/oxygen_images";
+		
+		new File(SimParams.OUTPUT_DIR_TUMOUR_IMAGES).mkdirs();
+		new File(SimParams.OUTPUT_DIR_OXYGEN_IMAGES).mkdirs();
+
+		// Generate parameter report
+		SimParams.generateParameterReport(outputDir + "/parameters.md");
+		SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
+		saveGitInfo(outputDir);
+		
         // Initialize simulation (creates vessels, seeds tumor, sets up PK)
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
@@ -64,6 +94,7 @@ public class Main {
         
         // Injection protocol
         int[] injectionDays = {5, 35, 65, 95};
+//        int[] injectionDays = {35};
         double injectionDose = 100e-9;  // mol (100 nmol)
         double hotFraction = 0.1;
         
@@ -79,7 +110,7 @@ public class Main {
         
         // Determine simulation length
         int lastInjectionDay = injectionDays[injectionDays.length - 1];
-        int daysAfterLastInjection = 30;
+        int daysAfterLastInjection = 60;
         int totalDays = lastInjectionDay + daysAfterLastInjection;
         
         System.out.printf("Simulation length: %d days%n", totalDays);
@@ -97,8 +128,8 @@ public class Main {
                     double coldDose = injectionDose * (1.0 - hotFraction);
                     
                     double[] currentPK = model.PKStateVariables.get(model.PKStateVariables.size() - 1);
-                    currentPK[0] += hotDose / SimParams.V_CENTRAL;   // C_cen_hot
-                    currentPK[1] += coldDose / SimParams.V_CENTRAL;  // C_cen_cold
+                    currentPK[0] += hotDose;   // N_cen_hot
+                    currentPK[1] += coldDose;  // N_cen_cold
                     model.PKStateVariables.set(model.PKStateVariables.size() - 1, currentPK);
                     
                     System.out.printf("Day %d: Injected %.1f nmol (%.1f hot + %.1f cold)%n",
@@ -129,19 +160,23 @@ public class Main {
                 }
             }
 
+			if (SimParams.EXPORT_TUMOUR_OX_IMAGES) {
             // Draw and save visualizations every 5 days
-            if (day % 5 == 0 || day<=10) {
-                drawer.gridDraw(visualizationMaskList);
-//                drawer.gridDrawAge(visualizationMaskList);
-                
-                double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
-                drawer.plot(dayCount, valueList[0]);
-                
-                // Save with day number in filename
-                String imageFile = String.format("%s/day_%03d.png", outputDir, dayCount);
-                logger.saveFigureTotal(imageFile, drawer, dayCount, false);
-            }
-
+				if (day % 5 == 0 || day<=10) {
+					drawer.gridDraw(visualizationMaskList);
+					
+					double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
+					drawer.plot(dayCount, valueList[0]);
+					
+					// Save with day number in filename
+					String imageFile = String.format("%s/day_%03d.png", SimParams.OUTPUT_DIR_TUMOUR_IMAGES, dayCount);
+					if (day == 0) {
+						logger.saveFigureTotal(imageFile, drawer, dayCount, true);
+					} else {
+						logger.saveFigureTotal(imageFile, drawer, dayCount, false);
+					}
+				}
+			}
         }
         
         // Final report
@@ -170,11 +205,33 @@ public class Main {
 */        
 		// Final output of data:
 //        DataLogger logger = new DataLogger();
-        logger.log(model.PopsOverTime, "results/single_runs/populations.csv"); // population over time
-        logger.log(model.DoseRateList, "results/single_runs/dose.csv"); // dose rate over time
-        logger.log(model.PKStateVariables, "results/single_runs/pkStateVariables.csv"); // PK variables (radioligand in each compartment)
+		String popcsvFileName = String.format("%s/populations.csv", outputDir);
+		String dosecsvFileName = String.format("%s/dose.csv", outputDir);
+		String PKvarscsvFileName = String.format("%s/pkStateVariables.csv", outputDir);
+
+        logger.log(model.PopsOverTime, popcsvFileName); // population over time
+        logger.log(model.DoseRateList, dosecsvFileName); // dose rate over time
+        logger.log(model.PKStateVariables, PKvarscsvFileName); // PK variables (radioligand in each compartment)
 
         System.out.println("All data logged!-Close the simulation");
         
     }
+
+	private static void saveGitInfo(String outputDir) {
+		try {
+			Process process = Runtime.getRuntime().exec("git rev-parse HEAD");
+			BufferedReader reader = new BufferedReader(
+				new InputStreamReader(process.getInputStream()));
+			String commit = reader.readLine();
+			
+			try (PrintWriter out = new PrintWriter(
+					new FileWriter(outputDir + "/git_info.txt"))) {
+				out.println("Git commit: " + commit);
+				out.println("Date: " + java.time.LocalDateTime.now());
+			}
+		} catch (Exception e) {
+			// Git not available or not a git repo
+		}
+	}
+
 }
