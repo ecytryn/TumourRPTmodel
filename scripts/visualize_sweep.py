@@ -19,11 +19,24 @@ from pathlib import Path
 import sys
 import os
 
-# Configuration - can be overridden by command line argument
-OUTPUT_SUFFIX = sys.argv[1] if len(sys.argv) > 1 else ""
-CSV_FILE = f"Results/sweep_summary{OUTPUT_SUFFIX}.csv"
-OUTPUT_DIR = "Results"
-SWEEP_DIR = f"Results/ParameterSweep{OUTPUT_SUFFIX}"
+# Usage: python visualize_sweep.py 2026-01-27_01-53-14
+TIMESTAMP = sys.argv[1] if len(sys.argv) > 1 else None
+
+if TIMESTAMP:
+    CSV_FILE = f"results/ParameterSweep/ParameterSweep_{TIMESTAMP}/sweep_summary.csv"
+    SWEEP_DIR = f"results/ParameterSweep/ParameterSweep_{TIMESTAMP}"
+else:
+    # Try to find most recent
+    import glob
+    sweep_dirs = glob.glob("results/ParameterSweep/ParameterSweep_*")
+    if sweep_dirs:
+        SWEEP_DIR = sorted(sweep_dirs)[-1]
+        CSV_FILE = f"{SWEEP_DIR}/sweep_summary.csv"
+    else:
+        print("ERROR: No sweep found. Pass timestamp: python visualize_sweep.py 2026-01-27_01-53-14")
+        sys.exit(1)
+
+OUTPUT_DIR = SWEEP_DIR  # Put visualizations in same directory as sweep
 
 def load_data(csv_path):
     """Load parameter sweep results"""
@@ -115,7 +128,7 @@ def create_cure_rate_heatmap(df, output_path):
     else:
         title = 'RPT Treatment Outcome\n(Color = Cure Rate, Number = Mean Injections Used)'
     
-    ax.set_title(title + '\nDose Pattern: [100+2s, 100+s, 100-s, 100-2s] nmol',
+    ax.set_title(title + '\nDose Pattern: [90+s, 90-s] nmol',
                 fontsize=14, pad=20)
     
     plt.tight_layout()
@@ -149,7 +162,7 @@ def load_population_data(sweep_dir, interval, skew, num_replicates=5):
     
     return trajectories
 
-def create_small_multiples(df, sweep_dir, output_path, max_time=250, max_pop=15000):
+def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=10000):
     """Create small multiples grid showing population trajectories"""
     
     intervals = sorted(df['interval'].unique())
@@ -245,11 +258,11 @@ def main():
     print("\nGenerating visualizations...")
     
     # Figure 1: Clean heatmap with cure rate + injections annotation
-    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/heatmap_cure_rate{OUTPUT_SUFFIX}.png")
+    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/heatmap_cure_rate.png")
     
     # Figure 2: Small multiples with population trajectories
     if os.path.exists(SWEEP_DIR):
-        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/trajectories_small_multiples{OUTPUT_SUFFIX}.png")
+        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/trajectories_small_multiples.png")
     else:
         print(f"Warning: Sweep directory not found: {SWEEP_DIR}")
         print("Skipping small multiples figure.")

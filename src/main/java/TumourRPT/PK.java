@@ -260,7 +260,8 @@ public class PK {
         // β particle escape correction
         // Lu-177 beta range ~1 mm in tissue
         double beta_range_m = 1.0e-3;  // m
-		// Assume the tumour cells are in a sphere of some effective radius
+		// Assume the tumour cells are in the extruded cylinder shape (sphere gives the same formula)
+		// with an effective radius
         double R_tumor_eff = Math.pow(3.0 * tumorVolume / (4.0 * Math.PI), 1.0/3.0);
         double f_deposit = Math.pow(R_tumor_eff / (R_tumor_eff + beta_range_m), 3.0);
 		// Spread the energy over a sphere of radius R_tumor_eff + beta_range_m
@@ -278,7 +279,7 @@ public class PK {
         double doseRate_Gy_per_h = doseRate_Gy_per_s * 3600.0;
 
         // DIAGNOSTIC: Print every 10 days
-        if (currentDay % 10 == 0 && currentHour == 0) {
+        if (currentDay % 10 == 0 && currentHour == 0 && SimParams.VERBOSE_ON) {
             System.out.printf("\n=== PK DOSE DIAGNOSTIC (Day %d) ===\n", currentDay);
             System.out.printf("Tumor: V=%.3f mm³, M=%.3f mg, R=%.3f mm\n",
                              tumorVolume*1e9, tumorMass*1e6, R_tumor_eff*1e3);

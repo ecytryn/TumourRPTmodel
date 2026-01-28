@@ -30,7 +30,16 @@ public class Main {
     
     public static void main(String[] args) throws IOException {
         
-        // Initialize grid
+		// Parse command line arguments
+		String experimentName = "default";
+		if (args.length > 0) {
+			experimentName = args[0];
+		}
+		
+		// Set parameters based on experiment
+		setupExperiment(experimentName);
+
+		// Initialize grid
         Rand rng = new Rand(42);  // Fixed seed for reproducibility
         Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, rng, null);
 
@@ -52,9 +61,11 @@ public class Main {
 		SimParams.OUTPUT_DIR_BASE = outputDir;
 		SimParams.OUTPUT_DIR_TUMOUR_IMAGES = outputDir + "/tumour_images";
 		SimParams.OUTPUT_DIR_OXYGEN_IMAGES = outputDir + "/oxygen_images";
-		
+		SimParams.OUTPUT_DIR_SF_IMAGES = outputDir + "/sf_images";		
+
 		new File(SimParams.OUTPUT_DIR_TUMOUR_IMAGES).mkdirs();
 		new File(SimParams.OUTPUT_DIR_OXYGEN_IMAGES).mkdirs();
+		new File(SimParams.OUTPUT_DIR_SF_IMAGES).mkdirs();
 
 		// Generate parameter report
 		SimParams.generateParameterReport(outputDir + "/parameters.md");
@@ -73,45 +84,41 @@ public class Main {
 
 		System.out.println("\n=== INITIAL STATE ===");
 		System.out.println("Tumor cells (2D): " + initialCells);
-		System.out.println("Vessels (near tumor): " + vesselsNearTumor);
-		System.out.println("Vessels (total): " + numVessels);
+//		System.out.println("Vessels (near tumor): " + vesselsNearTumor);
+//		System.out.println("Vessels (total): " + numVessels);
 
         double receptorMoles = SimParams.computeReceptorMoles(initialCells, numVessels);
-        System.out.printf("Total receptors: %.3e mol (%.1f nmol)%n", receptorMoles, receptorMoles * 1e9);
+//        System.out.printf("Total receptors: %.3e mol (%.1f nmol)%n", receptorMoles, receptorMoles * 1e9);
 
-		System.out.println("\n=== GEOMETRY OUTPUT ===");		
-		System.out.printf("V_ec = %.6e m³\n", model.PBPK.getV_ec());
-		System.out.printf("V_v = %.6e m³\n", model.PBPK.getV_v());
-		System.out.printf("R_total = %.6e mol\n", model.PBPK.getR_total());
-		System.out.printf("Tumor volume = %.6e m³\n", model.PBPK.getTumorVolume());
+//		System.out.println("\n=== GEOMETRY OUTPUT ===");		
+//		System.out.printf("V_ec = %.6e m³\n", model.PBPK.getV_ec());
+//		System.out.printf("V_v = %.6e m³\n", model.PBPK.getV_v());
+//		System.out.printf("R_total = %.6e mol\n", model.PBPK.getR_total());
+		System.out.printf("Tumor volume = %.6e m³ (cylindrical extension)\n", model.PBPK.getTumorVolume());
 		
 		// Calculate derived quantities for comparison
 		double R_T_tilde = model.PBPK.getR_total() / model.PBPK.getV_ec();
 		double beta = (SimParams.K_OFF + SimParams.K_INT) / SimParams.K_ON;
-		System.out.printf("R_T_tilde = %.6e mol/m³\n", R_T_tilde);
-		System.out.printf("beta = %.6e mol/m³\n", beta);
-		System.out.println("==============================================\n");
+//		System.out.printf("R_T_tilde = %.6e mol/m³\n", R_T_tilde);
+//		System.out.printf("beta = %.6e mol/m³\n", beta);
+//		System.out.println("==============================================\n");
         
-        // Injection protocol
-        int[] injectionDays = {5, 35, 65, 95};
-//        int[] injectionDays = {35};
-        double injectionDose = 100e-9;  // mol (100 nmol)
-        double hotFraction = 0.1;
+        // Injection protocol - ALL parameters defined in SimParams.java
+        // (No local variables - use SimParams directly for clarity)
         
-        System.out.println("\n--- Injection Protocol ---");
-        System.out.printf("Dose per injection: %.1f nmol%n", injectionDose * 1e9);
-        System.out.printf("Hot fraction: %.1f%%%n", hotFraction * 100);
+//        System.out.println("\n--- Injection Protocol ---");
+//        System.out.printf("Dose per injection: %.1f nmol%n", SimParams.DOSE_PER_INJECTION * 1e9);
+//        System.out.printf("Hot fraction: %.1f%%%n", SimParams.HOT_FRACTION * 100);
         System.out.printf("Injection days: ");
-        for (int day : injectionDays) {
+        for (int day : SimParams.INJECTION_SCHEDULE) {
         	System.out.printf("%d  ",day);
 		}
         System.out.printf("%n");
 
         
-        // Determine simulation length
-        int lastInjectionDay = injectionDays[injectionDays.length - 1];
-        int daysAfterLastInjection = 60;
-        int totalDays = lastInjectionDay + daysAfterLastInjection;
+        // Determine simulation length (from last injection + follow-up period)
+        int lastInjectionDay = SimParams.INJECTION_SCHEDULE[SimParams.INJECTION_SCHEDULE.length - 1];
+        int totalDays = lastInjectionDay + SimParams.DAYS_AFTER_LAST_INJECTION;
         
         System.out.printf("Simulation length: %d days%n", totalDays);
         
@@ -121,21 +128,46 @@ public class Main {
             dayCount++;
             
             // Check for injection
-            for (int injDay : injectionDays) {
+            for (int injDay : SimParams.INJECTION_SCHEDULE) {
                 if (injDay == dayCount) {
                     // Inject into PK model
-                    double hotDose = injectionDose * hotFraction;
-                    double coldDose = injectionDose * (1.0 - hotFraction);
+                    double hotDose = SimParams.DOSE_PER_INJECTION * SimParams.HOT_FRACTION;
+                    double coldDose = SimParams.DOSE_PER_INJECTION * (1.0 - SimParams.HOT_FRACTION);
                     
                     double[] currentPK = model.PKStateVariables.get(model.PKStateVariables.size() - 1);
                     currentPK[0] += hotDose;   // N_cen_hot
                     currentPK[1] += coldDose;  // N_cen_cold
                     model.PKStateVariables.set(model.PKStateVariables.size() - 1, currentPK);
                     
-                    System.out.printf("Day %d: Injected %.1f nmol (%.1f hot + %.1f cold)%n",
-                                    dayCount, injectionDose * 1e9, hotDose * 1e9, coldDose * 1e9);
+//                    System.out.printf("Day %d: Injected %.1f nmol (%.1f hot + %.1f cold)%n",
+//                                    dayCount, SimParams.DOSE_PER_INJECTION * 1e9, hotDose * 1e9, coldDose * 1e9);
                 }
             }
+
+			if (SimParams.EXPORT_TUMOUR_OX_IMAGES) {
+            // Draw and save visualizations every 5 days
+				if (day % 5 == 0  || (day>=4 && day<=10) || (day>=44 && day<=50)) { // || day<=10
+					drawer.gridDraw(visualizationMaskList);
+					
+					double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
+					drawer.plot(dayCount, valueList[0]);
+					
+					// Save tumour image with day number in filename
+					String imageFile = String.format("%s/day_%03d.png", SimParams.OUTPUT_DIR_TUMOUR_IMAGES, dayCount);
+					if (day == 0 && experimentName.equals("WatchGrow")) {
+						logger.saveFigureTotal(imageFile, drawer, dayCount, false, true);
+					} else {
+						logger.saveFigureTotal(imageFile, drawer, dayCount, false, false);
+					}
+
+					// Save SF visualization
+					if (SimParams.EXPORT_SF_IMAGES) {
+						String sfImageFile = String.format("%s/sf_day_%03d.png", SimParams.OUTPUT_DIR_SF_IMAGES, dayCount);
+						logger.saveSFVisualization(sfImageFile, model, dayCount);
+					}					
+				}
+			}
+
 
             // Step simulation (tumor frozen, only PK evolves)
             model.Step(dayCount);
@@ -143,50 +175,32 @@ public class Main {
             // Report every 20 days AND at day 0 for early diagnostics
             if (dayCount % 20 == 0 || dayCount == 0 || dayCount == totalDays - 1) {
 //                model.printDiagnostics(dayCount);
-                
+
+                System.out.printf("Day %d%n", dayCount); 
+
                 // Extra detail for first few days
                 if (dayCount <= 1) {
-                    System.out.printf("Detailed cell type breakdown:\n");
+//                    System.out.printf("Detailed cell type breakdown:\n");
                     int[] typeCounts = new int[SimParams.NUM_CELL_TYPES];
                     for (Cell cell : model) {
                         if (cell != null && cell.type != SimParams.VESSEL) {
                             typeCounts[cell.type]++;
                         }
                     }
-                    System.out.printf("  Normal=%d, Hypoxic=%d, Necrotic=%d, Apoptotic=%d\n",
-                                     typeCounts[SimParams.NORMAL], typeCounts[SimParams.HYPOXIC],
-                                     typeCounts[SimParams.NECROTIC], typeCounts[SimParams.APOPTOTIC]);
-                    System.out.println();
+//                    System.out.printf("  Normal=%d, Hypoxic=%d, Necrotic=%d, Apoptotic=%d\n",
+//                                     typeCounts[SimParams.NORMAL], typeCounts[SimParams.HYPOXIC],
+//                                     typeCounts[SimParams.NECROTIC], typeCounts[SimParams.APOPTOTIC]);
+//                    System.out.println();
                 }
             }
 
-			if (SimParams.EXPORT_TUMOUR_OX_IMAGES) {
-            // Draw and save visualizations every 5 days
-				if (day % 5 == 0 || day<=10) {
-					drawer.gridDraw(visualizationMaskList);
-					
-					double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
-					drawer.plot(dayCount, valueList[0]);
-					
-					// Save with day number in filename
-					String imageFile = String.format("%s/day_%03d.png", SimParams.OUTPUT_DIR_TUMOUR_IMAGES, dayCount);
-					if (day == 0) {
-						logger.saveFigureTotal(imageFile, drawer, dayCount, true);
-					} else {
-						logger.saveFigureTotal(imageFile, drawer, dayCount, false);
-					}
-				}
-			}
         }
         
         // Final report
-        System.out.println("\n--- Final State ---");
-        System.out.printf("Simulation completed: %d days%n", totalDays);
+//        System.out.println("\n--- Final State ---");
+//        System.out.printf("Simulation completed: %d days%n", totalDays);
 //        System.out.printf("PK data points: %d%n", model.PKStateVariables.size());
 //        System.out.printf("Dose rate data points: %d%n", model.DoseRateList.size());
-        
-        // Print radiobiology validation report
-        model.radioBio.printValidationReport();
         
         double[] finalPK = model.PKStateVariables.get(model.PKStateVariables.size() - 1);
 //        System.out.printf("Final C_cen_hot: %.3e mol/m³ (%.3e nmol/L)%n", 
@@ -234,4 +248,61 @@ public class Main {
 		}
 	}
 
+	private static void setupExperiment(String name) {
+		switch(name) {
+			case "WatchGrow":
+				SimParams.setExperiment("WatchATumourGrow", 
+					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
+					new int[]{145}, 100e-6, 0.06, 0.019);
+				break;
+			case "WatchGrowLarge":
+				SimParams.setExperiment("WatchATumourGrowLarge", 
+					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
+					new int[]{40}, 950e-6, 0.06, 0.019);
+				break;
+			case "Day5VerySmall":
+				SimParams.setExperiment("InjectionDay5VerySmallTumour",
+					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Very small initial tumour",
+					new int[]{5}, 100e-6, 0.06, 0.019);
+				break;
+			case "Day5Small":
+				SimParams.setExperiment("InjectionDay5SmallTumour",
+					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Small initial tumour",
+					new int[]{5}, 333e-6, 0.06, 0.019);
+				break;
+			case "Day5Large":
+				SimParams.setExperiment("InjectionDay5LargeTumour",
+					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Large initial tumour",
+					new int[]{5}, 950e-6, 0.06, 0.019);
+				break;
+			case "Day45VerySmall":
+				SimParams.setExperiment("InjectionDay45VerySmallTumour",
+					"Treat late to demonstrate what happens with treatment of a mixed tumour. Very small initial tumour",
+					new int[]{45}, 10e-6, 0.06, 0.019);
+				break;
+			case "Day45Small":
+				SimParams.setExperiment("InjectionDay45SmallTumour",
+					"Treat late to demonstrate what happens with treatment of a mixed tumour. Small initial tumour",
+					new int[]{45}, 333e-6, 0.06, 0.019);
+				break;
+			case "Day45Large":
+				SimParams.setExperiment("InjectionDay45LargeTumour",
+					"Treat late to demonstrate what happens with treatment of a mixed tumour. Large initial tumour",
+					new int[]{45}, 950e-6, 0.06, 0.019);
+				break;
+			case "Reoxygenation":
+				SimParams.setExperiment("ReoxygenationExperiment",
+					"Set alpha_hypoxic = beta_hypoxic =0. This allows us to see how, once reoxygenated, hypoxic cells convert back to normoxic and die.",
+					new int[]{45}, 333e-6, 0.0, 0.0);  // Zero hypoxic sensitivity!
+				break;
+			case "CustomRun":
+				SimParams.setExperiment("CustomRunToMakeAFig",
+					"This case is for one-off runs to create specific plots for a figure.",
+					new int[]{5, 15}, 333e-6, 0.06, 0.019);
+				break;
+			default:
+				// Use defaults from SimParams
+				break;
+		}
+	}
 }

@@ -17,7 +17,7 @@ public class FSM_DIVCHECK {
     }
 
 
-    public int FSM_Run(ArrayList<double[]> lookupTable){
+    public int FSM_Run(){
         // trouble reading the name? This is finite state machine run.
         // Logically, we first need to determine the new cell type (NormalTCell, HypoTCELL, NEC) based on the
         // oxygen parameters. Then, based on the updated type, (which is in fact the type of the cell that the cell was
@@ -35,7 +35,7 @@ public class FSM_DIVCHECK {
                 } else {
                     this.cell.ChangeType(SimParams.NORMAL);
                 }
-                this.cell.GetSurvivalProb(lookupTable);
+                this.cell.GetSurvivalProb();  // No parameter needed!
                 if (this.cell.G.rng.Double()<(1-cell.survivalProb)){
                     this.cell.ChangeType(SimParams.APOPTOTIC);
                 }else{

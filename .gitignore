@@ -10,6 +10,9 @@ target/
 out/
 bin/
 
+# Other directories
+migrationFiles
+
 # Gradle
 .gradle/
 gradle-app.setting

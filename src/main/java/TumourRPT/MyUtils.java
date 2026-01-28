@@ -11,4 +11,13 @@ public class MyUtils {
         }
         return myArrayList.get(myArrayList.size() - 1);
     }
+
+	public static boolean isElementPresent(int[] arr, int key) {
+		for (int element : arr) {
+			if (element == key) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

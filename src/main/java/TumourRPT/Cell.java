@@ -67,12 +67,11 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         }
     }
 
-    void Step(int currentHour, int currentDay, ArrayList<double[]> lookupTable){
-
+    void Step(int currentHour, int currentDay){
         this.oxygen = this.G.oxygenGrid.Get(this.Isq());
 
         this.cellBio.DivProbCalc(); // updates divisionProb
-        this.fsmDiv.FSM_Run(lookupTable); // updates type and flags
+        this.fsmDiv.FSM_Run(); // updates type and flags
         this.CellFate(currentHour, currentDay); // takes the actions
 
         if (this.isAlive == false){
@@ -80,9 +79,6 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
             // high standard deviation of the geometric random variable
             this.howManyDaysDead += 1;
         }
-//        else{
-//            this.age += SimParams.MinorLoop_PER_MajorLoop() * SimParams.T_PER_Minor() + currenHour;
-//        }
     }
 
 
@@ -108,29 +104,10 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         }
     }
 
-    int GetSurvivalProb(ArrayList<double[]> lookupTable){
-		int ageHours = SimParams.globalTime - birthTime;
-		int lookUpTableAge = (int)(Math.floorDiv(ageHours, 24));  // Convert hours → days
-
-        if (lookUpTableAge == 0){
-            this.survivalProb = lookupTable.get(0)[0];
-            // or equivalently we can write this.survivalProb = lookupTable.get(0)[0];
-            // this is because at age zero that happens only on day 1 it doesn't matter what
-            // is the type of cell.
-            return 0;
-        }
-
-        if (lookUpTableAge > SimParams.maxLookupAge){
-            lookUpTableAge = SimParams.maxLookupAge;
-        }
-
-        if (this.type == SimParams.NORMAL) {
-            this.survivalProb = lookupTable.get(lookUpTableAge-1)[0];
-        }
-        if (this.type == SimParams.HYPOXIC){
-            this.survivalProb = lookupTable.get(lookUpTableAge-1)[1];
-        }
-
+    int GetSurvivalProb(){
+        // Query RadioBio directly using birthTime and current type
+        // RadioBio maintains ODE states for each birth hour
+        this.survivalProb = this.G.radioBio.calculateSF(this.birthTime, this.type);
         return 0;
     }
 }

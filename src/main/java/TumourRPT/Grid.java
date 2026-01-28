@@ -75,8 +75,8 @@ public class Grid extends AgentGrid2D<Cell> {
         for (int idx : vesselsIndex) {
             if (GetAgent(idx).blockedVessel) blocked++;
         }
-        System.out.printf("Vessels: %d total, %d blocked (%.1f%%)%n", 
-                         vesselsIndex.size(), blocked, 100.0*blocked/vesselsIndex.size());
+//        System.out.printf("Vessels: %d total, %d blocked (%.1f%%)%n", 
+//                         vesselsIndex.size(), blocked, 100.0*blocked/vesselsIndex.size());
 
         // CALIBRATE oxygen boundary condition from healthy tissue
         // Must happen after vessels but before tumor seeding
@@ -152,7 +152,6 @@ public class Grid extends AgentGrid2D<Cell> {
         int hourCount = -1;
         
         int perHourCellUpdateBudget = Math.floorDiv((int) this.Pop(), 23);
-        ArrayList<double[]> survivalProbLookupTable = new ArrayList<>();
         
         long oxygenTime = 0, pkTime = 0, radioBioTime = 0, cellIterTime = 0;
         int oxygenCalls = 0, pkCalls = 0;
@@ -177,14 +176,9 @@ public class Grid extends AgentGrid2D<Cell> {
                 pkTime += System.nanoTime() - t2;
                 pkCalls++;
                 
-                // Time radiobiology
+                // Time radiobiology - update all hour states
                 long t3 = System.nanoTime();
-// ----->          Temporary work-around for the growth in compute time - only fixes FREEZE_TUMOR=true case.
-//				if (!SimParams.FREEZE_TUMOR) {
-					survivalProbLookupTable = this.radioBio.SurvivalProbLookupTableCalc(currentDay, hourCount);
-//				} else {
-//					survivalProbLookupTable = new ArrayList<>();  // Empty - not used
-//				}
+                this.radioBio.updateAllStates();
                 radioBioTime += System.nanoTime() - t3;
                 
                 PopsOverTime.add(copyArray(CurrentCellsPops));
@@ -193,17 +187,15 @@ public class Grid extends AgentGrid2D<Cell> {
             // Time cell iteration
             long t4 = System.nanoTime();
             if (!SimParams.FREEZE_TUMOR) {
-                cell.Step(hourCount, currentDay, survivalProbLookupTable);
+                cell.Step(hourCount, currentDay);  // No lookup table parameter!
             }
             cellIterTime += System.nanoTime() - t4;
             
             counter++;
         }
         
-        long cleanStart = System.nanoTime();
         CleanAgents();
         ShuffleAgents(this.rng);
-        long cleanTime = System.nanoTime() - cleanStart;
         
         long totalStepTime = System.nanoTime() - stepStart;
         
@@ -216,14 +208,17 @@ public class Grid extends AgentGrid2D<Cell> {
                              pkTime/1e9, pkCalls, pkTime/1e6/pkCalls);
             System.out.printf("  RadioBio:  %.3f s\n", radioBioTime/1e9);
             System.out.printf("  CellIter:  %.3f s\n", cellIterTime/1e9);
-            System.out.printf("  Clean:     %.3f s\n", cleanTime/1e9);
             System.out.printf("  TOTAL:     %.3f s\n", totalStepTime/1e9);
             
             // Check for growing data structures
             System.out.printf("  PK states: %d, DoseRates: %d, Pops: %d\n",
                              PKStateVariables.size(), DoseRateList.size(), PopsOverTime.size());
         }
+        
+        CleanAgents();
+        ShuffleAgents(this.rng);
     }
+
 	
 	
     /**
@@ -268,7 +263,7 @@ public class Grid extends AgentGrid2D<Cell> {
      * Seed initial tumor at center of domain
      */
     public void SeedTumor() {
-        int[] hood = CircleHood(false, SimParams.INITIAL_TUMOR_RADIUS_CELLS);
+        int[] hood = CircleHood(false, SimParams.getInitialTumorRadiusCells());
         int seedCellCount = MapHood(hood, xDim / 2, yDim / 2);
         
         for (int i = 0; i < seedCellCount; i++) {
@@ -316,7 +311,7 @@ public class Grid extends AgentGrid2D<Cell> {
      */
     private String getVesselConfigPath() {
         String density = SimParams.VESSEL_DENSITY_CONFIG;
-        return String.format("vasculature/%s.csv", density);
+        return String.format("vasculature/Capillaries_Rrepel%s.csv", density);
     }
 
     /**

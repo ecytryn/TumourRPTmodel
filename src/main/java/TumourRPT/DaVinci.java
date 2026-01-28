@@ -51,7 +51,18 @@ class DaVinci {
             this.pixelBuffer = new int[xDim * yDim];  // Offscreen buffer
         }
     }
-
+    
+    /* ------------------------------------------------------------
+       Warm colour map for oxygen
+       ------------------------------------------------------------ */
+	private int WarmOxygenGradient(double normalized) {
+		// Low oxygen (0.0) = dark brown/amber
+		// High oxygen (1.0) = light yellow/gold
+		int r = (int)(120 + 135 * normalized);  // 120 -> 255
+		int g = (int)(80 + 175 * normalized);   // 80 -> 255
+		int b = (int)(40 + 100 * normalized);   // 40 -> 140 (stays warm)
+		return RGB(r/255.0, g/255.0, b/255.0);
+	}
     /* ------------------------------------------------------------
        PLOTTING
        ------------------------------------------------------------ */
@@ -86,25 +97,31 @@ class DaVinci {
             Cell c = grid.GetAgent(i);
 
             if (c == null) {
-                if (maskList[6]) {
-                    double oxygenConc = grid.oxygenGrid.Get(i);
-                    gridWin.SetPix(i, HeatMapBGR(oxygenConc, 0, 
-                        1.5 * SimParams.P_O2_VESSEL));
-                }
+				if (maskList[6]) {
+					double oxygenConc = grid.oxygenGrid.Get(i);
+					double minScale = 0.0;
+					double maxScale = 15000.0;
+					double normalized = (oxygenConc - minScale) / (maxScale - minScale);
+					normalized = Math.max(0.0, Math.min(1.0, normalized));
+//					int warmalized = WarmOxygenGradient(normalized);
+//					gridWin.SetPix(i, warmalized);
+					gridWin.SetPix(i, HeatMapBGR(normalized, 0, 1));
+
+				}
                 continue;
             }
 
             // Vessel logic
             if (c.type == SimParams.VESSEL) {
                 if (c.blockedVessel) {
-                    // BLOCKED VESSEL → show as dark red
+                    // BLOCKED VESSEL -> show as dark red
                     if (maskList[6]) {
 //                        double oxygenConc = grid.oxygenGrid.Get(i);
-                        gridWin.SetPix(i, RGB(0.5, 0.0, 0.0));
+                        gridWin.SetPix(i, SimParams.COLORLIST[6]);
                     }
                 } else { // UNBLOCKED VESSEL -> show as brighter red
                     if (maskList[SimParams.VESSEL]) {
-                        gridWin.SetPix(i, RGB(1.0, 0.3, 0.3)); // unblocked vessel
+                        gridWin.SetPix(i, SimParams.COLORLIST[5]);
                     }
                 }
                 continue;
@@ -125,10 +142,14 @@ class DaVinci {
             Cell c = grid.GetAgent(i);
 
             if (c == null) {
-                if (maskList[6]) {
-                    double oxygenConc = grid.oxygenGrid.Get(i);
-                    pixelBuffer[i] = HeatMapBGR(oxygenConc, 0, 
-                        1.5 * SimParams.P_O2_VESSEL);
+				if (maskList[6]) {
+					double oxygenConc = grid.oxygenGrid.Get(i);
+					double minScale = 0.0;
+					double maxScale = 15000.0;
+					double normalized = (oxygenConc - minScale) / (maxScale - minScale);
+					normalized = Math.max(0.0, Math.min(1.0, normalized));
+//					pixelBuffer[i] = WarmOxygenGradient(normalized);
+					pixelBuffer[i] = HeatMapBGR(normalized, 0, 1);
                 }
                 continue;
             }
@@ -138,11 +159,11 @@ class DaVinci {
                 if (c.blockedVessel) {
                     if (maskList[6]) {
                         double oxygenConc = grid.oxygenGrid.Get(i);
-                        pixelBuffer[i] = RGB(0.5, 0.0, 0.0);
+                        pixelBuffer[i] = SimParams.COLORLIST[6];
                     }
                 } else {
                     if (maskList[SimParams.VESSEL]) {
-                        pixelBuffer[i] = RGB(1.0, 0.3, 0.3);
+                        pixelBuffer[i] = SimParams.COLORLIST[5];
                     }
                 }
                 continue;

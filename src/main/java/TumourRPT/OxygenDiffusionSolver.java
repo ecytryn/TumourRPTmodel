@@ -1,6 +1,7 @@
 package TumorRPT;
 
 import HAL.GridsAndAgents.Grid2Ddouble;
+import java.awt.FontMetrics;
 
 /**
  * Solves the steady-state oxygen diffusion-consumption equation:
@@ -38,6 +39,9 @@ public class OxygenDiffusionSolver {
     // Diagnostic flags
     private int consumptionBuildCount = 0;
     
+    // Day on which to add a scale bar to the oxygen image
+    private int ScaleBarDay = 55;
+    
 	// Boundary condition type: true = Neumann (zero flux), false = Dirichlet (fixed value)
 	// NOTE: Neumann BC is NOT IMPLEMENTED - always uses Dirichlet regardless of this flag
 	private boolean useNeumannBC = false; // Currently only Dirichlet is implemented
@@ -63,8 +67,8 @@ public class OxygenDiffusionSolver {
         double C_typical = SimParams.CELLS_CONSUMPTION_RATE_LIST[SimParams.NORMAL];
         this.a_vessel2tissue = 4.0 * C_typical; // Should give a_vessel2tissue ~ 75000 hr^-1
 
-        System.out.printf("Oxygen solver init: a=%.3e 1/s, u_B=%.3e Pa (%.1f mmHg)\n",
-                         this.a_vessel2tissue, u_B, u_B/SimParams.MMHG_TO_PA);
+//        System.out.printf("Oxygen solver init: a=%.3e 1/s, u_B=%.3e Pa (%.1f mmHg)\n",
+//                         this.a_vessel2tissue, u_B, u_B/SimParams.MMHG_TO_PA);
         
         // Verify D is in correct units (should be um^2/hour)
 //        double D_check = this.D; // Already converted by Params
@@ -170,7 +174,7 @@ public class OxygenDiffusionSolver {
         
         // Save oxygen field visualization every N days
 		int currentHour = SimParams.globalTime % 24;
-        if (currentDay % 10 == 0 && currentHour == 0) {
+        if ((currentDay % 5 == 0 || (currentDay >= 44 && currentDay <= 50)) && currentHour == 0) {
             saveOxygenFieldImage(oxygenGrid, currentDay);
         }
         
@@ -365,7 +369,7 @@ public class OxygenDiffusionSolver {
                 java.awt.Graphics2D g2d = img.createGraphics();
                 g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
                                     java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12));
+                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12*3/2));
                 
                 // Title
                 g2d.setColor(java.awt.Color.WHITE);
@@ -471,7 +475,7 @@ public class OxygenDiffusionSolver {
      * @return Calibrated boundary oxygen pressure
      */
     public double calibrateBoundaryCondition(Grid2Ddouble oxygenGrid) {
-        System.out.println("Calibrating boundary condition from healthy tissue...");
+//        System.out.println("Calibrating boundary condition from healthy tissue...");
         
         // Use initial guess for BC (won't affect final result much)
         double initialBC = 0.5 * (SimParams.P_O2_VESSEL + SimParams.P_O2_VEIN);
@@ -518,10 +522,10 @@ public class OxygenDiffusionSolver {
         double avg = sum / count;
         double variability = (max - min) / avg;
         
-        System.out.printf("Calibration converged in %d iterations (residual %.3e)\n", iter, maxResidual);
-        System.out.printf("Healthy tissue oxygen: avg=%.3e Pa (%.1f mmHg), min=%.3e Pa, max=%.3e Pa\n", 
-                         avg, avg/SimParams.MMHG_TO_PA, min, max);
-        System.out.printf("Relative variability: %.2f (< 0.5 is good)\n", variability);
+//        System.out.printf("Calibration converged in %d iterations (residual %.3e)\n", iter, maxResidual);
+//        System.out.printf("Healthy tissue oxygen: avg=%.3e Pa (%.1f mmHg), min=%.3e Pa, max=%.3e Pa\n", 
+//                         avg, avg/SimParams.MMHG_TO_PA, min, max);
+//        System.out.printf("Relative variability: %.2f (< 0.5 is good)\n", variability);
         
         if (variability > 1.0) {
             System.out.println("WARNING: High oxygen variability - consider increasing parameter 'a'");
@@ -550,12 +554,20 @@ public class OxygenDiffusionSolver {
                 } else {
                     filename = String.format("%s/oxygen_field_day%d.png", SimParams.OUTPUT_DIR_OXYGEN_IMAGES, day);
                 }
-                
-                // Create buffered image with extra space for color bar
-                int imageWidth = xDim + 120;  // Add 120 pixels on right for color bar
-                int imageHeight = yDim;
-                java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
-                    imageWidth, imageHeight, java.awt.image.BufferedImage.TYPE_INT_RGB);
+
+				// Export image data to csv to check oxygen bug:
+//				DataLogger csvLogger = new DataLogger();
+//				String csvFilename = filename.replace(".png", ".csv");
+//				csvLogger.saveOxygenFieldCSV(csvFilename, grid);
+            
+				int imageWidth = xDim;                
+				if (day == ScaleBarDay) {
+					// Create buffered image with extra space for color bar on day 50 only
+					imageWidth = xDim + 150;  // Add 150 pixels on right for color bar
+				}
+				int imageHeight = yDim;
+				java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+					imageWidth, imageHeight, java.awt.image.BufferedImage.TYPE_INT_RGB);
 
                 // Fill entire image with white background first
                 java.awt.Graphics2D g2d_bg = img.createGraphics();
@@ -579,24 +591,26 @@ public class OxygenDiffusionSolver {
                         
                         // Use blue (low) to red (high) colormap
                         int color = HAL.Util.HeatMapBGR(normalized, 0, 1);
-                        img.setRGB(x, yDim - 1 - y, color);  // Flip y for image coordinates
+                        img.setRGB(y, x, color);  // Flip y for image coordinates
                     }
                 }
                 
-                // Draw color bar
-                int barX = xDim + 20;  // Start of color bar
-                int barWidth = 30;
-                int barY = 50;
-                int barHeight = yDim - 100;
+				// Draw color bar
+				int barX = xDim + 20;  // Start of color bar
+				int barWidth = 30;
+				int barY = 50;
+				int barHeight = yDim - 100;
                 
-                for (int i = 0; i < barHeight; i++) {
-                    double normalized = 1.0 - (double)i / barHeight;  // Top = high, bottom = low
-                    int color = HAL.Util.HeatMapBGR(normalized, 0, 1);
-                    for (int j = 0; j < barWidth; j++) {
-                        img.setRGB(barX + j, barY + i, color);
-                    }
-                }
-                
+				if (day == ScaleBarDay) {
+					for (int i = 0; i < barHeight; i++) {
+						double normalized = 1.0 - (double)i / barHeight;  // Top = high, bottom = low
+						int color = HAL.Util.HeatMapBGR(normalized, 0, 1);
+						for (int j = 0; j < barWidth; j++) {
+							img.setRGB(barX + j, barY + i, color);
+						}
+					}
+				}                
+
                 // Add text annotations
                 java.awt.Graphics2D g2d = img.createGraphics();
                 g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
@@ -610,15 +624,26 @@ public class OxygenDiffusionSolver {
                     title = "Oxygen Field (Calibration)";
                 } else {
                     title = String.format("Day %d", day);
+					if ( MyUtils.isElementPresent(SimParams.INJECTION_SCHEDULE, day) ) {
+						title = title + " (injection)";
+					}
                 }
                 
                 // Use larger, bold font
-                java.awt.Font titleFont = new java.awt.Font("Arial", java.awt.Font.BOLD, 18);
+				int titleSize = (int)(20 * SimParams.FONT_SCALE_FACTOR);
+				java.awt.Font titleFont = new java.awt.Font("Arial", java.awt.Font.BOLD, titleSize);
                 g2d.setFont(titleFont);
-                
-                int titleX = 15;
-                int titleY = 25;
-                
+
+				// Get text dimensions for positioning
+				FontMetrics fm = g2d.getFontMetrics();
+				int textWidth = fm.stringWidth(title);
+				int textHeight = fm.getHeight();
+				
+				// Position in top-left corner with padding
+				int padding = 10;
+				int titleX = padding;
+				int titleY = padding + fm.getAscent();
+                                
                 // Draw black outline first for contrast
                 g2d.setColor(java.awt.Color.BLACK);
                 for (int dx = -2; dx <= 2; dx++) {
@@ -634,49 +659,94 @@ public class OxygenDiffusionSolver {
                 g2d.drawString(title, titleX, titleY);
                 // ======================================
                 
-                // Color bar labels
-                g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawRect(barX, barY, barWidth, barHeight);  // Border around color bar
-                
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 11));
-                
-                // Max label (top) - show both Pa and mmHg
-                String maxLabel = String.format("%.0f Pa", maxScale);
-                String maxLabelMmHg = String.format("(%.0f mmHg)", maxScale / SimParams.MMHG_TO_PA);
-                g2d.drawString(maxLabel, barX + barWidth + 5, barY + 5);
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 9));
-                g2d.drawString(maxLabelMmHg, barX + barWidth + 5, barY + 17);
-                
-                // Mid label
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 11));
-                double midValue = (minScale + maxScale) / 2;
-                String midLabel = String.format("%.0f Pa", midValue);
-                String midLabelMmHg = String.format("(%.0f mmHg)", midValue / SimParams.MMHG_TO_PA);
-                g2d.drawString(midLabel, barX + barWidth + 5, barY + barHeight / 2);
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 9));
-                g2d.drawString(midLabelMmHg, barX + barWidth + 5, barY + barHeight / 2 + 12);
-                
-                // Min label (bottom)
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 11));
-                String minLabel = String.format("%.0f Pa", minScale);
-                String minLabelMmHg = String.format("(%.0f mmHg)", minScale / SimParams.MMHG_TO_PA);
-                g2d.drawString(minLabel, barX + barWidth + 5, barY + barHeight - 5);
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 9));
-                g2d.drawString(minLabelMmHg, barX + barWidth + 5, barY + barHeight + 7);
-                
-                // Add key oxygen thresholds as reference
-                g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 10));
-                int refY = barY + barHeight + 30;
-                g2d.drawString("Thresholds:", barX - 10, refY);
-                g2d.drawString("Vessel: 100 mmHg", barX - 10, refY + 15);
-                g2d.drawString("Hypoxic: 10 mmHg", barX - 10, refY + 30);
-                g2d.drawString("Necrotic: 0.5 mmHg", barX - 10, refY + 45);
-                
+                if (day == ScaleBarDay) {
+					// Color bar labels
+					g2d.setColor(java.awt.Color.BLACK);
+					g2d.drawRect(barX, barY, barWidth, barHeight);  // Border around color bar
+	
+					int labelSize = (int)(14 * SimParams.FONT_SCALE_FACTOR);                
+					g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, labelSize));
+					
+					// Max label (top) - kPa only
+					double maxKPa = maxScale / 1000.0;  // Pa to kPa
+					String maxLabel = String.format("%.0f kPa", maxKPa);
+					g2d.drawString(maxLabel, barX + barWidth + 5, barY + 10);                
+	
+					// Mid label
+					double midKPa = (minScale + maxScale) / 2000.0;
+					String midLabel = String.format("%.1f", midKPa);
+					g2d.drawString(midLabel, barX + barWidth + 5, barY + barHeight / 2);
+					
+					// Min label (bottom)
+					String minLabel = "0 kPa";
+					g2d.drawString(minLabel, barX + barWidth + 5, barY + barHeight + 3);
+					
+					// Add threshold markers directly on color bar
+					// Calculate y-positions for thresholds on the color bar
+					double vesselPos = (SimParams.P_O2_VESSEL - minScale) / (maxScale - minScale);
+					double hypoxicPos = (SimParams.P_O2_HYPOXIC - minScale) / (maxScale - minScale);
+					double necroticPos = (SimParams.P_O2_NECROTIC - minScale) / (maxScale - minScale);
+					
+					int vesselY = barY + (int)((1.0 - vesselPos) * barHeight);
+					int hypoxicY = barY + (int)((1.0 - hypoxicPos) * barHeight);
+					int necroticY = barY + (int)((1.0 - necroticPos) * barHeight);
+					
+					// Draw threshold lines across color bar (only if within scale)
+					g2d.setStroke(new java.awt.BasicStroke(2.0f));
+	
+					// Threshold labels - simplified, larger font
+					int thresholdLabelSize = (int)(11 * SimParams.FONT_SCALE_FACTOR);
+					g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, thresholdLabelSize));
+					g2d.setColor(java.awt.Color.BLACK);
+					
+					// Vessel threshold
+					if (vesselPos >= 0 && vesselPos <= 1.0) {
+						g2d.setColor(java.awt.Color.BLACK);
+						g2d.setStroke(new java.awt.BasicStroke(5.0f));
+						g2d.drawLine(barX, vesselY, barX + barWidth, vesselY);
+						g2d.setColor(new java.awt.Color(1.0f, 0.3f, 0.3f));
+//						g2d.setColor(java.awt.Color.GREEN);
+						g2d.setStroke(new java.awt.BasicStroke(3.0f));
+						g2d.drawLine(barX, vesselY, barX + barWidth, vesselY);
+						g2d.setColor(java.awt.Color.BLACK);
+						//g2d.drawString("← ", barX + barWidth + 5, vesselY + 4);
+					}
+					
+					// Hypoxic threshold  
+					if (hypoxicPos >= 0 && hypoxicPos <= 1.0) {
+						g2d.setColor(java.awt.Color.BLACK);
+						g2d.setStroke(new java.awt.BasicStroke(5.0f));
+						g2d.drawLine(barX, hypoxicY, barX + barWidth, hypoxicY);
+						g2d.setColor(java.awt.Color.YELLOW);
+						g2d.setStroke(new java.awt.BasicStroke(3.0f));
+						g2d.drawLine(barX, hypoxicY, barX + barWidth, hypoxicY);
+						g2d.setColor(java.awt.Color.BLACK);
+						//g2d.drawString("← ", barX + barWidth + 5, hypoxicY + 4);
+					}
+					
+					// Necrotic threshold
+					if (necroticPos >= 0 && necroticPos <= 1.0) {
+						g2d.setColor(java.awt.Color.BLACK);
+						g2d.setStroke(new java.awt.BasicStroke(5.0f));
+						g2d.drawLine(barX, necroticY, barX + barWidth, necroticY);
+						g2d.setColor(new java.awt.Color(0.0f, 0.7f, 0.0f));
+//						g2d.setColor(java.awt.Color.RED);
+						g2d.setStroke(new java.awt.BasicStroke(3.0f));
+						g2d.drawLine(barX, necroticY, barX + barWidth, necroticY);
+						g2d.setColor(java.awt.Color.BLACK);
+						//g2d.drawString("← ", barX + barWidth + 5, necroticY + 4);
+					}
+									
+					// Reset stroke for border redraw
+					g2d.setStroke(new java.awt.BasicStroke(1.0f));
+					g2d.setColor(java.awt.Color.BLACK);
+					g2d.drawRect(barX, barY, barWidth, barHeight);  // Redraw border on top
+				}                
                 g2d.dispose();
                 
                 // Save image
                 javax.imageio.ImageIO.write(img, "png", new java.io.File(filename));
-                System.out.printf("Saved oxygen field visualization: %s\n", filename);
+//                System.out.printf("Saved oxygen field visualization: %s\n", filename);
                 
             } catch (Exception e) {
                 System.err.printf("Warning: Could not save oxygen field image: %s\n", 

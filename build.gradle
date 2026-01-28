@@ -51,6 +51,21 @@ application {
     mainClass = 'TumorRPT.Main'
 }
 
+// Task to run parameter sweep - interval-skew
+task runSweep(type: JavaExec) {
+    mainClass = 'TumorRPT.ParameterSweep'
+    classpath = sourceSets.main.runtimeClasspath
+    // Increase heap size for large sweeps if needed
+    jvmArgs = ['-Xmx4g']
+}
+
+// Task to run parameter sweep - dose-receptor
+task runDoseReceptorSweep(type: JavaExec) {
+    mainClass = 'TumorRPT.DoseReceptorSweep'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Xmx4g']
+}
+
 sourceSets {
     main {
         java {
@@ -73,10 +88,4 @@ shadowJar {
     archiveClassifier.set('all')
     archiveVersion.set('0.1.0')
     mergeServiceFiles()
-}
-
-// Additional task for running parameter sweep (once ready)
-task runSweep(type: JavaExec) {
-    mainClass = 'TumorRPT.ParameterSweep'
-    classpath = sourceSets.main.runtimeClasspath
 }

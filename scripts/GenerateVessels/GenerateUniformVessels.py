@@ -11,7 +11,9 @@ fig, ax = plt.subplots()
 # -------------------------------
 N = 10000
 DOMAIN_SIZE = 4000.0      # microns (square domain)
-R_REPEL = 50.0            # repulsive radius
+R_REPEL = 40.0            # repulsive radius --> 616.1 vessels/mm^2 
+#R_REPEL = 50.0            # repulsive radius  --> 604.8 vessels/mm^2
+#R_REPEL = 60.0            # repulsive radius --> 591.9 vessels/mm^2 
 STEP_SIZE = 0.1           # smaller = slower but more stable relaxation
 ITERATIONS = 100          # number of relaxation iterations
 PLOT_EVERY = 10           # show progress
@@ -117,5 +119,5 @@ for it in range(ITERATIONS):
 #np.savetxt("vessels_relaxed.txt", pts, fmt="%.3f")
 #print("Saved vessel positions → vessels_relaxed.txt")
 
-save_as_grid(pts, "Vasculature/relaxed_vessels.csv")
+save_as_grid(pts, "scripts/GenerateVessels/relaxed_vessels.csv")
 

@@ -6,9 +6,11 @@ import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
- * Parameter sweep over radiopharmaceutical therapy injection schedules
+ * Parameter sweep over TWO-INJECTION radiopharmaceutical therapy schedules
  * 
  * Explores 2D parameter space:
  * - Axis 1: Inter-injection interval (days between doses)
@@ -29,60 +31,80 @@ import java.io.IOException;
 public class ParameterSweep {
     
     // =======================================================================
-    // PARAMETER RANGES - Edit these to refine the sweep
+    // SWEEP PARAMETERS - Edit these to define the parameter space
     // =======================================================================
-    
-    // Coarse sweep (original):
-    // private static final int[] INTERVALS = {10, 20, 30, 40, 50, 60};
-    // private static final double[] SKEWS = {-30, -20, -10, 0, 10, 20, 30};
-    
+    // These parameters are SWEPT (varied systematically) to explore treatment space
+    // 
+    // INTERVALS: Days between injections (e.g., 30 → injections at 5, 35, 65, 95)
+    // SKEWS: Dose distribution offsets in nmol (e.g., 10 → doses of 110, 90 nmol)
+    //        Note: Average dose is always 100 nmol regardless of skew
+    //        Skew pattern: [100+s, 100-s]
+    //
+    // For a 2D sweep, each (interval, skew) combination will be run NUM_REPLICATES times
+        
     // Current sweep - edit as needed:
-    private static final int[] INTERVALS = {30};
-    private static final double[] SKEWS = {0};
+    private static final int[] INTERVALS = {5, 10, 15, 20, 25, 30, 35, 40};
+    private static final double[] SKEWS = {-60e-9, -40.0e-9, -20.0e-9, -10.0e-9, 0, 10.0e-9, 20.0e-9, 40.0e-9, 60e-9};
     
     // Output suffix - change this when refining to avoid overwriting (e.g., "_v2", "_fine")
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 1;
+    private static final int NUM_REPLICATES = 5;
     
     // =======================================================================
+    // FIXED PARAMETERS - Constant across all sweep runs
+    // =======================================================================
+    // Note: These override SimParams values for sweep runs
+    //       Single-run mode (Main.java) uses SimParams values
     
-    // Fixed parameters (now using SI units internally)
-    private static final int NUM_INJECTIONS = 4;
-    private static final double BASE_DOSE = 100.0e-9; // mol (100 nmol in SI)
+    private static final int NUM_INJECTIONS = 2;
+    private static final double BASE_DOSE = 90.0e-9; // mol (100 nmol in SI)
     private static final double HOT_FRACTION = 0.1;
     private static final int FIRST_INJECTION_DAY = 5;
     private static final int MIN_DAYS_AFTER_LAST_INJECTION = 30; // Days to observe after final injection
     
+    // Initial tumor size and radiosensitivity (from SimParams defaults)
+    // These can be overridden if needed, but default to SimParams values
+    
     // Output configuration
-    private static final String BASE_OUTPUT_DIR = "Results/ParameterSweep" + OUTPUT_SUFFIX;
-    private static final String SUMMARY_CSV = "Results/sweep_summary" + OUTPUT_SUFFIX + ".csv";
+    private static final String BASE_OUTPUT_DIR = "results/ParameterSweep/ParameterSweep" + OUTPUT_SUFFIX;
+    private static final String SUMMARY_CSV = BASE_OUTPUT_DIR + "/sweep_summary" + OUTPUT_SUFFIX + ".csv";
+    
+    // Image export control (set to false for faster sweeps)
+    private static final boolean EXPORT_IMAGES = false;
     
     public static void main(String[] args) throws IOException {
         
-        // Create base output directory
-        new File(BASE_OUTPUT_DIR).mkdirs();
+        String timestamp = LocalDateTime.now().format(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        
+        String sweepDir = BASE_OUTPUT_DIR + "_" + timestamp;
+        new File(sweepDir).mkdirs();
+        
+        String summaryPath = sweepDir + "/sweep_summary.csv";
         
         // Initialize CSV output
         PrintWriter csvWriter;
         try {
-            csvWriter = new PrintWriter(new FileWriter(SUMMARY_CSV));
+            csvWriter = new PrintWriter(new FileWriter(summaryPath));
         } catch (IOException e) {
-            throw new RuntimeException("Could not open summary CSV at: " + SUMMARY_CSV, e);
+            throw new RuntimeException("Could not open summary CSV at: " + summaryPath, e);
         }
 
         // CSV header (doses shown in nmol for readability)
-        csvWriter.println("interval,skew,dose1_nmol,dose2_nmol,dose3_nmol,dose4_nmol,replicate,finalTumorCount,outcome,injectionsUsed");
+        csvWriter.println("interval,skew,dose1_nmol,dose2_nmol,replicate,finalTumorCount,outcome,injectionsUsed");
         
         int totalCombinations = INTERVALS.length * SKEWS.length;
         int totalRuns = totalCombinations * NUM_REPLICATES;
         int currentRun = 0;
         
         System.out.println("=== PARAMETER SWEEP START ===");
+        System.out.println("Sweep timestamp: " + timestamp);
         System.out.println("Parameter combinations: " + totalCombinations);
         System.out.println("Replicates per combination: " + NUM_REPLICATES);
         System.out.println("Total runs: " + totalRuns);
+        System.out.println("Output directory: " + sweepDir);
         System.out.println();
         
         // Loop over parameter space
@@ -107,10 +129,9 @@ public class ParameterSweep {
                         currentRun++;
                         System.out.printf("[%d/%d] SKIPPED: interval=%d, skew=%.0f nmol, rep=%d (negative dose)%n", 
                                          currentRun, totalRuns, interval, skew * 1e9, rep + 1);
-                        csvWriter.printf("%d,%.1f,%.1f,%.1f,%.1f,%.1f,%d,%d,%s,%d%n",
+                        csvWriter.printf("%d,%.1f,%.1f,%.1f,%d,%d,%s,%d%n",
                                        interval, skew * 1e9,  // Convert to nmol for display
                                        injectionDoses[0] * 1e9, injectionDoses[1] * 1e9, 
-                                       injectionDoses[2] * 1e9, injectionDoses[3] * 1e9,
                                        rep + 1, -1, "INVALID", 0);
                         csvWriter.flush();
                     }
@@ -127,17 +148,15 @@ public class ParameterSweep {
                     
                     // Create output directory for this run (includes replicate number)
                     String runDir = String.format("%s/interval_%d_skew_%.0f_rep_%d", 
-                                                 BASE_OUTPUT_DIR, interval, skew * 1e9, rep + 1);
+                                                 sweepDir, interval, skew * 1e9, rep + 1);
                     new File(runDir).mkdirs();
                     
                     System.out.printf("[%d/%d] Running: interval=%d days, skew=%.0f nmol, replicate=%d/%d%n", 
                                      currentRun, totalRuns, interval, skew * 1e9, rep + 1, NUM_REPLICATES);
-                    System.out.printf("  Injection times: %d, %d, %d, %d days%n",
-                                     injectionTimes[0], injectionTimes[1], 
-                                     injectionTimes[2], injectionTimes[3]);
-                    System.out.printf("  Doses: %.1f, %.1f, %.1f, %.1f nmol%n",
-                                     injectionDoses[0] * 1e9, injectionDoses[1] * 1e9, 
-                                     injectionDoses[2] * 1e9, injectionDoses[3] * 1e9);
+                    System.out.printf("  Injection times: %d, %d days%n",
+                                     injectionTimes[0], injectionTimes[1]);
+                    System.out.printf("  Doses: %.1f, %.1f nmol%n",
+                                     injectionDoses[0] * 1e9, injectionDoses[1] * 1e9);
                     System.out.printf("  Simulation length: %d days%n", simulationDays);
                     
                     // Run simulation
@@ -150,10 +169,9 @@ public class ParameterSweep {
                                      result.finalTumorCount, outcome);
 
                     // Write to CSV (doses in nmol for readability)
-                    csvWriter.printf("%d,%.1f,%.1f,%.1f,%.1f,%.1f,%d,%d,%s,%d%n",
+                    csvWriter.printf("%d,%.1f,%.1f,%.1f,%d,%d,%s,%d%n",
                            interval, skew * 1e9,
                            injectionDoses[0] * 1e9, injectionDoses[1] * 1e9,
-                           injectionDoses[2] * 1e9, injectionDoses[3] * 1e9,
                            rep + 1, result.finalTumorCount, outcome,
                            result.injectionsUsed);				
                     csvWriter.flush(); // Flush after each run to preserve data if interrupted
@@ -164,36 +182,33 @@ public class ParameterSweep {
         csvWriter.close();
         
         System.out.println("=== PARAMETER SWEEP COMPLETE ===");
-        System.out.println("Results saved to: " + SUMMARY_CSV);
-        System.out.println("Individual run outputs in: " + BASE_OUTPUT_DIR);
+        System.out.println("Results saved to: " + summaryPath);
+        System.out.println("Individual run outputs in: " + sweepDir);
     }
     
     /**
-     * Generates injection times based on inter-injection interval
+     * Generates injection times for two injections
      * @param interval Days between injections
      * @return Array of injection times (days)
      */
     private static int[] generateInjectionTimes(int interval) {
         int[] times = new int[NUM_INJECTIONS];
-        for (int i = 0; i < NUM_INJECTIONS; i++) {
-            times[i] = FIRST_INJECTION_DAY + i * interval;
-        }
+        times[0] = FIRST_INJECTION_DAY;
+        times[1] = FIRST_INJECTION_DAY + interval;
         return times;
     }
     
     /**
      * Generates injection doses with linear skew pattern
-     * Pattern: [100+3s, 100+s, 100-s, 100-3s] where s is the skew parameter
+     * Pattern: [100+s, 100-s] where s is the skew parameter
      * 
      * @param skew Dose skew parameter in mol (input as nmol in main, converted internally)
      * @return Array of injection doses in mol
      */
     private static double[] generateInjectionDoses(double skew) {
         double[] doses = new double[NUM_INJECTIONS];
-        doses[0] = BASE_DOSE + 3 * skew;
-        doses[1] = BASE_DOSE + skew;
-        doses[2] = BASE_DOSE - skew;
-        doses[3] = BASE_DOSE - 3 * skew;
+        doses[0] = BASE_DOSE + skew;
+        doses[1] = BASE_DOSE - skew;
         return doses;
     }
     
@@ -209,15 +224,32 @@ public class ParameterSweep {
     private static SimResult runSingleSimulation(int[] injectionTimes, double[] injectionDoses, 
                                           String outputDir, int simulationDays) throws IOException {
         
-        // Set injection schedule (need to implement injection mechanism in new code)
-        // TODO: Create injection schedule handler that works with new PK model
+        // Initialize simulation (similar to Main.java structure)
+        Rand rng = new Rand(); // Different seed each time for sweep variability
+        Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, rng, null);
         
-        // Initialize simulation
-        Main main = new Main();
         DataLogger logger = new DataLogger();
-        Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, new Rand(), main);
         DaVinci drawer = new DaVinci(model);
         
+        // Set up output subdirectories if exporting images
+        
+		SimParams.OUTPUT_DIR_BASE = outputDir;
+		SimParams.OUTPUT_DIR_TUMOUR_IMAGES = outputDir + "/tumour_images";
+		SimParams.OUTPUT_DIR_OXYGEN_IMAGES = outputDir + "/oxygen_images";
+		SimParams.OUTPUT_DIR_SF_IMAGES = outputDir + "/sf_images";
+
+        if (EXPORT_IMAGES) {            
+            new File(SimParams.OUTPUT_DIR_TUMOUR_IMAGES).mkdirs();
+            new File(SimParams.OUTPUT_DIR_OXYGEN_IMAGES).mkdirs();
+            new File(SimParams.OUTPUT_DIR_SF_IMAGES).mkdirs();
+        }
+
+		if (!EXPORT_IMAGES) {
+			SimParams.EXPORT_OX_IMAGES = false;
+			SimParams.EXPORT_TUMOUR_OX_IMAGES = false;
+			SimParams.EXPORT_SF_IMAGES = false;
+		}        
+
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
 
@@ -225,7 +257,8 @@ public class ParameterSweep {
         int initialCells = model.countTumorCells();
         int numVessels = model.countVessels();
         double receptorMoles = SimParams.computeReceptorMoles(initialCells, numVessels);
-        System.out.printf("  R_T = %.3e mol (%.3e nmol)%n", receptorMoles, receptorMoles * 1e9);
+        System.out.printf("  Initial tumor cells: %d (R_T = %.3e nmol)%n", 
+                         initialCells, receptorMoles * 1e9);
 
         // Visualization settings
         boolean[] visualizationMaskList = {true, true, true, true, true, true, true};
@@ -233,7 +266,7 @@ public class ParameterSweep {
         int injectionsUsed = 0;        
 
         // Run simulation
-        for (int i = 0; i < simulationDays; i++) {
+        for (int day = 0; day < simulationDays; day++) {
             dayCount += 1;
             
             // Check if an injection is scheduled today
@@ -277,28 +310,33 @@ public class ParameterSweep {
                 break;
             }
 
-            // Draw and save visualizations every 5 days
-            if (i % 5 == 0) {
-                drawer.gridDraw(visualizationMaskList);
-                drawer.gridDrawAge(visualizationMaskList);
-                
-                double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
-                drawer.plot(dayCount, valueList[0]);
-                
-                // Save with day number in filename
-                String imageFile = String.format("%s/day_%03d.png", outputDir, dayCount);
-                logger.saveFigureTotal(imageFile, drawer, dayCount, false);
+            // Draw and save visualizations (if enabled)
+            if (EXPORT_IMAGES && SimParams.EXPORT_TUMOUR_OX_IMAGES) {
+                if (day % 10 == 0) { // Every 10 days for sweep (less frequent than Main)
+                    drawer.gridDraw(visualizationMaskList);
+                    
+                    double[] valueList = MyUtils.lastElementOfDoubleArrayList(model.DoseRateList);
+                    drawer.plot(dayCount, valueList[0]);
+                    
+                    String imageFile = String.format("%s/day_%03d.png", 
+                                                    SimParams.OUTPUT_DIR_TUMOUR_IMAGES, dayCount);
+                    logger.saveFigureTotal(imageFile, drawer, dayCount, false, false);
+                }
             }
         }
         
         // Save final data files
         String popsFile = outputDir + "/populations.csv";
-        String doseFile = outputDir + "/doses.csv";
-        String pkFile = outputDir + "/state_variable.csv";
+        String doseFile = outputDir + "/dose.csv";
+        String pkFile = outputDir + "/pkStateVariables.csv";
         
         logger.log(model.PopsOverTime, popsFile);
         logger.log(model.DoseRateList, doseFile);
         logger.log(model.PKStateVariables, pkFile);
+        
+        // Save parameter info for this run
+        SimParams.generateParameterReport(outputDir + "/parameters.md");
+        SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
         
         // Report final viable tumor count (exclude vessels, necrotic, and apoptotic)
         int finalCount =
