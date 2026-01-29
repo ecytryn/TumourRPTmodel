@@ -66,6 +66,14 @@ task runDoseReceptorSweep(type: JavaExec) {
     jvmArgs = ['-Xmx4g']
 }
 
+task runDebug(type: JavaExec) {
+    main = 'TumorRPT.DebugRunner'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('args')) {
+        args project.property('args').split()
+    }
+}
+
 sourceSets {
     main {
         java {
