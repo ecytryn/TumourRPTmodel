@@ -260,11 +260,18 @@ public class PK {
         // β particle escape correction
         // Lu-177 beta range ~1 mm in tissue
         double beta_range_m = 1.0e-3;  // m
+
 		// Assume the tumour cells are in the extruded cylinder shape (sphere gives the same formula)
 		// with an effective radius
         double R_tumor_eff = Math.pow(3.0 * tumorVolume / (4.0 * Math.PI), 1.0/3.0);
-        double f_deposit = Math.pow(R_tumor_eff / (R_tumor_eff + beta_range_m), 3.0);
-		// Spread the energy over a sphere of radius R_tumor_eff + beta_range_m
+
+		// This is the upgraded f_deposit using the sphere-intersection calculation
+		double f_deposit = BetaRetention.getRetentionFraction(R_tumor_eff*1e3); // the lookup table wants mm and R is in m
+
+		// This is the old ratio of spheres implementation - off by ~2x
+//        double f_deposit = Math.pow(R_tumor_eff / (R_tumor_eff + beta_range_m), 3.0);
+
+		// Discount the energy by the fraction of radiation that remains within the tumour
         double energyRate = energyRate_emitted * f_deposit;
                 
         // Tumor mass (assuming density = 1000 kg/m³)

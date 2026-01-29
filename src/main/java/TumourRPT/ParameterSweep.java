@@ -43,8 +43,30 @@ public class ParameterSweep {
     // For a 2D sweep, each (interval, skew) combination will be run NUM_REPLICATES times
         
     // Current sweep - edit as needed:
-    private static final int[] INTERVALS = {5, 10, 15, 20, 25, 30, 35, 40};
-    private static final double[] SKEWS = {-60e-9, -40.0e-9, -20.0e-9, -10.0e-9, 0, 10.0e-9, 20.0e-9, 40.0e-9, 60e-9};
+    private static final int[] INTERVALS = {
+//    	5, 
+//    	10, 
+//    	15, 
+    	20, 
+    	28, 
+    	36, 
+    	44, 
+	   	52,
+	   	60,
+		68,
+		76
+    	};
+    private static final double[] SKEWS = {
+    	-60e-9, 
+    	-40.0e-9, 
+    	-20.0e-9, 
+//    	-10.0e-9, 
+    	0, 
+//    	10.0e-9, 
+    	20.0e-9, 
+    	40.0e-9, 
+    	60e-9
+    	};
     
     // Output suffix - change this when refining to avoid overwriting (e.g., "_v2", "_fine")
     private static final String OUTPUT_SUFFIX = "";
@@ -75,7 +97,9 @@ public class ParameterSweep {
     private static final boolean EXPORT_IMAGES = false;
     
     public static void main(String[] args) throws IOException {
-        
+
+		SimParams.INITIAL_TUMOR_RADIUS = 200e-6;  // Small vulnerable tumor just below treatment threshold
+
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
         

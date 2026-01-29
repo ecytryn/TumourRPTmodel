@@ -5,8 +5,8 @@ Visualizes parameter sweep results as:
 2. Small multiples grid showing population trajectories for each parameter combination
 
 Usage:
-    python visualize_sweep.py              # Uses default sweep_summary.csv
-    python visualize_sweep.py _v2          # Uses sweep_summary_v2.csv
+    python visualize_interval_skew.py              # Uses default sweep_summary.csv
+    python visualize_interval_skew.py _v2          # Uses sweep_summary_v2.csv
 """
 
 import pandas as pd
@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 import os
 
-# Usage: python visualize_sweep.py 2026-01-27_01-53-14
+# Usage: python visualize_interval_skew.py 2026-01-27_01-53-14
 TIMESTAMP = sys.argv[1] if len(sys.argv) > 1 else None
 
 if TIMESTAMP:
@@ -33,7 +33,7 @@ else:
         SWEEP_DIR = sorted(sweep_dirs)[-1]
         CSV_FILE = f"{SWEEP_DIR}/sweep_summary.csv"
     else:
-        print("ERROR: No sweep found. Pass timestamp: python visualize_sweep.py 2026-01-27_01-53-14")
+        print("ERROR: No sweep found. Pass timestamp: python visualize_interval_dose.py 2026-01-27_01-53-14")
         sys.exit(1)
 
 OUTPUT_DIR = SWEEP_DIR  # Put visualizations in same directory as sweep

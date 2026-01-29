@@ -29,6 +29,9 @@ import java.util.Arrays;
  * All parameters are already in the correct SI units.
  */
 public class SimParams {
+    // =================================================================
+    // Default parameters that can be overwritten for different numerical experiments
+    // =================================================================
 
 	public static String EXPERIMENT_NAME = "default";
 	public static String EXPERIMENT_DESCRIPTION = "Default run";
@@ -36,6 +39,16 @@ public class SimParams {
 	public static double INITIAL_TUMOR_RADIUS = 333e-6;
 	public static double ALPHA_HYPOXIC = 0.06;
 	public static double BETA_HYPOXIC = 0.019;
+    // Vessel density configuration
+    // Use scripts/GenerateVessels/GenerateUniformVessels.py to create new csv files.
+    // Possibilities: 40, 50, 60 - these refer to the R_REPEL parameter used in GenerateUniformVessels.py
+    // Density of vessels is "inversely" proportional to R_REPEL
+    // Corresponds to CSV files in src/main/resources/vasculature/
+	// R_REPEL = 40 --> 616.1 vessels/mm^2 
+	// R_REPEL = 50 --> 604.8 vessels/mm^2 
+	// R_REPEL = 60 --> 591.9 vessels/mm^2 
+	public static String VESSEL_DENSITY_CONFIG = "50";  // Default configuration
+
 	
 	// Add setter method
 	public static void setExperiment(String name, String desc, int[] injections, 
@@ -239,16 +252,6 @@ public class SimParams {
     public static final int APOPTOTIC = 4;
     public static final int VESSEL = 5;
     public static final int NUM_CELL_TYPES = 6;
-
-    // Vessel density configuration
-    // Use scripts/GenerateVessels/GenerateUniformVessels.py to create new csv files.
-    // Possibilities: 40, 50, 60 - these refer to the R_REPEL parameter used in GenerateUniformVessels.py
-    // Density of vessels is "inversely" proportional to R_REPEL
-    // Corresponds to CSV files in src/main/resources/vasculature/
-	// R_REPEL = 40 --> 616.1 vessels/mm^2 
-	// R_REPEL = 50 --> 604.8 vessels/mm^2 
-	// R_REPEL = 60 --> 591.9 vessels/mm^2 
-	public static final String VESSEL_DENSITY_CONFIG = "50";  // Default configuration
 
     // =================================================================
     // DERIVED/COMPUTED PARAMETERS

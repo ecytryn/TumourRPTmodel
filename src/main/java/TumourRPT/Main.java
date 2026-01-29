@@ -278,7 +278,7 @@ public class Main {
 			case "Day45VerySmall":
 				SimParams.setExperiment("InjectionDay45VerySmallTumour",
 					"Treat late to demonstrate what happens with treatment of a mixed tumour. Very small initial tumour",
-					new int[]{45}, 10e-6, 0.06, 0.019);
+					new int[]{45}, 8e-6, 0.06, 0.019);
 				break;
 			case "Day45Small":
 				SimParams.setExperiment("InjectionDay45SmallTumour",

@@ -18,14 +18,14 @@ import glob
 def find_sweep_dir(timestamp=None):
     """Find sweep directory"""
     if timestamp:
-        sweep_dir = f"results/DoseReceptorSweep_{timestamp}"
+        sweep_dir = f"results/DoseReceptorSweep/DoseReceptorSweep_{timestamp}"
         if not Path(sweep_dir).exists():
             print(f"ERROR: Directory not found: {sweep_dir}")
             sys.exit(1)
         return sweep_dir
     
     # Find most recent
-    sweep_dirs = glob.glob("results/DoseReceptorSweep_*")
+    sweep_dirs = glob.glob("results/DoseReceptorSweep/DoseReceptorSweep_*")
     if not sweep_dirs:
         print("ERROR: No DoseReceptorSweep directories found!")
         sys.exit(1)

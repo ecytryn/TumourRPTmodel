@@ -27,35 +27,37 @@ public class DoseReceptorSweep {
     // SWEEP PARAMETERS - Edit these to define the parameter space
     // =======================================================================
     
-    // DOSES: Total dose across both injections (in nmol)
-    // Each injection gets DOSE/2
-    private static final double[] DOSES = {50, 75, 100, 125, 150, 175, 200, 225, 250}; // nmol
+    private static final double[] DOSES = {
+    	50, 
+    	75, 
+    	100, 
+    	125, 
+    	150, 
+    	175, 
+    	200, 
+    	225, 
+    	250}; // nmol
     
     // RECEPTOR_DENSITIES: Receptors per cell (in moles)
 	private static final double BASELINE_RECEPTORS = 6.64e-19;  // mol/cell, from SimParams
 	private static final double[] RECEPTOR_DENSITIES = {
-//		0.5 * BASELINE_RECEPTORS,   // 50%
-		0.95 * BASELINE_RECEPTORS,   // 95% 
+		0.76 * BASELINE_RECEPTORS,   
+		0.84 * BASELINE_RECEPTORS,   
+		0.92 * BASELINE_RECEPTORS,  
 		1.0 * BASELINE_RECEPTORS,   // 100% (baseline)
-		1.05 * BASELINE_RECEPTORS,   // 105% 
-		1.1 * BASELINE_RECEPTORS,   // 110% 
-		1.15 * BASELINE_RECEPTORS,   // 115% 
-		1.2 * BASELINE_RECEPTORS,   // 120% 
-		1.25 * BASELINE_RECEPTORS,   // 125% 
-		1.3 * BASELINE_RECEPTORS,   // 130% 
-		1.35 * BASELINE_RECEPTORS,   // 135% 
-		1.4 * BASELINE_RECEPTORS,   // 140% 
-		1.45 * BASELINE_RECEPTORS,   // 145% 
-		1.5 * BASELINE_RECEPTORS   // 150%
-//		2.0 * BASELINE_RECEPTORS,   // 200%
-//		3.0 * BASELINE_RECEPTORS    // 300%
+		1.08 * BASELINE_RECEPTORS, 
+		1.16 * BASELINE_RECEPTORS,  
+		1.24 * BASELINE_RECEPTORS, 
+		1.32 * BASELINE_RECEPTORS,
+		1.4 * BASELINE_RECEPTORS,
+		1.48 * BASELINE_RECEPTORS
 	};
     
     // Output suffix - change this when refining to avoid overwriting
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 10;
+    private static final int NUM_REPLICATES = 5;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -75,6 +77,8 @@ public class DoseReceptorSweep {
     
     public static void main(String[] args) throws IOException {
         
+		SimParams.INITIAL_TUMOR_RADIUS = 250e-6;  // Small vulnerable tumor just below treatment threshold
+
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
         
