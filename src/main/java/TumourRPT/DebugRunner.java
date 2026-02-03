@@ -3,6 +3,7 @@ package TumorRPT;
 import HAL.Rand;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Debug Runner - Investigate specific parameter combinations from sweeps
@@ -15,6 +16,7 @@ import java.io.IOException;
  * 1. COMMAND LINE (Quick):
  *    ./gradlew runDebug --args="interval=30 skew=20"
  *    ./gradlew runDebug --args="dose=150 receptors=0.8"
+ *    ./gradlew runDebug --args="interval=30 skew=20 seed=43"
  * 
  * 2. EDIT METHOD (Detailed):
  *    Edit setDebugParameters() method below
@@ -26,7 +28,10 @@ public class DebugRunner {
     // Storage for doses when we need variable doses per injection
     private static double[] customDoses = null;
     private static int totalDays = 120;
-    
+
+	private static Integer customSeed = null;    
+    private static boolean saveSFdata = true;
+
     // ===================================================================
     // METHOD 2: EDIT THESE PARAMETERS DIRECTLY
     // ===================================================================
@@ -147,7 +152,10 @@ public class DebugRunner {
                 case "receptors":
                     receptors = Double.parseDouble(value);  // Multiplier of baseline
                     break;
-                case "x":
+				case "seed":
+					customSeed = Integer.parseInt(value);
+					break;
+				case "x":
                     xIndex = Integer.parseInt(value);
                     break;
                 case "y":
@@ -288,7 +296,9 @@ public class DebugRunner {
         System.out.println("=".repeat(60) + "\n");
         
         // Initialize random seed
-        Rand rng = new Rand(42);  // Fixed seed - change for different outcomes
+		int seed = (customSeed != null) ? customSeed : 42;
+		Rand rng = new Rand(seed);
+		System.out.println("Using random seed: " + seed);
         
         // Parse command line OR use edited method
         if (args.length > 0) {
@@ -344,6 +354,10 @@ public class DebugRunner {
         System.out.println("Initial tumor cells: " + initialPop);
         System.out.println("Starting simulation for " + totalDays + " days...\n");
         
+        // SF logging: track SF for day-0 cohort and previous-day cohort each day
+        // Columns: day, SF_cohort0_norm, SF_cohort0_hypo, SF_prevDay_norm, SF_prevDay_hypo
+        ArrayList<double[]> sfData = saveSFdata ? new ArrayList<>() : null;
+        
         // Main simulation loop
         for (dayCount = 0; dayCount <= totalDays; dayCount++) {
             int day = dayCount;
@@ -382,6 +396,28 @@ public class DebugRunner {
             // Step simulation
             model.Step(dayCount);
             
+            // Log SF data for key cohorts
+            // Columns: day, SF_c0_norm, SF_c0_hypo, SF_prev_norm, SF_prev_hypo,
+            //          D_c0, A_c0, Gnum_c0, D_prev, A_prev, Gnum_prev
+            if (saveSFdata) {
+                double sf_c0_norm = model.radioBio.calculateSF(0, SimParams.NORMAL);
+                double sf_c0_hypo = model.radioBio.calculateSF(0, SimParams.HYPOXIC);
+                // Previous-day cohort: born 24 hours ago. Guard against negative on day 0.
+                int prevDayCohort = Math.max(0, (dayCount - 1) * 24);
+                double sf_prev_norm = model.radioBio.calculateSF(prevDayCohort, SimParams.NORMAL);
+                double sf_prev_hypo = model.radioBio.calculateSF(prevDayCohort, SimParams.HYPOXIC);
+
+                double[] state_c0   = model.radioBio.getCohortState(0);
+                double[] state_prev = model.radioBio.getCohortState(prevDayCohort);
+
+                sfData.add(new double[] {
+                    dayCount,
+                    sf_c0_norm, sf_c0_hypo, sf_prev_norm, sf_prev_hypo,
+                    state_c0[0],   state_c0[1],   state_c0[2],    // D, A, G_num for cohort 0
+                    state_prev[0], state_prev[1], state_prev[2]   // D, A, G_num for prev-day cohort
+                });
+            }
+            
             // Report progress every 10 days
             if (dayCount % 10 == 0 || dayCount == totalDays) {
                 int currentPop = model.countTumorCells();
@@ -416,6 +452,13 @@ public class DebugRunner {
         logger.log(model.PopsOverTime, popcsvFileName);
         logger.log(model.DoseRateList, dosecsvFileName);
         logger.log(model.PKStateVariables, PKvarscsvFileName);
+        
+        // Save SF data if enabled
+        if (saveSFdata && sfData != null) {
+            String sfCsvFileName = outputDir + "/sfData.csv";
+            logger.log(sfData, sfCsvFileName);
+            System.out.println("SF data saved to: " + sfCsvFileName);
+        }
         
         // Generate parameter report
         SimParams.generateParameterReport(outputDir + "/parameters.md");

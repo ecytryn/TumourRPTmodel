@@ -138,9 +138,13 @@ public class DoseReceptorSweep {
 //                    System.out.printf("  Doses: %.1f, %.1f nmol%n",
 //                                     injectionDoses[0] * 1e9, injectionDoses[1] * 1e9);
                     System.out.printf("  Simulation length: %d days%n", simulationDays);
+
+					// Use replicate-based seed for reproducibility
+					int seed = 42 + rep;  // Seeds: 43, 44, 45, 46, 47 for reps 1-5
+					Rand rng = new Rand(seed);
                     
                     // Run simulation with this receptor density
-                    SimResult result = runSingleSimulation(injectionTimes, injectionDoses, 
+                    SimResult result = runSingleSimulation(rng, injectionTimes, injectionDoses, 
                                                           receptorDensity, runDir, simulationDays);
 
                     // Classify outcome
@@ -202,7 +206,8 @@ public class DoseReceptorSweep {
      * @param simulationDays Number of days to simulate
      * @return SimResult with final tumor count
      */
-    private static SimResult runSingleSimulation(int[] injectionTimes, double[] injectionDoses,
+    private static SimResult runSingleSimulation(Rand rng, int[] injectionTimes, 
+    									  double[] injectionDoses,
                                           double receptorDensity, String outputDir, 
                                           int simulationDays) throws IOException {
         
@@ -211,9 +216,8 @@ public class DoseReceptorSweep {
         SimParams.RECEPTORS_PER_CELL_MOL = receptorDensity;
         
         // Initialize simulation
-        Rand rng = new Rand(); // Different seed each time
-        Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, rng, null);
-        
+		Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, rng, null);
+
         DataLogger logger = new DataLogger();
         DaVinci drawer = new DaVinci(model);
         

@@ -182,9 +182,15 @@ public class ParameterSweep {
                     System.out.printf("  Doses: %.1f, %.1f nmol%n",
                                      injectionDoses[0] * 1e9, injectionDoses[1] * 1e9);
                     System.out.printf("  Simulation length: %d days%n", simulationDays);
+
+					// Use replicate-based seed for reproducibility across parameter combinations
+					// This means replicate 1 across all parameters uses seed 43, rep 2 uses 44, etc.
+					// This creates a "controlled experiment" where only parameters change, not stochasticity
+					int seed = 42 + rep;  // rep is 1-indexed, so seeds are 43, 44, 45, 46, 47
+					Rand rng = new Rand(seed);
                     
                     // Run simulation
-                    SimResult result = runSingleSimulation(injectionTimes, injectionDoses, runDir, simulationDays);
+                    SimResult result = runSingleSimulation(rng, injectionTimes, injectionDoses, runDir, simulationDays);
 
                     // Classify outcome
                     String outcome = (result.finalTumorCount == 0) ? "CURE" : "FAILURE";                
@@ -245,11 +251,11 @@ public class ParameterSweep {
      * @param simulationDays Number of days to simulate
      * @return SimResult with final tumor count and injections used
      */
-    private static SimResult runSingleSimulation(int[] injectionTimes, double[] injectionDoses, 
+    private static SimResult runSingleSimulation(Rand rng, int[] injectionTimes, double[] injectionDoses, 
                                           String outputDir, int simulationDays) throws IOException {
         
         // Initialize simulation (similar to Main.java structure)
-        Rand rng = new Rand(); // Different seed each time for sweep variability
+
         Grid model = new Grid(SimParams.GRID_SIZE, SimParams.GRID_SIZE, rng, null);
         
         DataLogger logger = new DataLogger();

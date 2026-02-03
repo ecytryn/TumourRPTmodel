@@ -11,7 +11,7 @@ out/
 bin/
 
 # Other directories
-migrationFiles
+DoNotGitThisFolder
 
 # Gradle
 .gradle/

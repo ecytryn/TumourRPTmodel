@@ -176,7 +176,7 @@ public class PK {
         }
 
         // Get current state from grid
-        double[] currentValues = this.grid.PKStateVariables.get(this.grid.PKStateVariables.size()-1);
+		double[] currentValues = this.grid.PKStateVariables.get(this.grid.PKStateVariables.size()-1);
 
         // Extract ODE variables (slow compartments only)
         double[] ODE_currentValues = {

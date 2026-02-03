@@ -1,13 +1,14 @@
 package TumorRPT;
 
 /**
- * Beta particle self-dose retention fraction calculator
+ * Intratumoural energy deposition fraction calculator
  * 
  * Uses uniform deposition sphere model with pre-computed lookup table
- * for computational efficiency.
+ * for computational efficiency. In principle, this could be replaced by
+ * an analytical form (the integrals end up being piecewise polynommial).
  * 
  * Physical model:
- * - Each Lu-177 decay deposits energy uniformly in sphere of radius ℓ (mean free path)
+ * - Each Lu-177 decay deposits energy uniformly in sphere of radius ℓ (mean range)
  * - Computes fraction of energy retained within tumor using geometric overlap calculation
  * - See appendix for full mathematical derivation
  * 

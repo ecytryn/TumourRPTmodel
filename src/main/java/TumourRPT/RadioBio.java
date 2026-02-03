@@ -25,6 +25,11 @@ import java.util.ArrayList;
  * 
  * Survival fraction:
  *   SF = exp(-α*D - β*G*D²)
+ *
+ * The 2/D^2 in the definition of G causes unnecessary trouble for small D so I'm reformulating the SF: 
+ *   G = 2 G_num and
+ *   SF = exp(-α*D - β*G) 
+ * This is totally equivalent - I've just cancelled a D^2 on top and bottom.
  * 
  * IMPLEMENTATION:
  * - hourStates[h] stores {D, A, G_num} for cells born at hour h
@@ -73,6 +78,32 @@ public class RadioBio {
      * @param doseRate Current dose rate (Gy/h)
      * @param dt Time step (hours)
      */
+	private void stepODE(HourState state, double doseRate, double dt) {
+		// D is exact (linear accumulation)
+		state.D += doseRate * dt;
+		
+		// G_num and A need careful handling
+		// Subdivide for accuracy when A is changing rapidly
+		int nSubsteps = 10;
+		double dt_sub = dt / nSubsteps;
+		
+		for (int i = 0; i < nSubsteps; i++) {
+			double A_old = state.A;
+			
+			// G_num accumulates doseRate * A(t)
+			state.G_num += doseRate * A_old * dt_sub;
+			
+			// Update A using analytical solution for this substep
+			double decay = Math.exp(-mu * dt_sub);
+			if (mu > 1e-10) {
+				state.A = decay * A_old + doseRate * (1.0 - decay) / mu;
+			} else {
+				state.A = decay * A_old + doseRate * dt_sub;
+			}
+		}
+	}
+/**
+	// This version of stepODE uses dt= 1 hr which is too big during the peak after an injeciton
     private void stepODE(HourState state, double doseRate, double dt) {
         // IMPORTANT: Use A_old for G_num BEFORE updating A
         double A_old = state.A;
@@ -90,6 +121,7 @@ public class RadioBio {
             state.A = decay * A_old + doseRate * dt;
         }
     }
+*/
 
     /**
      * Update all hour states with the most recent dose rate.
@@ -101,13 +133,18 @@ public class RadioBio {
         
         // Get dose rate for the hour that just completed
         double doseRate = getDoseRate(globalTime - 1);
-        double dt = 1.0;  // hours
+		double dt = 1.0;  // hours
         
         // Update all hours that represent existing cell cohorts
         // (All hours from 0 to globalTime-1)
         for (int hour = 0; hour < globalTime; hour++) {
             stepODE(hourStates[hour], doseRate, dt);
         }
+        
+//        if (globalTime % 24 == 0 && globalTime / 24 > 22 && globalTime / 24 < 27 ) {  // output around injection day (manually modified), hour 0
+//			System.out.printf("Day %d Hour 0: globalTime=%d, reading doseRate for hour %d, value=%.3e\n",
+//                     globalTime / 24, globalTime, globalTime-1, doseRate);
+//		}
     }
 
     /**
@@ -132,6 +169,24 @@ public class RadioBio {
     }
 
     /**
+     * Get the ODE state (D, A, G_num) for a given birth cohort.
+     * Useful for debugging: lets you see whether dose is accumulating
+     * and whether A and G_num are responding.
+     * 
+     * @param birthTime Hour when cell was born
+     * @return double[3] = {D, A, G_num}, or {0,0,0} if birthTime out of bounds
+     */
+    public double[] getCohortState(int birthTime) {
+        if (birthTime < 0 || birthTime >= maxSimulationHours) {
+            System.err.printf("ERROR: birthTime %d out of bounds [0, %d) - returning zeros for D, A, G_num\n", 
+                             birthTime, maxSimulationHours);
+            return new double[] {0.0, 0.0, 0.0};
+        }
+        HourState state = hourStates[birthTime];
+        return new double[] { state.D, state.A, state.G_num };
+    }
+
+    /**
      * Calculate survival fraction for a cell based on its birth time.
      * 
      * @param birthTime Hour when cell was born
@@ -151,12 +206,13 @@ public class RadioBio {
         // Compute G-factor
         double D = state.D;
         double G_num = state.G_num;
-        double G = 0.0;
-        
-        if (D > 1e-10) {
-            G = 2.0 * G_num / (D * D);
-            G = Math.max(0.0, Math.min(1.0, G));
-        }
+        double G = 2.0 * G_num;
+//		This commented section is the original G*D^2 formulation
+//        double G = 0.0;
+//        if (D > 1e-10) {
+//            G = 2.0 * G_num / (D * D);
+//            G = Math.max(0.0, Math.min(1.0, G));
+//        }
         
         // Get radiosensitivity parameters for cell type
         double alpha, beta;
@@ -169,7 +225,9 @@ public class RadioBio {
         }
         
         // Calculate survival fraction using LQ model with G-factor
-        double SF = Math.exp(-alpha * D - beta * G * D * D);
+        double SF = Math.exp(-alpha * D - beta * G);
+//		This commented section is the original G*D^2 formulation
+//        double SF = Math.exp(-alpha * D - beta * G * D * D);
         
         return SF;
     }
@@ -192,7 +250,9 @@ public class RadioBio {
                 HourState state = hourStates[hour];
                 double age = (globalTime - hour) / 24.0;
                 
-                double G = (state.D > 1e-10) ? 2.0 * state.G_num / (state.D * state.D) : 0.0;
+                double G = 2.0 * state.G_num;
+//		This commented section is the original G*D^2 formulation
+//                double G = (state.D > 1e-10) ? 2.0 * state.G_num / (state.D * state.D) : 0.0;
                 double SF_norm = calculateSF(hour, SimParams.NORMAL);
                 double SF_hypo = calculateSF(hour, SimParams.HYPOXIC);
                 
