@@ -72,7 +72,7 @@ public class IntervalSkewSweep {
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 5;
+    private static final int NUM_REPLICATES = 1;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -81,7 +81,7 @@ public class IntervalSkewSweep {
     //       Single-run mode (Main.java) uses SimParams values
     
     private static final int NUM_INJECTIONS = 2;
-    private static final double BASE_DOSE = 90.0e-9; // mol (100 nmol in SI)
+    private static final double BASE_DOSE = 75.0e-9; // mol (nmol converted to mol)
     private static final double HOT_FRACTION = 0.1;
     private static final int FIRST_INJECTION_DAY = 5;
     private static final int MIN_DAYS_AFTER_LAST_INJECTION = 30; // Days to observe after final injection

@@ -23,17 +23,17 @@ import os
 TIMESTAMP = sys.argv[1] if len(sys.argv) > 1 else None
 
 if TIMESTAMP:
-    CSV_FILE = f"results/ParameterSweep/ParameterSweep_{TIMESTAMP}/sweep_summary.csv"
-    SWEEP_DIR = f"results/ParameterSweep/ParameterSweep_{TIMESTAMP}"
+    CSV_FILE = f"results/IntervalSkewSweep/IntervalSkewSweep_{TIMESTAMP}/sweep_summary.csv"
+    SWEEP_DIR = f"results/IntervalSkewSweep/IntervalSkewSweep_{TIMESTAMP}"
 else:
     # Try to find most recent
     import glob
-    sweep_dirs = glob.glob("results/ParameterSweep/ParameterSweep_*")
+    sweep_dirs = glob.glob("results/IntervalSkewSweep/IntervalSkewSweep_*")
     if sweep_dirs:
         SWEEP_DIR = sorted(sweep_dirs)[-1]
         CSV_FILE = f"{SWEEP_DIR}/sweep_summary.csv"
     else:
-        print("ERROR: No sweep found. Pass timestamp: python visualize_interval_dose.py 2026-01-27_01-53-14")
+        print("ERROR: No sweep found. Pass timestamp: python interval_skew_visualize.py 2026-01-27_01-53-14")
         sys.exit(1)
 
 OUTPUT_DIR = SWEEP_DIR  # Put visualizations in same directory as sweep
@@ -120,7 +120,7 @@ def create_cure_rate_heatmap(df, output_path):
     
     # Labels and title
     ax.set_xlabel('Inter-injection Interval (days)', fontsize=14)
-    ax.set_ylabel('Dose Skew s (nmol)', fontsize=14)
+    ax.set_ylabel('Injection Skew s (nmol)', fontsize=14)
     
     if 'replicate' in df.columns:
         num_reps = df['replicate'].max()
@@ -128,7 +128,7 @@ def create_cure_rate_heatmap(df, output_path):
     else:
         title = 'RPT Treatment Outcome\n(Color = Cure Rate, Number = Mean Injections Used)'
     
-    ax.set_title(title + '\nDose Pattern: [90+s, 90-s] nmol',
+    ax.set_title(title + '\nInjection Pattern: [90+s, 90-s] nmol',
                 fontsize=14, pad=20)
     
     plt.tight_layout()
@@ -226,7 +226,7 @@ def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=1000
     
     # Add overall labels
     fig.text(0.5, 0.02, 'Inter-injection Interval', ha='center', fontsize=14)
-    fig.text(0.02, 0.5, 'Dose Skew (nmol)', va='center', rotation='vertical', fontsize=14)
+    fig.text(0.02, 0.5, 'Injection Skew (nmol)', va='center', rotation='vertical', fontsize=14)
     
     # Title
     fig.suptitle(f'Tumor Population Trajectories\n(x: 0-{max_time} days, y: 0-{max_pop} cells, n={num_reps} replicates overlaid)',
@@ -245,7 +245,7 @@ def main():
     # Check if results file exists
     if not Path(CSV_FILE).exists():
         print(f"ERROR: Results file not found: {CSV_FILE}")
-        print("Please run ParameterSweep.java first.")
+        print("Please run IntervalSkewSweep.java first.")
         return
     
     # Load data
@@ -258,11 +258,11 @@ def main():
     print("\nGenerating visualizations...")
     
     # Figure 1: Clean heatmap with cure rate + injections annotation
-    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/heatmap_cure_rate.png")
+    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/cure_rate_grid.png")
     
     # Figure 2: Small multiples with population trajectories
     if os.path.exists(SWEEP_DIR):
-        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/trajectories_small_multiples.png")
+        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/sweep_summary.png")
     else:
         print(f"Warning: Sweep directory not found: {SWEEP_DIR}")
         print("Skipping small multiples figure.")

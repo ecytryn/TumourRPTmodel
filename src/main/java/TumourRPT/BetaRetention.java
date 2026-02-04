@@ -32,9 +32,24 @@ public class BetaRetention {
     
     /**
      * Lookup table: retention fractions corresponding to R_VALUES_MM
-     * Computed using uniform deposition sphere model with ℓ = 1.0 mm
+     * Computed by
+     * Taylor J. McColl, Nouran R. R. Zaid, Carlos F. Uribe, Arman Rahmim
+     * A unified multi-scale S-value framework enabling pharmacokinetic-pharmacodynamic 
+     * model coupling in radiopharmaceutical therapy
+     * Proc. SNMMI Annual Meeting, 2026 
      */
     private static final double[] RETENTION_FRACTIONS = {
+		0.1982, 0.2899, 0.3641, 0.4275, 0.4861, 0.5408, 
+		0.5921, 0.642, 0.6898, 0.7342, 0.8137, 0.876, 
+		0.9187, 0.9449, 0.9593, 0.9701, 0.97, 0.9695, 
+		0.97, 0.9714, 0.9734
+	};
+
+    /**
+     * Lookup table: retention fractions corresponding to R_VALUES_MM
+     * Computed using uniform deposition sphere model with ℓ = 1.0 mm
+     */
+    private static final double[] RETENTION_FRACTIONS_UNIFORM_DEPOSITION = {
         0.0010, 0.0080, 0.0270, 0.0640, 0.1250, 0.2072,
         0.2875, 0.3579, 0.4179, 0.4688, 0.5493, 0.6096,
         0.6561, 0.6929, 0.7227, 0.7770, 0.8137, 0.8400,
