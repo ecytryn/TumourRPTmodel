@@ -55,12 +55,12 @@ public class DebugRunner {
         String expDesc = String.format("interval=%d, skew=%.0fnmol", interval, skew * 1e9);
         SimParams.setExperiment(expName, expDesc,
                                new int[]{firstInjectionDay, secondInjectionDay},
-                               50e-6,    // Match sweep: 50 μm radius
+                               250e-6,    // Match sweep: 50 μm radius
                                0.06, 0.019);  // Standard hypoxic radiosensitivity
         
         // Store custom doses for injection
         customDoses = new double[]{firstDose, secondDose};
-        totalDays = secondInjectionDay + 60;
+        totalDays = secondInjectionDay + 30;
         
         // Enable visualization
         SimParams.EXPORT_TUMOUR_OX_IMAGES = true;

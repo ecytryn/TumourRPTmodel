@@ -284,20 +284,17 @@ public class PK {
         
         // Convert to Gy/h for compatibility with old outputs
         double doseRate_Gy_per_h = doseRate_Gy_per_s * 3600.0;
-
-        // DIAGNOSTIC: Print every 10 days
-        if (currentDay % 10 == 0 && currentHour == 0 && SimParams.VERBOSE_ON) {
-            System.out.printf("\n=== PK DOSE DIAGNOSTIC (Day %d) ===\n", currentDay);
-            System.out.printf("Tumor: V=%.3f mm³, M=%.3f mg, R=%.3f mm\n",
-                             tumorVolume*1e9, tumorMass*1e6, R_tumor_eff*1e3);
-            System.out.printf("RL: N=%.3e mol, A=%.3e Bq\n", N_hot, activityBq);
-            System.out.printf("Energy: %.3e J/s emitted, %.3e J/s deposited (%.1f%%)\n",
-                             energyRate_emitted, energyRate, f_deposit*100);
-            System.out.printf("Dose rate: %.3e Gy/h\n", doseRate_Gy_per_h);
-            System.out.printf("=====================================\n\n");
-        }
                 
         this.grid.DoseRateList.add(new double[]{doseRate_Gy_per_h});
+        
+        // DIAGNOSTIC: Print around injection days  
+        boolean shouldPrint = false;
+        for (int injDay : SimParams.INJECTION_SCHEDULE) {
+            if (currentDay >= injDay - 1 && currentDay <= injDay + 2) {
+                shouldPrint = true;
+                break;
+            }
+        }
         
         return 0;
     }

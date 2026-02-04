@@ -65,9 +65,6 @@ public class RadioBio {
         for (int i = 0; i < maxSimulationHours; i++) {
             hourStates[i] = new HourState();
         }
-        
-//        System.out.printf("RadioBio initialized: %d hour states, μ=%.4f/hr\n", 
-//                         maxSimulationHours, mu);
     }
 
     /**
@@ -133,18 +130,13 @@ public class RadioBio {
         
         // Get dose rate for the hour that just completed
         double doseRate = getDoseRate(globalTime - 1);
-		double dt = 1.0;  // hours
+        double dt = 1.0;  // hours
         
         // Update all hours that represent existing cell cohorts
         // (All hours from 0 to globalTime-1)
         for (int hour = 0; hour < globalTime; hour++) {
             stepODE(hourStates[hour], doseRate, dt);
         }
-        
-//        if (globalTime % 24 == 0 && globalTime / 24 > 22 && globalTime / 24 < 27 ) {  // output around injection day (manually modified), hour 0
-//			System.out.printf("Day %d Hour 0: globalTime=%d, reading doseRate for hour %d, value=%.3e\n",
-//                     globalTime / 24, globalTime, globalTime-1, doseRate);
-//		}
     }
 
     /**

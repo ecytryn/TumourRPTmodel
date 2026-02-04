@@ -145,81 +145,69 @@ public class Grid extends AgentGrid2D<Cell> {
         ShuffleAgents(this.rng);
     }
 	*/
-    public void Step(int currentDay) {
-        long stepStart = System.nanoTime();
-        
-        int counter = 0;
-        int hourCount = -1;
-        
-        int perHourCellUpdateBudget = Math.floorDiv((int) this.Pop(), 23);
-        
-        long oxygenTime = 0, pkTime = 0, radioBioTime = 0, cellIterTime = 0;
-        int oxygenCalls = 0, pkCalls = 0;
-        
-        for (Cell cell : this) {
-            if (counter % perHourCellUpdateBudget == 0) {
-                hourCount++;
-                SimParams.updateGlobalTime(currentDay, hourCount);
-                
-                // Time oxygen solver
-                long t1 = System.nanoTime();
-                double r_average = updatePKGeometry();
-                this.oxygen.UpdateSteadyStateOxygen(currentDay, r_average);
-                oxygenTime += System.nanoTime() - t1;
-                oxygenCalls++;
-                
-                // Time PK solver
-                long t2 = System.nanoTime();
-                double t_0 = hourCount * SimParams.TIME_STEP;
-                double t_f = (hourCount + 1) * SimParams.TIME_STEP;
-                this.PBPK.DoseRateCalc(t_0, t_f, currentDay, hourCount);
-                pkTime += System.nanoTime() - t2;
-                pkCalls++;
-                
-                // Time radiobiology - update all hour states
-                long t3 = System.nanoTime();
-                this.radioBio.updateAllStates();
-                radioBioTime += System.nanoTime() - t3;
-                
-                PopsOverTime.add(copyArray(CurrentCellsPops));
-            }
-            
-            // Time cell iteration
-            long t4 = System.nanoTime();
-            if (!SimParams.FREEZE_TUMOR) {
-                cell.Step(hourCount, currentDay);  // No lookup table parameter!
-            }
-            cellIterTime += System.nanoTime() - t4;
-            
-            counter++;
-        }
-        
-        CleanAgents();
-        ShuffleAgents(this.rng);
-        
-        long totalStepTime = System.nanoTime() - stepStart;
-        
-        // Print timing breakdown every 5 days
-        if (currentDay % 5 == 6) {
-            System.out.printf("\nDay %d timing breakdown:\n", currentDay);
-            System.out.printf("  Oxygen:    %.3f s (%d calls, avg %.0f ms)\n", 
-                             oxygenTime/1e9, oxygenCalls, oxygenTime/1e6/oxygenCalls);
-            System.out.printf("  PK:        %.3f s (%d calls, avg %.0f ms)\n", 
-                             pkTime/1e9, pkCalls, pkTime/1e6/pkCalls);
-            System.out.printf("  RadioBio:  %.3f s\n", radioBioTime/1e9);
-            System.out.printf("  CellIter:  %.3f s\n", cellIterTime/1e9);
-            System.out.printf("  TOTAL:     %.3f s\n", totalStepTime/1e9);
-            
-            // Check for growing data structures
-            System.out.printf("  PK states: %d, DoseRates: %d, Pops: %d\n",
-                             PKStateVariables.size(), DoseRateList.size(), PopsOverTime.size());
-        }
-        
-        CleanAgents();
-        ShuffleAgents(this.rng);
-    }
 
-	
+	public void Step(int currentDay) {
+		long stepStart = System.nanoTime();
+		
+		long oxygenTime = 0, pkTime = 0, radioBioTime = 0, cellIterTime = 0;
+		int oxygenCalls = 0, pkCalls = 0;
+		
+		// ===== GUARANTEED 24 HOURLY UPDATES =====
+		// Do NOT tie this to cell iteration - must be exactly 24 times
+		for (int hourCount = 0; hourCount < 24; hourCount++) {
+			SimParams.updateGlobalTime(currentDay, hourCount);
+			
+			// Time oxygen solver
+			long t1 = System.nanoTime();
+			double r_average = updatePKGeometry();
+			this.oxygen.UpdateSteadyStateOxygen(currentDay, r_average);
+			oxygenTime += System.nanoTime() - t1;
+			oxygenCalls++;
+			
+			// Time PK solver
+			long t2 = System.nanoTime();
+			double t_0 = hourCount * SimParams.TIME_STEP;
+			double t_f = (hourCount + 1) * SimParams.TIME_STEP;
+			this.PBPK.DoseRateCalc(t_0, t_f, currentDay, hourCount);
+			pkTime += System.nanoTime() - t2;
+			pkCalls++;
+			
+			// Time radiobiology - update all hour states
+			long t3 = System.nanoTime();
+			this.radioBio.updateAllStates();
+			radioBioTime += System.nanoTime() - t3;
+			
+			PopsOverTime.add(copyArray(CurrentCellsPops));
+		}
+		
+		// ===== CELL UPDATES =====
+		// Cells still get stepped, but not tied to hour boundary
+		for (Cell cell : this) {
+			long t4 = System.nanoTime();
+			if (!SimParams.FREEZE_TUMOR) {
+				// Note: hourCount is now 23 (from the loop above)
+				// Each cell experiences the full day's progression
+				cell.Step(23, currentDay);  
+			}
+			cellIterTime += System.nanoTime() - t4;
+		}
+		
+		CleanAgents();
+		ShuffleAgents(this.rng);
+		
+		// Timing report (if enabled)
+		if (SimParams.VERBOSE_ON && currentDay % 10 == 0) {
+			long stepTime = System.nanoTime() - stepStart;
+			System.out.printf("Day %d timing:\n", currentDay);
+			System.out.printf("  Oxygen:    %.3f s (%d calls)\n", oxygenTime/1e9, oxygenCalls);
+			System.out.printf("  PK:        %.3f s (%d calls)\n", pkTime/1e9, pkCalls);
+			System.out.printf("  RadioBio:  %.3f s\n", radioBioTime/1e9);
+			System.out.printf("  Cells:     %.3f s\n", cellIterTime/1e9);
+			System.out.printf("  Total:     %.3f s\n", stepTime/1e9);
+			System.out.printf("  PKStateVariables.size=%d, DoseRateList.size=%d\n",
+							 PKStateVariables.size(), DoseRateList.size());
+		}
+	}	
 	
     /**
      * Update PK model with current tumor geometry

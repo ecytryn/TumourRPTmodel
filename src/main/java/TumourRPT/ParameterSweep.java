@@ -98,7 +98,7 @@ public class ParameterSweep {
     
     public static void main(String[] args) throws IOException {
 
-		SimParams.INITIAL_TUMOR_RADIUS = 200e-6;  // Small vulnerable tumor just below treatment threshold
+		SimParams.INITIAL_TUMOR_RADIUS = 250e-6;  // Small vulnerable tumor just below treatment threshold
 
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
