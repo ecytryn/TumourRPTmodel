@@ -223,9 +223,9 @@ public class SimParams {
     // INJECTION PROTOCOL
     // =================================================================
     // **FOR SINGLE RUNS:** Change these parameters to run individual experiments
-    // **FOR PARAMETER SWEEPS:** Use ParameterSweep.java which programmatically 
+    // **FOR PARAMETER SWEEPS:** Use IntervalSkewSweep.java which programmatically 
     //                          varies inter-injection interval and dose distribution
-    //
+    //                           or DoseReceptorSweep.java (injected amount and receptor density)
     // Main.java uses these values for single-run mode
     
     public static final double DOSE_PER_INJECTION = 100e-9;   // mol (100 nmol per injection is baseline)

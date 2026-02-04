@@ -167,7 +167,7 @@ public class DebugRunner {
         // Handle sweep type with indices
         if (sweepType != null && xIndex != null && yIndex != null) {
             if (sweepType.contains("interval") || sweepType.contains("skew")) {
-                // Copy arrays from ParameterSweep - MUST MATCH YOUR ACTUAL SWEEP!
+                // Copy arrays from IntervalSkewSweep - MUST MATCH YOUR ACTUAL SWEEP!
                 int[] INTERVALS = {20, 28, 36, 44, 52, 60, 68, 76};
                 double[] SKEWS = {-60e-9, -40e-9, -20e-9, 0, 20e-9, 40e-9, 60e-9};
                 
@@ -294,12 +294,7 @@ public class DebugRunner {
         System.out.println("\n" + "=".repeat(60));
         System.out.println("        TUMOR RPT DEBUG RUNNER");
         System.out.println("=".repeat(60) + "\n");
-        
-        // Initialize random seed
-		int seed = (customSeed != null) ? customSeed : 42;
-		Rand rng = new Rand(seed);
-		System.out.println("Using random seed: " + seed);
-        
+                
         // Parse command line OR use edited method
         if (args.length > 0) {
             parseCommandLine(args);
@@ -310,6 +305,11 @@ public class DebugRunner {
             setDebugParameters_IntervalSkew();  // For interval-skew sweeps
             // setDebugParameters_DoseReceptor();   // For dose-receptor sweeps
         }
+
+        // Initialize random seed
+		int seed = (customSeed != null) ? customSeed : 42;
+		Rand rng = new Rand(seed);
+		System.out.println("Using random seed: " + seed);
         
         // Create output directory
         String timestamp = java.time.LocalDateTime.now()

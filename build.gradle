@@ -52,8 +52,8 @@ application {
 }
 
 // Task to run parameter sweep - interval-skew
-task runSweep(type: JavaExec) {
-    mainClass = 'TumorRPT.ParameterSweep'
+task runIntervalSkewSweep(type: JavaExec) {
+    mainClass = 'TumorRPT.IntervalSkewSweep'
     classpath = sourceSets.main.runtimeClasspath
     // Increase heap size for large sweeps if needed
     jvmArgs = ['-Xmx4g']

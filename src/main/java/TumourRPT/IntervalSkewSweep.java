@@ -28,7 +28,7 @@ import java.time.format.DateTimeFormatter;
  * 6. Repeat as needed
  */
 
-public class ParameterSweep {
+public class IntervalSkewSweep {
     
     // =======================================================================
     // SWEEP PARAMETERS - Edit these to define the parameter space
@@ -90,7 +90,7 @@ public class ParameterSweep {
     // These can be overridden if needed, but default to SimParams values
     
     // Output configuration
-    private static final String BASE_OUTPUT_DIR = "results/ParameterSweep/ParameterSweep" + OUTPUT_SUFFIX;
+    private static final String BASE_OUTPUT_DIR = "results/IntervalSkewSweep/IntervalSkewSweep" + OUTPUT_SUFFIX;
     private static final String SUMMARY_CSV = BASE_OUTPUT_DIR + "/sweep_summary" + OUTPUT_SUFFIX + ".csv";
     
     // Image export control (set to false for faster sweeps)
