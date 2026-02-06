@@ -324,10 +324,10 @@ public class Grid extends AgentGrid2D<Cell> {
             return;
         }
         
-        // TODO: File doesn't exist - call Python script to generate it
+        // Requested vessel file doesn't exist. Prompt the user to create it.
         System.err.println("WARNING: Vessel configuration not found: " + configPath);
         System.err.println("Expected location: src/main/resources/" + configPath);
-        System.err.println("Please ensure the file exists or implement GenerateVesselConf() to create it.");
+        System.err.println("Please use GenerateUniformVessels.py to create it.");
     }
 
     /**

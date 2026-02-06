@@ -130,6 +130,8 @@ public class DoseReceptorSweep {
                     String runDir = String.format("%s/dose_%.0f_recep_%.2e_rep_%d", 
                                                  sweepDir, dose, receptorDensity, rep + 1);
                     new File(runDir).mkdirs();
+
+					saveGitInfo(outputDir);
                     
                     System.out.printf("[%d/%d] Running: dose=%.0f nmol, receptors=%.2e mol/cell, replicate=%d/%d%n", 
                                      currentRun, totalRuns, dose, receptorDensity, rep + 1, NUM_REPLICATES);
@@ -327,4 +329,21 @@ public class DoseReceptorSweep {
         
         return new SimResult(finalCount, NUM_INJECTIONS);
     }
+
+	private static void saveGitInfo(String outputDir) {
+		try {
+			Process process = Runtime.getRuntime().exec("git rev-parse HEAD");
+			BufferedReader reader = new BufferedReader(
+				new InputStreamReader(process.getInputStream()));
+			String commit = reader.readLine();
+			
+			try (PrintWriter out = new PrintWriter(
+					new FileWriter(outputDir + "/git_info.txt"))) {
+				out.println("Git commit: " + commit);
+				out.println("Date: " + java.time.LocalDateTime.now());
+			}
+		} catch (Exception e) {
+			// Git not available or not a git repo - silently skip
+		}
+	}
 }

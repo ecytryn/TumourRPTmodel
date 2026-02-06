@@ -28,7 +28,7 @@ import java.time.format.DateTimeFormatter;
  * 6. Repeat as needed
  */
 
-public class IntervalSkewSweep {
+public class ParameterSweep {
     
     // =======================================================================
     // SWEEP PARAMETERS - Edit these to define the parameter space
@@ -72,7 +72,7 @@ public class IntervalSkewSweep {
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 1;
+    private static final int NUM_REPLICATES = 5;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -81,7 +81,7 @@ public class IntervalSkewSweep {
     //       Single-run mode (Main.java) uses SimParams values
     
     private static final int NUM_INJECTIONS = 2;
-    private static final double BASE_DOSE = 75.0e-9; // mol (nmol converted to mol)
+    private static final double BASE_DOSE = 90.0e-9; // mol (100 nmol in SI)
     private static final double HOT_FRACTION = 0.1;
     private static final int FIRST_INJECTION_DAY = 5;
     private static final int MIN_DAYS_AFTER_LAST_INJECTION = 30; // Days to observe after final injection
@@ -90,7 +90,7 @@ public class IntervalSkewSweep {
     // These can be overridden if needed, but default to SimParams values
     
     // Output configuration
-    private static final String BASE_OUTPUT_DIR = "results/IntervalSkewSweep/IntervalSkewSweep" + OUTPUT_SUFFIX;
+    private static final String BASE_OUTPUT_DIR = "results/ParameterSweep/ParameterSweep" + OUTPUT_SUFFIX;
     private static final String SUMMARY_CSV = BASE_OUTPUT_DIR + "/sweep_summary" + OUTPUT_SUFFIX + ".csv";
     
     // Image export control (set to false for faster sweeps)
@@ -174,8 +174,6 @@ public class IntervalSkewSweep {
                     String runDir = String.format("%s/interval_%d_skew_%.0f_rep_%d", 
                                                  sweepDir, interval, skew * 1e9, rep + 1);
                     new File(runDir).mkdirs();
-					
-					saveGitInfo(outputDir);                      
                     
                     System.out.printf("[%d/%d] Running: interval=%d days, skew=%.0f nmol, replicate=%d/%d%n", 
                                      currentRun, totalRuns, interval, skew * 1e9, rep + 1, NUM_REPLICATES);
@@ -377,24 +375,6 @@ public class IntervalSkewSweep {
         
         return new SimResult(finalCount, injectionsUsed);
     }
-
-	private static void saveGitInfo(String outputDir) {
-		try {
-			Process process = Runtime.getRuntime().exec("git rev-parse HEAD");
-			BufferedReader reader = new BufferedReader(
-				new InputStreamReader(process.getInputStream()));
-			String commit = reader.readLine();
-			
-			try (PrintWriter out = new PrintWriter(
-					new FileWriter(outputDir + "/git_info.txt"))) {
-				out.println("Git commit: " + commit);
-				out.println("Date: " + java.time.LocalDateTime.now());
-			}
-		} catch (Exception e) {
-			// Git not available or not a git repo - silently skip
-		}
-	}
-
 }
 
 /**

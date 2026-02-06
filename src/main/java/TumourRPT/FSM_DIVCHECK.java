@@ -35,19 +35,27 @@ public class FSM_DIVCHECK {
                 } else {
                     this.cell.ChangeType(SimParams.NORMAL);
                 }
-                this.cell.GetSurvivalProb();  // No parameter needed!
-                if (this.cell.G.rng.Double()<(1-cell.survivalProb)){
-                    this.cell.ChangeType(SimParams.APOPTOTIC);
-                }else{
-                    this.DivideCheck();
-                    return 0;
-                }
+				// Check if cell wants to divide
+				this.DivideCheck();
+
+				// Only check radiation survival if attempting division
+				if (this.cell.divisionFlag) {
+					this.cell.GetSurvivalProb();
+					if (this.cell.G.rng.Double() < (1 - this.cell.survivalProb)) {
+						// Failed survival check during mitosis
+						this.cell.ChangeType(SimParams.APOPTOTIC);
+					} else {
+						// Survived mitosis - reset radiation age for both parent and daughter
+						this.cell.birthTime = SimParams.globalTime;
+						// divisionFlag remains true, Grid will create daughter cell
+					}
+				}
+				return 0;
             }
         }
         this.DisposeCheck();
         return 0;
     }
-
 
     public void DisposeCheck(){
         // if some conditions are satisfied, then sets the dispose flag to be true
@@ -75,17 +83,16 @@ public class FSM_DIVCHECK {
 //            }
 //        }
 
-
-
     }
+
     public void DivideCheck(){
-        // if some conditions are satisfied, then sets the divide flat to true
+        // if some conditions are satisfied, then sets the divide flag to true
         // this.cell.divideFlag = true.
-        // TODO: This needs to be implemented. The "cell divides" block in the
-        //  flow chart should be implemented
-
-
         if (this.cell.type != SimParams.VESSEL) {
+			if (this.cell.G.GetTick() % 240 == 0) {  // Every 10 days
+				System.out.printf("Cell divProb sample: %.3f (type=%d, O2=%.1f)\n", 
+					 this.cell.divisionProb, this.cell.type, this.cell.oxygen);
+			}
             if (this.cell.G.rng.Double()<this.cell.divisionProb){
                 this.cell.divisionFlag = true;
             }

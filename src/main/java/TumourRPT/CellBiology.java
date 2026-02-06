@@ -16,11 +16,11 @@ public class CellBiology {
         this.cell.divisionProb = 1;
 
         if (this.cell.type == SimParams.HYPOXIC){
-            this.cell.divisionProb = SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
+            this.cell.divisionProb = SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
         }
         if (this.cell.type == SimParams.NORMAL){
-            // TODO: Magic number here for good visualization
-            this.cell.divisionProb = 10*SimParams.DIVISON_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
+            // Not sure when the 10* was added. This Prob is likely close to 1 based on tumour growth rate - check this.
+            this.cell.divisionProb = 10*SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
         }
     }
 

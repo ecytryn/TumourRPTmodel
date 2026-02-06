@@ -112,7 +112,6 @@ public class OxygenDiffusionSolver {
         // oxygenGrid already contains previous solution
         
         // Boundary conditions: Set boundary to healthy tissue oxygen level
-		// TODO: Implement Neumann BC option - currently always uses Dirichlet
 		double u_boundary;
 		if (useCalibrated && calibratedBoundary > 0) {
 			// use average from a tumour-free simulation carried out during initialization 

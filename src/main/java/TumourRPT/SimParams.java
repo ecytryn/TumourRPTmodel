@@ -147,7 +147,7 @@ public class SimParams {
 	public static final double strictRemovalCoeff = 1.0;
 
 
-	public static final double DIVISON_PROB_MAX = 0.5;  // per day
+	public static final double DIVISION_PROB_MAX = 0.5;  // per day
 	public static final int[] divHood = HAL.Util.CircleHood(true, 1);  // immediate neighbors    
 
     // =================================================================

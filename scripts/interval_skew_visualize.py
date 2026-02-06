@@ -128,7 +128,7 @@ def create_cure_rate_heatmap(df, output_path):
     else:
         title = 'RPT Treatment Outcome\n(Color = Cure Rate, Number = Mean Injections Used)'
     
-    ax.set_title(title + '\nInjection Pattern: [90+s, 90-s] nmol',
+    ax.set_title(title + '\nInjection Pattern: [75+s, 75-s] nmol',
                 fontsize=14, pad=20)
     
     plt.tight_layout()
@@ -262,7 +262,7 @@ def main():
     
     # Figure 2: Small multiples with population trajectories
     if os.path.exists(SWEEP_DIR):
-        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/sweep_summary.png")
+        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/cure_rate_grid_with_tiny_plots.png")
     else:
         print(f"Warning: Sweep directory not found: {SWEEP_DIR}")
         print("Skipping small multiples figure.")

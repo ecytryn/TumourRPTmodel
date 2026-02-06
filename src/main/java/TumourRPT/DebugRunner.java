@@ -316,6 +316,8 @@ public class DebugRunner {
                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String outputDir = "results/debug_runs/" + SimParams.EXPERIMENT_NAME + "_" + timestamp;
         new File(outputDir).mkdirs();
+
+		saveGitInfo(outputDir);
         
         // Set up output directories (matches Main.java pattern)
         SimParams.OUTPUT_DIR_BASE = outputDir;
@@ -464,4 +466,23 @@ public class DebugRunner {
         SimParams.generateParameterReport(outputDir + "/parameters.md");
         SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
     }
+
+	private static void saveGitInfo(String outputDir) {
+		try {
+			Process process = Runtime.getRuntime().exec("git rev-parse HEAD");
+			BufferedReader reader = new BufferedReader(
+				new InputStreamReader(process.getInputStream()));
+			String commit = reader.readLine();
+			
+			try (PrintWriter out = new PrintWriter(
+					new FileWriter(outputDir + "/git_info.txt"))) {
+				out.println("Git commit: " + commit);
+				out.println("Date: " + java.time.LocalDateTime.now());
+			}
+		} catch (Exception e) {
+			// Git not available or not a git repo - silently skip
+		}
+	}
+
+
 }

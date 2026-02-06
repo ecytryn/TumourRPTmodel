@@ -43,7 +43,7 @@ lambda_bio = 1.6e-4  # /min (biological clearance)
 lambda_decay = 7.14e-5  # /min (Lu-177 decay)
 k_on = 0.046 * 1e6 * 1e-9 # m³/(nmol·min) (binding rate)
 # k_off will be varied
-k_int = 1*0.001  # /min (internalization)
+k_int = 0.001  # /min (internalization)
 k_rel = 2e-4  # /min (release from cells)
 
 # Geometry (for small tumor, ~3285 cells in 2D)
