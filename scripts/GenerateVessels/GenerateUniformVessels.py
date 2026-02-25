@@ -11,7 +11,8 @@ fig, ax = plt.subplots()
 # -------------------------------
 N = 10000
 DOMAIN_SIZE = 4000.0      # microns (square domain)
-R_REPEL = 40.0            # repulsive radius --> 616.1 vessels/mm^2 
+R_REPEL = 80.0            # repulsive radius --> 616.1 vessels/mm^2 
+#R_REPEL = 40.0            # repulsive radius --> 616.1 vessels/mm^2 
 #R_REPEL = 50.0            # repulsive radius  --> 604.8 vessels/mm^2
 #R_REPEL = 60.0            # repulsive radius --> 591.9 vessels/mm^2 
 STEP_SIZE = 0.1           # smaller = slower but more stable relaxation

@@ -69,13 +69,23 @@ public class Main {
 
 		// Generate parameter report
 		SimParams.generateParameterReport(outputDir + "/parameters.md");
-		SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
+		SimParams.exportParametersToCSV(outputDir + "/parameters.csv",
+                                SimParams.INJECTION_SCHEDULE,
+                                // Need to create dose array from DOSE_PER_INJECTION:
+                                createDoseArray(SimParams.INJECTION_SCHEDULE.length),
+                                SimParams.HOT_FRACTION,
+                                SimParams.RECEPTORS_PER_CELL_MOL);
 		saveGitInfo(outputDir);
 		
         // Initialize simulation (creates vessels, seeds tumor, sets up PK)
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
 //        model.Init(dayCount, null, null);
+
+		// Develop hypoxia without growth
+		if (SimParams.HYPOXIA_DEV_DAYS > 0) {
+			model.developHypoxiaWithoutGrowth(SimParams.HYPOXIA_DEV_DAYS, false);
+		}
 
         // Report initial state
         int initialCells = model.countTumorCells();
@@ -231,6 +241,14 @@ public class Main {
         
     }
 
+	private static double[] createDoseArray(int numInjections) {
+		double[] doses = new double[numInjections];
+		for (int i = 0; i < numInjections; i++) {
+			doses[i] = SimParams.DOSE_PER_INJECTION;
+		}
+		return doses;
+	}
+	
 	private static void saveGitInfo(String outputDir) {
 		try {
 			Process process = Runtime.getRuntime().exec("git rev-parse HEAD");
@@ -253,52 +271,52 @@ public class Main {
 			case "WatchGrow":
 				SimParams.setExperiment("WatchATumourGrow", 
 					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
-					new int[]{145}, 100e-6, 0.06, 0.019);
+					new int[]{195}, 100e-6, 0.06, 0.02, 0);
 				break;
 			case "WatchGrowLarge":
 				SimParams.setExperiment("WatchATumourGrowLarge", 
 					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
-					new int[]{40}, 950e-6, 0.06, 0.019);
+					new int[]{40}, 950e-6, 0.06, 0.02, 0);
 				break;
-			case "Day5VerySmall":
-				SimParams.setExperiment("InjectionDay5VerySmallTumour",
-					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Very small initial tumour",
-					new int[]{5}, 100e-6, 0.06, 0.019);
+			case "NormoxicSmall":
+				SimParams.setExperiment("NormoxicSmallTumour",
+					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Small initial tumour.",
+					new int[]{5}, 100e-6, 0.05, 0.02, 0);
 				break;
-			case "Day5Small":
-				SimParams.setExperiment("InjectionDay5SmallTumour",
-					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Small initial tumour",
-					new int[]{5}, 333e-6, 0.06, 0.019);
+			case "NormoxicMedium":
+				SimParams.setExperiment("NormoxicMediumTumour",
+					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Medium initial tumour.",
+					new int[]{5}, 333e-6, 0.05, 0.02, 0);
 				break;
-			case "Day5Large":
-				SimParams.setExperiment("InjectionDay5LargeTumour",
-					"Treat early to demonstrate what happens with treatment of a normoxic tumour. Large initial tumour",
-					new int[]{5}, 950e-6, 0.06, 0.019);
+			case "NormoxicLarge":
+				SimParams.setExperiment("NormoxicLargeTumour",
+					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Large initial tumour.",
+					new int[]{5}, 950e-6, 0.05, 0.02, 0);
 				break;
-			case "Day45VerySmall":
-				SimParams.setExperiment("InjectionDay45VerySmallTumour",
-					"Treat late to demonstrate what happens with treatment of a mixed tumour. Very small initial tumour",
-					new int[]{45}, 8e-6, 0.06, 0.019);
+			case "HypoxicSmall":
+				SimParams.setExperiment("HypoxicSmallTumour",
+					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Small initial tumour.",
+					new int[]{5}, 100e-6, 0.05, 0.02, 40);
 				break;
-			case "Day45Small":
-				SimParams.setExperiment("InjectionDay45SmallTumour",
-					"Treat late to demonstrate what happens with treatment of a mixed tumour. Small initial tumour",
-					new int[]{45}, 333e-6, 0.06, 0.019);
+			case "HypoxicMedium":
+				SimParams.setExperiment("HypoxicMediumTumour",
+					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Medium initial tumour.",
+					new int[]{5}, 333e-6, 0.05, 0.02, 40);
 				break;
-			case "Day45Large":
-				SimParams.setExperiment("InjectionDay45LargeTumour",
-					"Treat late to demonstrate what happens with treatment of a mixed tumour. Large initial tumour",
-					new int[]{45}, 950e-6, 0.06, 0.019);
+			case "HypoxicLarge":
+				SimParams.setExperiment("HypoxicLargeTumour",
+					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Large initial tumour",
+					new int[]{5}, 950e-6, 0.05, 0.02, 40);
 				break;
 			case "Reoxygenation":
 				SimParams.setExperiment("ReoxygenationExperiment",
 					"Set alpha_hypoxic = beta_hypoxic =0. This allows us to see how, once reoxygenated, hypoxic cells convert back to normoxic and die.",
-					new int[]{45}, 333e-6, 0.0, 0.0);  // Zero hypoxic sensitivity!
+					new int[]{5}, 333e-6, 0.0, 0.0, 40);  // Zero hypoxic sensitivity!
 				break;
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
 					"This case is for one-off runs to create specific plots for a figure.",
-					new int[]{5, 15}, 333e-6, 0.06, 0.019);
+					new int[]{5}, 100e-6, 0.05, 0.02, 40);
 				break;
 			default:
 				// Use defaults from SimParams

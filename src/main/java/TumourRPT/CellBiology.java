@@ -13,14 +13,16 @@ public class CellBiology {
     public void DivProbCalc(){
         // this function calculates the division probability of the cell
         // based on several factors like the cell type, oxygen level, etc
-        this.cell.divisionProb = 1;
+
+	    // Default for vessels and necrotic, apoptotic cells
+		this.cell.divisionProb = 0.0;
 
         if (this.cell.type == SimParams.HYPOXIC){
             this.cell.divisionProb = SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
         }
         if (this.cell.type == SimParams.NORMAL){
-            // Not sure when the 10* was added. This Prob is likely close to 1 based on tumour growth rate - check this.
-            this.cell.divisionProb = 10*SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
+            // The 3* ensures division when oxygen is not suppressed.
+            this.cell.divisionProb = 3*SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
         }
     }
 

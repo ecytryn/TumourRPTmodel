@@ -1,195 +1,221 @@
 #!/bin/bash
 
-# Automated Debug Sweep Runner
-# Runs simulations across a parameter row with multiple replicates
-# Intelligently interleaves replicates so you can see trends early
+# Automated Debug Sweep for IntervalSkewSweep
+# USAGE: ./interval_skew_debug_sweep.sh [sweep_directory]
+# Example: ./interval_skew_debug_sweep.sh results/IntervalSkewSweep/IntervalSkewSweep_2026-02-24_13-00-00
 
 # =============================================================================
-# CONFIGURATION - Edit these to match your needs
+# AUTO-DETECT OR USE PROVIDED SWEEP DIRECTORY
 # =============================================================================
 
-# Parameter space to explore
-INTERVALS=(20 28 36 44 52 60 68 76)  # Your interval values
-SKEW=0                                # Fixed skew value (row in heatmap)
+SWEEP_DIR="$1"
 
-# Number of replicates per point
-NUM_REPLICATES=5
+if [ -z "$SWEEP_DIR" ]; then
+    # Auto-find most recent IntervalSkewSweep
+    SWEEP_DIR=$(ls -td results/IntervalSkewSweep/IntervalSkewSweep_* 2>/dev/null | head -1)
+fi
 
-# Output organization
-SWEEP_NAME="interval_row_skew0"
-OUTPUT_BASE="results/debug_sweeps/${SWEEP_NAME}_$(date +%Y%m%d_%H%M%S)"
-
-# Specific days to extract images (adjust based on your injection schedule)
-# For interval row, you probably want: injection day, peak response, endpoint
-IMAGE_DAYS=(0 5 10 20 30 40 50 60 80 100)
-
-# =============================================================================
-# SETUP
-# =============================================================================
+if [ ! -d "$SWEEP_DIR" ]; then
+    echo "ERROR: Sweep directory not found: $SWEEP_DIR"
+    echo ""
+    echo "USAGE: $0 [sweep_directory]"
+    echo "Example: $0 results/IntervalSkewSweep/IntervalSkewSweep_2026-02-24_13-00-00"
+    echo ""
+    echo "Or run without arguments to auto-detect most recent sweep."
+    exit 1
+fi
 
 echo "============================================================"
-echo "  AUTOMATED DEBUG SWEEP: ${SWEEP_NAME}"
+echo "  INTERVAL-SKEW DEBUG SWEEP"
 echo "============================================================"
 echo ""
-echo "Configuration:"
+echo "Using sweep directory:"
+echo "  $SWEEP_DIR"
+echo ""
+
+# =============================================================================
+# EXTRACT CONFIGURATION FROM PARAMETERS.CSV
+# =============================================================================
+
+# Find a sample parameters.csv (any one will do - all runs have same fixed params)
+PARAM_FILE=$(find "$SWEEP_DIR" -name "parameters.csv" -type f | head -1)
+
+if [ ! -f "$PARAM_FILE" ]; then
+    echo "ERROR: No parameters.csv found in $SWEEP_DIR"
+    echo "Make sure the sweep completed successfully."
+    exit 1
+fi
+
+echo "Reading configuration from:"
+echo "  $PARAM_FILE"
+echo ""
+
+# Extract fixed parameters (these are the same across all runs in the sweep)
+INITIAL_RADIUS=$(grep "^initial_tumor_radius," "$PARAM_FILE" | cut -d',' -f2)
+VESSEL_CONFIG=$(grep "^vessel_density_config," "$PARAM_FILE" | cut -d',' -f2)
+HYPOXIA_DEV=$(grep "^hypoxia_dev_days," "$PARAM_FILE" | cut -d',' -f2 2>/dev/null || echo "0")
+ALPHA_HYPOXIC=$(grep "^alpha_hypoxic," "$PARAM_FILE" | cut -d',' -f2)
+BETA_HYPOXIC=$(grep "^beta_hypoxic," "$PARAM_FILE" | cut -d',' -f2)
+
+echo "Configuration from sweep:"
+echo "  Initial radius: ${INITIAL_RADIUS} um"
+echo "  Vessel config: ${VESSEL_CONFIG}"
+echo "  Hypoxia development: ${HYPOXIA_DEV} days"
+echo "  Hypoxic α/β: ${ALPHA_HYPOXIC} / ${BETA_HYPOXIC}"
+echo ""
+
+# =============================================================================
+# EXTRACT SWEEP PARAMETER RANGES
+# =============================================================================
+
+# Get all unique intervals and skews from directory names
+INTERVALS=($(find "$SWEEP_DIR" -type d -name "interval_*_skew_*_rep_*" | \
+             sed 's/.*interval_\([0-9]*\)_skew.*/\1/' | sort -nu))
+
+SKEWS=($(find "$SWEEP_DIR" -type d -name "interval_*_skew_*_rep_*" | \
+         sed 's/.*skew_\([-0-9]*\)_rep.*/\1/' | sort -nu))
+
+echo "Sweep parameter ranges found:"
 echo "  Intervals: ${INTERVALS[@]}"
-echo "  Skew: ${SKEW} nmol"
+echo "  Skews: ${SKEWS[@]}"
+echo ""
+
+# =============================================================================
+# USER SELECTS ROW OR COLUMN TO DEBUG
+# =============================================================================
+
+echo "Select debug mode:"
+echo "  1) Row (fix skew, vary interval)"
+echo "  2) Column (fix interval, vary skew)"
+echo ""
+read -p "Choice [1-2]: " MODE_CHOICE
+
+if [ "$MODE_CHOICE" = "1" ]; then
+    # Row mode - select which skew to fix
+    echo ""
+    echo "Available skews: ${SKEWS[@]}"
+    read -p "Select skew value: " FIXED_SKEW
+    
+    SWEEP_VALUES=("${INTERVALS[@]}")
+    SWEEP_PARAM="interval"
+    FIXED_PARAM="skew"
+    FIXED_VALUE=$FIXED_SKEW
+    
+    SWEEP_NAME="interval_row_skew${FIXED_SKEW}"
+    OUTPUT_BASE="results/debug_sweeps/${SWEEP_NAME}_$(date +%Y%m%d_%H%M%S)"
+    
+elif [ "$MODE_CHOICE" = "2" ]; then
+    # Column mode - select which interval to fix
+    echo ""
+    echo "Available intervals: ${INTERVALS[@]}"
+    read -p "Select interval value: " FIXED_INTERVAL
+    
+    SWEEP_VALUES=("${SKEWS[@]}")
+    SWEEP_PARAM="skew"
+    FIXED_PARAM="interval"
+    FIXED_VALUE=$FIXED_INTERVAL
+    
+    SWEEP_NAME="interval${FIXED_INTERVAL}_skew_col"
+    OUTPUT_BASE="results/debug_sweeps/${SWEEP_NAME}_$(date +%Y%m%d_%H%M%S)"
+else
+    echo "Invalid choice. Exiting."
+    exit 1
+fi
+
+echo ""
+read -p "Number of replicates per point [5]: " NUM_REPLICATES
+NUM_REPLICATES=${NUM_REPLICATES:-5}
+
+mkdir -p "$OUTPUT_BASE"
+
+echo ""
+echo "Debug sweep configuration:"
+echo "  Mode: $MODE_CHOICE (${SWEEP_PARAM} sweep, ${FIXED_PARAM}=${FIXED_VALUE})"
+echo "  Values to test: ${SWEEP_VALUES[@]}"
 echo "  Replicates: ${NUM_REPLICATES}"
 echo "  Output: ${OUTPUT_BASE}"
 echo ""
-echo "This will run $(( ${#INTERVALS[@]} * ${NUM_REPLICATES} )) simulations"
-echo "Estimated time: ~$(( ${#INTERVALS[@]} * ${NUM_REPLICATES} * 10 )) minutes (10 min/sim)"
+echo "This will run $(( ${#SWEEP_VALUES[@]} * ${NUM_REPLICATES} )) simulations"
 echo ""
 read -p "Press Enter to continue or Ctrl+C to cancel..."
-echo ""
-
-# Create output directory
-mkdir -p "${OUTPUT_BASE}"
-
-# Log file
-LOGFILE="${OUTPUT_BASE}/sweep_log.txt"
-echo "Sweep started: $(date)" > "${LOGFILE}"
-echo "Configuration: intervals=${INTERVALS[@]}, skew=${SKEW}, replicates=${NUM_REPLICATES}" >> "${LOGFILE}"
-echo "" >> "${LOGFILE}"
 
 # =============================================================================
 # RUN SIMULATIONS
-# Strategy: Interleave replicates so you get full row coverage quickly
 # =============================================================================
 
+LOGFILE="${OUTPUT_BASE}/sweep_log.txt"
+echo "Debug sweep started: $(date)" > "${LOGFILE}"
+echo "Source sweep: $SWEEP_DIR" >> "${LOGFILE}"
+echo "Configuration file: $PARAM_FILE" >> "${LOGFILE}"
+echo "" >> "${LOGFILE}"
+
+echo ""
 echo "Starting simulations..."
-echo "Strategy: Run all intervals for replicate 1, then rep 2, etc."
-echo "This gives you full parameter coverage quickly!"
 echo ""
 
-TOTAL_RUNS=$(( ${#INTERVALS[@]} * ${NUM_REPLICATES} ))
+TOTAL_RUNS=$(( ${#SWEEP_VALUES[@]} * ${NUM_REPLICATES} ))
 CURRENT_RUN=0
 
-for REP in $(seq 1 ${NUM_REPLICATES}); do
+for REP in $(seq 1 $NUM_REPLICATES); do
     echo "=========================================="
     echo "  REPLICATE ${REP}/${NUM_REPLICATES}"
     echo "=========================================="
     echo ""
     
-    for INTERVAL in "${INTERVALS[@]}"; do
+    for VALUE in "${SWEEP_VALUES[@]}"; do
         CURRENT_RUN=$((CURRENT_RUN + 1))
+        
+        # Set interval and skew based on mode
+        if [ "$MODE_CHOICE" = "1" ]; then
+            INTERVAL=$VALUE
+            SKEW=$FIXED_VALUE
+        else
+            INTERVAL=$FIXED_VALUE
+            SKEW=$VALUE
+        fi
         
         echo "[${CURRENT_RUN}/${TOTAL_RUNS}] Running: interval=${INTERVAL}, skew=${SKEW}, replicate=${REP}"
         
-        # Run the simulation
         START_TIME=$(date +%s)
+        SEED=$((42 + REP))  # Seeds: 43, 44, 45, 46, 47 for reps 1-5
         
-		SEED=$((42 + REP))  # Seed 43, 44, 45, 46, 47 for reps 1-5
-		./gradlew runDebug --args="interval=${INTERVAL} skew=${SKEW} seed=${SEED}" 2>&1 | tee -a "${LOGFILE}"
+        # Run with parameter file so DebugRunner loads fixed params
+        ./gradlew runDebug --args="interval=${INTERVAL} skew=${SKEW} seed=${SEED} paramfile=${PARAM_FILE}" \
+            2>&1 | tee -a "${LOGFILE}"
         
         END_TIME=$(date +%s)
         ELAPSED=$((END_TIME - START_TIME))
         
-        # Find the most recent debug output directory
+        # Find most recent debug output directory
         LATEST_DIR=$(ls -td results/debug_runs/Debug_I${INTERVAL}_S${SKEW}_* 2>/dev/null | head -1)
         
         if [ -z "${LATEST_DIR}" ]; then
-            echo "ERROR: Could not find output directory for interval=${INTERVAL}, skew=${SKEW}"
-            echo "ERROR: interval=${INTERVAL}, skew=${SKEW}, rep=${REP} - no output found" >> "${LOGFILE}"
+            echo "ERROR: Could not find output directory"
+            echo "ERROR: interval=${INTERVAL}, skew=${SKEW}, rep=${REP} - no output" >> "${LOGFILE}"
             continue
         fi
         
-        # Organize output: move to sweep directory with clear naming
-        TARGET_DIR="${OUTPUT_BASE}/interval_${INTERVAL}_rep_${REP}"
-        mv "${LATEST_DIR}" "${TARGET_DIR}"
+        # Move to organized location
+        TARGET="${OUTPUT_BASE}/interval_${INTERVAL}_skew_${SKEW}_rep_${REP}"
+        mv "$LATEST_DIR" "$TARGET"
         
-        echo "  -> Saved to: ${TARGET_DIR}"
+        echo "  -> Saved to: $TARGET"
         echo "  -> Runtime: ${ELAPSED}s"
         echo ""
-        echo "Run ${CURRENT_RUN}/${TOTAL_RUNS}: interval=${INTERVAL}, skew=${SKEW}, rep=${REP}, time=${ELAPSED}s, dir=${TARGET_DIR}" >> "${LOGFILE}"
     done
-    
-    echo ""
-    echo "Replicate ${REP} complete! You can now review results while next replicate runs."
-    echo ""
-    
-    # Automatically generate comparison grid for completed replicates
-#    echo "Generating comparison grid for replicates 1-${REP}..."
-#    python3 create_image_grid.py "${OUTPUT_BASE}" --output "${OUTPUT_BASE}/comparison_grid_rep1-${REP}.pdf" 2>&1 | grep -E "(ERROR|saved|Page added)"
-    
-#    if [ -f "${OUTPUT_BASE}/comparison_grid_rep1-${REP}.pdf" ]; then
-#        echo "  -> Grid saved: ${OUTPUT_BASE}/comparison_grid_rep1-${REP}.pdf"
-#        echo "  -> Open this file to see results so far!"
-#    fi
-#    echo ""
 done
 
 echo ""
 echo "============================================================"
-echo "  ALL SIMULATIONS COMPLETE"
+echo "  DEBUG SWEEP COMPLETE"
 echo "============================================================"
-echo "Sweep finished: $(date)" >> "${LOGFILE}"
 echo ""
 echo "Results saved in: ${OUTPUT_BASE}"
 echo ""
-
-# =============================================================================
-# GENERATE SUMMARY
-# =============================================================================
-
-echo "Generating summary..."
-
-SUMMARY_FILE="${OUTPUT_BASE}/sweep_summary.txt"
-
-echo "Debug Sweep Summary" > "${SUMMARY_FILE}"
-echo "===================" >> "${SUMMARY_FILE}"
-echo "" >> "${SUMMARY_FILE}"
-echo "Sweep: ${SWEEP_NAME}" >> "${SUMMARY_FILE}"
-echo "Date: $(date)" >> "${SUMMARY_FILE}"
-echo "Intervals: ${INTERVALS[@]}" >> "${SUMMARY_FILE}"
-echo "Skew: ${SKEW} nmol" >> "${SUMMARY_FILE}"
-echo "Replicates: ${NUM_REPLICATES}" >> "${SUMMARY_FILE}"
-echo "" >> "${SUMMARY_FILE}"
-echo "Results:" >> "${SUMMARY_FILE}"
-echo "--------" >> "${SUMMARY_FILE}"
-
-for INTERVAL in "${INTERVALS[@]}"; do
-    echo "" >> "${SUMMARY_FILE}"
-    echo "Interval = ${INTERVAL} days:" >> "${SUMMARY_FILE}"
-    
-    for REP in $(seq 1 ${NUM_REPLICATES}); do
-        DIR="${OUTPUT_BASE}/interval_${INTERVAL}_rep_${REP}"
-        
-        if [ -f "${DIR}/populations.csv" ]; then
-            # Get final tumor count
-            FINAL_POP=$(tail -1 "${DIR}/populations.csv" | cut -d',' -f2)
-            
-            # Determine outcome
-            if [ "${FINAL_POP}" -lt 10 ]; then
-                OUTCOME="CURE"
-            else
-                OUTCOME="FAILURE"
-            fi
-            
-            echo "  Rep ${REP}: ${OUTCOME} (final cells: ${FINAL_POP})" >> "${SUMMARY_FILE}"
-        else
-            echo "  Rep ${REP}: ERROR - no data" >> "${SUMMARY_FILE}"
-        fi
-    done
-done
-
-cat "${SUMMARY_FILE}"
-
-echo ""
-echo "Summary saved to: ${SUMMARY_FILE}"
-echo ""
-
-# =============================================================================
-# NEXT STEPS
-# =============================================================================
-
-echo "============================================================"
-echo "  NEXT: Create Image Comparison Grid"
-echo "============================================================"
-echo ""
-echo "To create a visual comparison of all simulations, run:"
-echo ""
-echo "  python create_image_grid.py ${OUTPUT_BASE}"
-echo ""
-echo "This will extract key timepoints and create a comparison PDF."
+echo "To visualize, run:"
+if [ "$MODE_CHOICE" = "1" ]; then
+    echo "  python compare_sweep_sections.py --mode row --value ${FIXED_VALUE}"
+else
+    echo "  python compare_sweep_sections.py --mode col --value ${FIXED_VALUE}"
+fi
 echo ""

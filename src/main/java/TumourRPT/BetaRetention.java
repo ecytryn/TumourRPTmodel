@@ -38,7 +38,7 @@ public class BetaRetention {
      * model coupling in radiopharmaceutical therapy
      * Proc. SNMMI Annual Meeting, 2026 
      */
-    private static final double[] RETENTION_FRACTIONS = {
+    private static final double[] RETENTION_FRACTIONS_TJ = {
 		0.1982, 0.2899, 0.3641, 0.4275, 0.4861, 0.5408, 
 		0.5921, 0.642, 0.6898, 0.7342, 0.8137, 0.876, 
 		0.9187, 0.9449, 0.9593, 0.9701, 0.97, 0.9695, 
@@ -55,7 +55,23 @@ public class BetaRetention {
         0.6561, 0.6929, 0.7227, 0.7770, 0.8137, 0.8400,
         0.8599, 0.8753, 0.8878
     };
-    
+
+    /**
+     * Lookup table: retention fractions corresponding to R_VALUES_MM
+     * A blend of the uniform sphere at low R and TJ's table at higher R
+     */
+    private static final double[] RETENTION_FRACTIONS_BLEND = {
+		0.011956, 0.03932, 0.083183, 0.1447778, 0.2253056, 0.3184,
+		0.405956, 0.484167, 0.55385, 0.61624, 0.725567, 0.8168,
+		0.889522, 0.9449, 0.9593, 0.9701, 0.97, 0.9695,
+		0.97, 0.9714, 0.9734
+    };
+
+	/**
+	 * Pick which table to use.
+	*/
+    private static final double[] RETENTION_FRACTIONS = RETENTION_FRACTIONS_BLEND;
+        
     /**
      * Get beta retention fraction for given tumor radius
      * 

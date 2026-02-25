@@ -14,6 +14,23 @@ import seaborn as sns
 from pathlib import Path
 import sys
 import glob
+import matplotlib as mpl
+
+# Match interval_skew formatting settings
+mpl.rcParams.update({
+    "figure.figsize": (6.7, 4.8),   # two-column
+    "font.size": 8,
+    "axes.labelsize": 8,
+    "axes.titlesize": 8,
+    "legend.fontsize": 7,
+    "xtick.labelsize": 7,
+    "ytick.labelsize": 7,
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+    "pdf.fonttype": 42,   # editable text in Illustrator
+    "ps.fonttype": 42
+})
 
 def find_sweep_dir(timestamp=None):
     """Find sweep directory"""
@@ -44,7 +61,7 @@ def load_data(sweep_dir):
     
     print(f"Loaded {len(df)} simulation results from {sweep_dir}")
     print(f"\nParameter ranges:")
-    print(f"  Doses: {sorted(df['dose_nmol'].unique())} nmol")
+    print(f"  Injected amounts: {sorted(df['dose_nmol'].unique())} nmol")
     print(f"  Receptor densities: {sorted(df['receptors_per_cell_mol'].unique())}")
     print(f"\nOutcome summary:")
     print(df['outcome'].value_counts())
@@ -52,7 +69,7 @@ def load_data(sweep_dir):
     return df, sweep_dir
 
 def create_heatmap(df, output_path):
-    """Create cure rate heatmap: dose vs receptor density"""
+    """Create cure rate heatmap: injected amount vs receptor density"""
     
     # Calculate cure rate per parameter combination
     df['is_cure'] = (df['outcome'] == 'CURE').astype(int)
@@ -69,15 +86,14 @@ def create_heatmap(df, output_path):
     pivot = pivot[sorted(pivot.columns)]
     
     # Create figure
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = plt.subplots()
     
     # Custom colormap: red (failure) → yellow → green (cure)
     cmap = plt.cm.RdYlGn
     
     # Plot heatmap
     sns.heatmap(pivot, 
-                annot=True,
-                fmt='.2f',
+                annot=False,
                 cmap=cmap,
                 cbar_kws={'label': 'Cure Rate'},
                 linewidths=1,
@@ -85,24 +101,54 @@ def create_heatmap(df, output_path):
                 vmin=0, vmax=1,
                 ax=ax)
     
-    # Labels
-    ax.set_xlabel('Total Dose (nmol)', fontsize=14)
-    ax.set_ylabel('Receptor Density (mol/cell)', fontsize=14)
+    # Labels - updated terminology
+    ax.set_xlabel('Total Injected Amount (nmol)')
+    ax.set_ylabel('Receptor Density (mol/cell)')
     
-    # Format y-axis labels as scientific notation
-    yticklabels = [f'{float(label.get_text()):.1e}' for label in ax.get_yticklabels()]
-    ax.set_yticklabels(yticklabels, rotation=0)
+    # Format y-axis labels with mantissa only, exponent as offset
+    from matplotlib.ticker import ScalarFormatter
+    
+    # Get the actual y-tick values from the pivot index
+    ytick_values = pivot.index.values
+    
+    # Determine common exponent (assuming all values have similar order of magnitude)
+    if len(ytick_values) > 0:
+        common_exponent = int(np.floor(np.log10(np.abs(ytick_values[0]))))
+        
+        # Create labels with just the mantissa (scaled by the common exponent)
+        # Show every other tick to reduce crowding
+        yticklabels = []
+        for i, val in enumerate(ytick_values):
+            if i % 2 == 0:  # Keep every other label
+                yticklabels.append(f'{val / 10**common_exponent:.1f}')
+            else:
+                yticklabels.append('')  # Empty string for skipped labels
+        
+        ax.set_yticklabels(yticklabels, rotation=0)
+        
+        # Add exponent as offset text at top of y-axis
+        ax.text(0.03, 1.01, f'$\\times 10^{{{common_exponent}}}$', 
+                transform=ax.transAxes, fontsize=7, ha='right')
+    
+    # Format x-axis labels - show every other tick to reduce crowding
+    xticklabels = []
+    for i, label in enumerate(ax.get_xticklabels()):
+        if i % 2 == 0:  # Keep every other label
+            xticklabels.append(label.get_text())
+        else:
+            xticklabels.append('')  # Empty string for skipped labels
+    ax.set_xticklabels(xticklabels, rotation=0)
     
     if 'replicate' in df.columns:
         num_reps = df['replicate'].max()
-        title = f'RPT Treatment Outcome vs Dose and Receptor Expression\n(n={num_reps} replicates per point)'
+        title = f'RPT Treatment Outcome'
     else:
-        title = 'RPT Treatment Outcome vs Dose and Receptor Expression'
+        title = 'RPT Treatment Outcome'
     
-    ax.set_title(title, fontsize=14, pad=20)
+    ax.set_title(title)
     
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, format='pdf', bbox_inches='tight')
     print(f"\nHeatmap saved to: {output_path}")
     
     return fig
@@ -125,7 +171,8 @@ def create_dose_response_curves(df, output_path):
         ax.plot(cure_by_dose.index, cure_by_dose.values, 
                 marker='o', linewidth=2, markersize=8, label=label)
     
-    ax.set_xlabel('Total Dose (nmol)', fontsize=12)
+    # Updated terminology
+    ax.set_xlabel('Total Injected Amount (nmol)', fontsize=12)
     ax.set_ylabel('Cure Rate', fontsize=12)
     ax.set_title('Dose-Response Curves by Receptor Density', fontsize=14)
     ax.legend(title='Receptor Density', fontsize=10)
@@ -133,7 +180,7 @@ def create_dose_response_curves(df, output_path):
     ax.set_ylim(-0.05, 1.05)
     
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, format='pdf', bbox_inches='tight')
     print(f"Dose-response curves saved to: {output_path}")
     
     return fig
@@ -146,8 +193,8 @@ def print_summary_stats(df):
     overall_cure = (df['outcome'] == 'CURE').mean() * 100
     print(f"Overall cure rate: {overall_cure:.1f}%")
     
-    # Cure rate by dose
-    print("\nCure rate by dose:")
+    # Cure rate by injected amount
+    print("\nCure rate by injected amount:")
     dose_cure = df.groupby('dose_nmol')['outcome'].apply(
         lambda x: (x == 'CURE').mean() * 100
     )
@@ -165,7 +212,7 @@ def print_summary_stats(df):
     # Find approximate thresholds
     print("\n=== THRESHOLD ANALYSIS ===")
     
-    # For baseline receptor density (1.0e-15), what dose gives ~50% cure?
+    # For baseline receptor density (1.0e-15), what injected amount gives ~50% cure?
     baseline_recep = 1.0e-15
     baseline_data = df[df['receptors_per_cell_mol'] == baseline_recep]
     if len(baseline_data) > 0:
@@ -176,14 +223,14 @@ def print_summary_stats(df):
         for dose, rate in baseline_cure.items():
             print(f"  {dose:.0f} nmol → {rate*100:.0f}% cure rate")
     
-    # For a fixed dose (say 100 nmol), what receptor density gives ~50% cure?
+    # For a fixed injected amount (say 100 nmol), what receptor density gives ~50% cure?
     fixed_dose = 100.0
     dose_data = df[df['dose_nmol'] == fixed_dose]
     if len(dose_data) > 0:
         dose_cure = dose_data.groupby('receptors_per_cell_mol')['outcome'].apply(
             lambda x: (x == 'CURE').mean()
         )
-        print(f"\nAt {fixed_dose:.0f} nmol dose:")
+        print(f"\nAt {fixed_dose:.0f} nmol injected amount:")
         for recep, rate in dose_cure.items():
             print(f"  {recep:.1e} mol/cell → {rate*100:.0f}% cure rate")
 
@@ -201,11 +248,11 @@ def main():
     print("\nGenerating visualizations...")
     
     # Main heatmap
-    heatmap_path = f"{sweep_dir}/heatmap_dose_receptor.png"
+    heatmap_path = f"{sweep_dir}/cure_rate_dose_receptor.pdf"
     create_heatmap(df, heatmap_path)
     
     # Dose-response curves
-    curves_path = f"{sweep_dir}/dose_response_curves.png"
+    curves_path = f"{sweep_dir}/dose_response_curves.pdf"
     create_dose_response_curves(df, curves_path)
     
     # Print statistics

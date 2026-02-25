@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Visualizes parameter sweep results as:
-1. Clean heatmap with cure rate (greenish-yellow to green) + mean injections annotation
+1. Clean heatmap with cure rate (greenish-yellow to green)
 2. Small multiples grid showing population trajectories for each parameter combination
 
 Usage:
@@ -18,6 +18,23 @@ import seaborn as sns
 from pathlib import Path
 import sys
 import os
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "figure.figsize": (6.7, 4.8),   # two-column
+    "font.size": 8,
+    "axes.labelsize": 8,
+    "axes.titlesize": 8,
+    "legend.fontsize": 7,
+    "xtick.labelsize": 7,
+    "ytick.labelsize": 7,
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+    "pdf.fonttype": 42,   # editable text in Illustrator
+    "ps.fonttype": 42
+})
+
 
 # Usage: python visualize_interval_skew.py 2026-01-27_01-53-14
 TIMESTAMP = sys.argv[1] if len(sys.argv) > 1 else None
@@ -74,43 +91,29 @@ def create_custom_colormap():
     return cmap
 
 def create_cure_rate_heatmap(df, output_path):
-    """Create heatmap with cure rate coloring and mean injections annotation"""
+    """Create heatmap with cure rate coloring"""
     
     # Calculate cure rate per parameter combination
     df['is_cure'] = (df['outcome'] == 'CURE').astype(int)
     cure_rates = df.groupby(['interval', 'skew'])['is_cure'].mean().reset_index()
     cure_rates.columns = ['interval', 'skew', 'cure_rate']
     
-    # Calculate mean injections used per parameter combination
-    mean_injections = df.groupby(['interval', 'skew'])['injectionsUsed'].mean().reset_index()
-    mean_injections.columns = ['interval', 'skew', 'mean_injections']
-    
-    # Merge
-    merged = cure_rates.merge(mean_injections, on=['interval', 'skew'])
-    
     # Pivot for heatmap
-    pivot_cure = merged.pivot(index='skew', columns='interval', values='cure_rate')
-    pivot_inj = merged.pivot(index='skew', columns='interval', values='mean_injections')
+    pivot_cure = cure_rates.pivot(index='skew', columns='interval', values='cure_rate')
     
     # Sort indices
     pivot_cure = pivot_cure.sort_index(ascending=False)
     pivot_cure = pivot_cure[sorted(pivot_cure.columns)]
-    pivot_inj = pivot_inj.sort_index(ascending=False)
-    pivot_inj = pivot_inj[sorted(pivot_inj.columns)]
     
     # Create figure
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = plt.subplots()
     
     # Custom colormap
     cmap = create_custom_colormap()
     
-    # Create annotation array (mean injections, rounded to 1 decimal)
-    annot_data = pivot_inj.round(1)
-    
-    # Plot heatmap
+    # Plot heatmap WITHOUT annotations
     sns.heatmap(pivot_cure, 
-                annot=annot_data,
-                fmt='.1f',
+                annot=False,  # Changed from annot=annot_data
                 cmap=cmap,
                 cbar_kws={'label': 'Cure Rate'},
                 linewidths=1,
@@ -119,20 +122,14 @@ def create_cure_rate_heatmap(df, output_path):
                 ax=ax)
     
     # Labels and title
-    ax.set_xlabel('Inter-injection Interval (days)', fontsize=14)
-    ax.set_ylabel('Injection Skew s (nmol)', fontsize=14)
+    ax.set_xlabel('Inter-injection Interval (days)')
+    ax.set_ylabel('Injection Skew (nmol)')
     
-    if 'replicate' in df.columns:
-        num_reps = df['replicate'].max()
-        title = f'RPT Treatment Outcome\n(Color = Cure Rate, Number = Mean Injections Used, n={num_reps} replicates)'
-    else:
-        title = 'RPT Treatment Outcome\n(Color = Cure Rate, Number = Mean Injections Used)'
-    
-    ax.set_title(title + '\nInjection Pattern: [75+s, 75-s] nmol',
-                fontsize=14, pad=20)
-    
+    title = 'RPT Treatment Outcome'
+    ax.set_title(title)
+ 
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, format='pdf', bbox_inches='tight')
     print(f"\nCure rate heatmap saved to: {output_path}")
     
     return fig
@@ -149,7 +146,7 @@ def load_population_data(sweep_dir, interval, skew, num_replicates=5):
             try:
                 # populations.csv has columns for different cell types
                 # We want total tumor = normoxic + hypoxic (columns 1 and 2, 0-indexed)
-                data = np.loadtxt(pop_file, delimiter=',')
+                data = np.loadtxt(pop_file, delimiter=',', skiprows=1)
                 if len(data.shape) == 1:
                     data = data.reshape(1, -1)
                 
@@ -162,7 +159,7 @@ def load_population_data(sweep_dir, interval, skew, num_replicates=5):
     
     return trajectories
 
-def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=10000):
+def create_small_multiples(df, sweep_dir, output_path, max_time=80, max_pop=3000):
     """Create small multiples grid showing population trajectories"""
     
     intervals = sorted(df['interval'].unique())
@@ -175,8 +172,8 @@ def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=1000
     df['is_cure'] = (df['outcome'] == 'CURE').astype(int)
     cure_rates = df.groupby(['interval', 'skew'])['is_cure'].mean()
     
-    # Create figure
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2 * n_rows))
+    # Create figure - match main heatmap figure size
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6.7, 4.8))
     
     cmap = create_custom_colormap()
     
@@ -194,8 +191,8 @@ def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=1000
             
             # Set background color based on cure rate
             bg_color = cmap(cure_rate)
-#            ax.set_facecolor((*bg_color[:3], 0.3))  # Lighter version
             ax.set_facecolor(bg_color)  # Darker version            
+            
             # Load and plot trajectories
             trajectories = load_population_data(sweep_dir, interval, skew, num_reps)
             
@@ -205,19 +202,27 @@ def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=1000
                     time_days = np.arange(len(traj)) / 24.0
                     ax.plot(time_days, traj, color='darkblue', alpha=0.5, linewidth=0.8)
             
+            # Add dashed vertical lines at injection times
+            # First injection at day 0, subsequent at 'interval' days
+            # Total of 2 injections (pattern [75+s, 75-s])
+            injection_times = [5, 5+interval]
+            for inj_time in injection_times:
+                if inj_time <= max_time:
+                    ax.axvline(x=inj_time, color='white', linestyle='--', linewidth=0.8, alpha=0.7)
+            
             # Minimal formatting
             ax.set_xlim(0, max_time)
             ax.set_ylim(0, max_pop)
             ax.set_xticks([])
             ax.set_yticks([])
             
-            # Add interval label on bottom row
+            # Add interval label on bottom row - match main heatmap font size
             if i == n_rows - 1:
-                ax.set_xlabel(f'{interval}d', fontsize=9)
+                ax.set_xlabel(f'{interval}', fontsize=8)
             
             # Add skew label on left column
             if j == 0:
-                ax.set_ylabel(f's={int(skew)}', fontsize=9)
+                ax.set_ylabel(f'{int(skew)}', fontsize=8)
             
             # Add thin border
             for spine in ax.spines.values():
@@ -225,16 +230,15 @@ def create_small_multiples(df, sweep_dir, output_path, max_time=70, max_pop=1000
                 spine.set_color('gray')
     
     # Add overall labels
-    fig.text(0.5, 0.02, 'Inter-injection Interval', ha='center', fontsize=14)
-    fig.text(0.02, 0.5, 'Injection Skew (nmol)', va='center', rotation='vertical', fontsize=14)
+    fig.text(0.5, 0.02, 'Inter-injection Interval (days)', ha='center')
+    fig.text(0.02, 0.5, 'Injection skew (nmol)', va='center', rotation='vertical')
     
-    # Title
-    fig.suptitle(f'Tumor Population Trajectories\n(x: 0-{max_time} days, y: 0-{max_pop} cells, n={num_reps} replicates overlaid)',
-                fontsize=14, y=1.02)
+    # Title - single line only
+    fig.suptitle('Tumor Population Trajectories', fontsize=8, y=0.98)
     
     plt.tight_layout()
-    plt.subplots_adjust(left=0.08, bottom=0.08, top=0.95)
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(left=0.08, bottom=0.08, top=0.95, wspace=0.1, hspace=0.1)
+    plt.savefig(output_path, format='pdf', bbox_inches='tight')
     print(f"Small multiples saved to: {output_path}")
     
     return fig
@@ -257,12 +261,12 @@ def main():
     # Generate visualizations
     print("\nGenerating visualizations...")
     
-    # Figure 1: Clean heatmap with cure rate + injections annotation
-    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/cure_rate_grid.png")
+    # Figure 1: Clean heatmap with cure rate (no annotations)
+    create_cure_rate_heatmap(df, f"{OUTPUT_DIR}/cure_rate_interval_skew_grid.pdf")
     
     # Figure 2: Small multiples with population trajectories
     if os.path.exists(SWEEP_DIR):
-        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/cure_rate_grid_with_tiny_plots.png")
+        create_small_multiples(df, SWEEP_DIR, f"{OUTPUT_DIR}/cure_rate_interval_skew_grid_with_tiny_plots.pdf")
     else:
         print(f"Warning: Sweep directory not found: {SWEEP_DIR}")
         print("Skipping small multiples figure.")

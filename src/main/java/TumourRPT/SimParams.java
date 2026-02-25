@@ -37,28 +37,31 @@ public class SimParams {
 	public static String EXPERIMENT_DESCRIPTION = "Default run";
 	public static int[] INJECTION_SCHEDULE = {45};
 	public static double INITIAL_TUMOR_RADIUS = 333e-6;
-	public static double ALPHA_HYPOXIC = 0.06;
-	public static double BETA_HYPOXIC = 0.019;
+	public static double ALPHA_HYPOXIC = 0.05;
+	public static double BETA_HYPOXIC = 0.02;
     // Vessel density configuration
     // Use scripts/GenerateVessels/GenerateUniformVessels.py to create new csv files.
     // Possibilities: 40, 50, 60 - these refer to the R_REPEL parameter used in GenerateUniformVessels.py
     // Density of vessels is "inversely" proportional to R_REPEL
     // Corresponds to CSV files in src/main/resources/vasculature/
+	// R_REPEL = 20 --> 624.5 vessels/mm^2 
 	// R_REPEL = 40 --> 616.1 vessels/mm^2 
 	// R_REPEL = 50 --> 604.8 vessels/mm^2 
 	// R_REPEL = 60 --> 591.9 vessels/mm^2 
+	// R_REPEL = 80 --> 566.3 vessels/mm^2 
 	public static String VESSEL_DENSITY_CONFIG = "50";  // Default configuration
 
 	
 	// Add setter method
 	public static void setExperiment(String name, String desc, int[] injections, 
-									  double radius, double alphaH, double betaH) {
+									  double radius, double alphaH, double betaH, int hypoxiaDevDays) {
 		EXPERIMENT_NAME = name;
 		EXPERIMENT_DESCRIPTION = desc;
 		INJECTION_SCHEDULE = injections;
 		INITIAL_TUMOR_RADIUS = radius;
 		ALPHA_HYPOXIC = alphaH;
 		BETA_HYPOXIC = betaH;
+		HYPOXIA_DEV_DAYS = hypoxiaDevDays;
 	}
 
     // Output directories (set by Main at startup)
@@ -79,7 +82,7 @@ public class SimParams {
     public static boolean EXPORT_CONSUMP_IMAGES = false;  // Set true for exporting consumption images
 	public static boolean EXPORT_SF_IMAGES = false;  // Set true for SF visualization    
     public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
-	public static final boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
+	public static boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
 
 	// Likely to forever remain at these setting
 	public static final boolean PLOT_LIVE_IMAGES = false;  // Set true to pop up images during the run
@@ -118,7 +121,7 @@ public class SimParams {
     // =================================================================
     // PHARMACOKINETICS - Volumes
     // =================================================================
-    public static final double V_CENTRAL = 0.458e-3;          // m^3 (central/arterial, 0.458 L)
+    public static final double V_CENTRAL = 0.5e-3;          // m^3 (central/arterial, 0.458 L)
     public static final double INTERSTITIAL_FRACTION = 0.4;   // fraction of tumor that is interstitial
     
     // Per-vessel parameters
@@ -132,7 +135,7 @@ public class SimParams {
     // =================================================================
     // CELL BIOLOGY
     // =================================================================
-    public static final double RECEPTORS_PER_CELL = 4e5;      // receptors/cell
+    public static final double RECEPTORS_PER_CELL = 3e5;      // receptors/cell
     public static double RECEPTORS_PER_CELL_MOL = RECEPTORS_PER_CELL / AVOGADRO;  // mol/cell
 
 	public static double getInitialTumorRadiusCells() {
@@ -189,19 +192,22 @@ public class SimParams {
 		CONSUMPTION_APOPTOTIC, // 4
 		CONSUMPTION_VESSEL     // 5
 	};    
+	
+	// Number of days to run the pre-simulation to allow hypoxia to develop in the initial tumour state.
+	public static int HYPOXIA_DEV_DAYS = 40;  // Default value
 
     // =================================================================
     // RADIOBIOLOGY
     // =================================================================
 
-	public static final double ALPHA_NORMAL = 0.15;           // Gy^(-1)
-    public static final double BETA_NORMAL = 0.048;           // Gy^(-2)
+	public static double ALPHA_NORMAL = 0.15;           // Gy^(-1)
+    public static double BETA_NORMAL = 0.06;           // Gy^(-2)
 /** These are now set in Main.
-    public static final double ALPHA_HYPOXIC = 0.06;          // Gy^(-1) (0.15/2.5, OER=2.5)
-    public static final double BETA_HYPOXIC = 0.019;          // Gy^(-2) (0.048/2.5, OER=2.5)
+    public static final double ALPHA_HYPOXIC = 0.05;          // Gy^(-1) (0.15/2.5, OER=2.5)
+    public static final double BETA_HYPOXIC = 0.02;          // Gy^(-2) (0.048/2.5, OER=2.5)
 */
 
-    public static final double REPAIR_RATE = 0.65 / 3600.0;   // 1/s (0.65 per hour)    
+    public static final double REPAIR_RATE = 0.7 / 3600.0;   // 1/s (0.7 per hour)    
 
     public static final double E_BETA_LU177 = 2.14e-14;       // J (average beta energy)
 
@@ -217,7 +223,7 @@ public class SimParams {
 		BETA_HYPOXIC    // index 1: hypoxic
 	};
 	
-	public static final int maxLookupAge = 200;  // days
+//	public static final int maxLookupAge = 200;  // days
     
     // =================================================================
     // INJECTION PROTOCOL
@@ -229,7 +235,7 @@ public class SimParams {
     // Main.java uses these values for single-run mode
     
     public static final double DOSE_PER_INJECTION = 100e-9;   // mol (100 nmol per injection is baseline)
-    public static final double HOT_FRACTION = 0.1;            // Fraction that is radioactive (0.1 = 10%)
+    public static double HOT_FRACTION = 0.1;            // Fraction that is radioactive (0.1 = 10%)
 /**	Moved to Main
     public static final int[] INJECTION_SCHEDULE = {5};  // Days to inject (e.g., {5, 35, 65, 95})
 */    
@@ -240,7 +246,7 @@ public class SimParams {
     // Weekly x 4:       {7, 14, 21, 28}
     
     // Simulation length (days to simulate after last injection)
-    public static final int DAYS_AFTER_LAST_INJECTION = 30;
+    public static final int DAYS_AFTER_LAST_INJECTION = 40;
     
     // =================================================================
     // CELL TYPES (indices)
@@ -494,57 +500,148 @@ public static final int[] COLORLIST = {
 	}
    
 
-   
-	/**
-	 * Export key simulation parameters to CSV for reproducibility
-	 */
-	public static void exportParametersToCSV(String filepath) throws IOException {
-		try (PrintWriter out = new PrintWriter(new FileWriter(filepath))) {
-			out.println("parameter,value,units,description");
-			
-			// Experiment metadata
-			out.println("experiment_name," + EXPERIMENT_NAME + ",,Experiment identifier");
-			out.println("experiment_date," + java.time.LocalDateTime.now() + ",,Run timestamp");
-			
-			// Injection protocol
-			out.println("injection_days," + java.util.Arrays.toString(INJECTION_SCHEDULE) + ",days,");
-			out.println("dose_per_injection," + DOSE_PER_INJECTION * 1e9 + ",nmol,");
-			out.println("hot_fraction," + HOT_FRACTION + ",,");
-			
-			// Grid
-			out.println("grid_size," + GRID_SIZE + ",cells,");
-			out.println("cell_length," + CELL_LENGTH * 1e6 + ",um,");
-			out.println("domain_size," + DOMAIN_SIZE * 1e3 + ",mm,");
-			out.println("initial_tumour_radius," + INITIAL_TUMOR_RADIUS * 1e3 + ",mm,");
-			
-			// PK
-			out.println("lambda_bio," + LAMBDA_BIO * 3600 + ",1/hr,Biological clearance");
-			out.println("lambda_decay," + LAMBDA_DECAY * 3600 + ",1/hr,Lu-177 decay");
-			out.println("k_on," + K_ON / 1e6 * 60 + ",L/(nmol*min),Binding rate");
-			out.println("k_off," + K_OFF * 60 + ",1/min,Unbinding rate");
-			out.println("k_int," + K_INT * 60 + ",1/min,Internalization rate");
-			out.println("v_central," + V_CENTRAL * 1e3 + ",L,Central volume");
-			
-			// Radiobiology
-			out.println("alpha_normoxic," + ALPHA_NORMAL + ",Gy^-1,");
-			out.println("beta_normoxic," + BETA_NORMAL + ",Gy^-2,");
-			out.println("alpha_hypoxic," + ALPHA_HYPOXIC + ",Gy^-1,");
-			out.println("beta_hypoxic," + BETA_HYPOXIC + ",Gy^-2,");
-			out.println("repair_rate," + REPAIR_RATE * 3600 + ",1/hr,");
-			
-			// Oxygen
-			out.println("p_o2_vessel," + P_O2_VESSEL / MMHG_TO_PA + ",mmHg,");
-			out.println("p_o2_hypoxic," + P_O2_HYPOXIC / MMHG_TO_PA + ",mmHg,");
-			out.println("p_o2_necrotic," + P_O2_NECROTIC / MMHG_TO_PA + ",mmHg,");
-			out.println("d_o2," + D_O2 * 1e4 + ",cm^2/s,");
-			
-			// Cell biology
-			out.println("receptors_per_cell," + RECEPTORS_PER_CELL + ",,");
-			out.println("cell_cycle," + CELL_CYCLE / 3600 + ",hours,");
-			
-//			System.out.println("Parameters exported to: " + filepath);
-		}
-	}
+/**
+ * Export all simulation parameters to CSV
+ * 
+ * @param filepath Output file path
+ * @param injectionTimes Days when injections occur (sweep-specific)
+ * @param injectionDoses Amounts injected in mol (sweep-specific)
+ * @param hotFraction Fraction that is radioactive (could vary)
+ * @param receptorDensity Receptors per cell in mol (sweep-specific for DoseReceptorSweep)
+ */
+public static void exportParametersToCSV(String filepath, 
+                                         int[] injectionTimes, 
+                                         double[] injectionDoses,
+                                         double hotFraction,
+                                         double receptorDensity) throws IOException {
+    try (PrintWriter out = new PrintWriter(new FileWriter(filepath))) {
+        out.println("parameter,value,units,description");
+        
+        // ===== EXPERIMENT METADATA =====
+        out.println("experiment_name," + EXPERIMENT_NAME + ",,Experiment identifier");
+        out.println("experiment_description," + EXPERIMENT_DESCRIPTION.replace(",", ";") + ",,");
+        out.println("experiment_date," + java.time.LocalDateTime.now() + ",,Run timestamp");
+
+        // ===== HYPOXIA DEVELOPMENT =====
+        out.println("hypoxia_dev_days," + HYPOXIA_DEV_DAYS + ",days,Days to develop hypoxia before treatment");
+        
+        // ===== INJECTION PROTOCOL (SWEEP-SPECIFIC) =====
+        out.println("num_injections," + injectionTimes.length + ",,");
+        
+        // Format arrays as quoted strings
+        String injTimesStr = arrayToString(injectionTimes);
+        String injDosesStr = arrayToString(injectionDoses);
+        
+        out.println("injection_days,\"" + injTimesStr + "\",days,");
+        out.println("injection_doses,\"" + injDosesStr + "\",nmol,");
+        
+        // Total dose
+        double totalDose = 0;
+        for (double d : injectionDoses) totalDose += d;
+        out.println("total_injected_amount," + (totalDose * 1e9) + ",nmol,");
+
+        out.println("hot_fraction," + hotFraction + ",,Fraction that is radioactive");
+        
+        // ===== TUMOR INITIAL CONDITIONS =====
+        out.println("initial_tumor_radius," + (INITIAL_TUMOR_RADIUS * 1e6) + ",um,");
+        out.println("vessel_density_config," + VESSEL_DENSITY_CONFIG + ",,Vessel configuration file ID");
+        
+        // ===== GRID/DOMAIN =====
+        out.println("grid_size," + GRID_SIZE + ",cells,");
+        out.println("cell_length," + (CELL_LENGTH * 1e6) + ",um,");
+        out.println("domain_size," + (DOMAIN_SIZE * 1e3) + ",mm,");
+        out.println("time_step," + (TIME_STEP / 3600) + ",hours,");
+        out.println("cell_cycle," + (CELL_CYCLE / 3600) + ",hours,");
+        
+        // ===== PHARMACOKINETICS =====
+        out.println("lambda_bio," + (LAMBDA_BIO * 3600) + ",1/hr,Biological clearance");
+        out.println("lambda_decay," + (LAMBDA_DECAY * 3600) + ",1/hr,Lu-177 radioactive decay");
+        out.println("k_on," + (K_ON / 1e6 * 60) + ",L/(nmol*min),Association rate");
+        out.println("k_off," + (K_OFF * 60) + ",1/min,Dissociation rate");
+        out.println("k_int," + (K_INT * 60) + ",1/min,Internalization rate");
+        out.println("k_rel," + (K_REL * 60) + ",1/min,Release rate");
+        out.println("v_central," + (V_CENTRAL * 1e3) + ",L,Central compartment volume");
+        out.println("interstitial_fraction," + INTERSTITIAL_FRACTION + ",,Fraction of tumor that is extracellular");
+        
+        // ===== RADIOBIOLOGY =====
+        out.println("alpha_normoxic," + ALPHA_NORMAL + ",Gy^-1,Linear term normoxic");
+        out.println("beta_normoxic," + BETA_NORMAL + ",Gy^-2,Quadratic term normoxic");
+        out.println("alpha_hypoxic," + ALPHA_HYPOXIC + ",Gy^-1,Linear term hypoxic");
+        out.println("beta_hypoxic," + BETA_HYPOXIC + ",Gy^-2,Quadratic term hypoxic");
+        out.println("repair_rate," + (REPAIR_RATE * 3600) + ",1/hr,DNA repair rate (mu)");
+        out.println("e_beta_lu177," + E_BETA_LU177 + ",J,Average beta particle energy");
+        
+        // ===== OXYGEN =====
+        out.println("p_o2_vessel," + (P_O2_VESSEL / MMHG_TO_PA) + ",mmHg,Capillary oxygen pressure");
+        out.println("p_o2_hypoxic," + (P_O2_HYPOXIC / MMHG_TO_PA) + ",mmHg,Hypoxia threshold");
+        out.println("p_o2_necrotic," + (P_O2_NECROTIC / MMHG_TO_PA) + ",mmHg,Necrosis threshold");
+        out.println("d_o2," + (D_O2 * 1e4) + ",cm^2/s,Oxygen diffusion coefficient");
+        
+        out.println("consumption_healthy," + CONSUMPTION_HEALTHY + ",Pa/s,");
+        out.println("consumption_normal," + CONSUMPTION_NORMAL + ",Pa/s,");
+        out.println("consumption_hypoxic," + CONSUMPTION_HYPOXIC + ",Pa/s,");
+        out.println("consumption_necrotic," + CONSUMPTION_NECROTIC + ",Pa/s,");
+        
+        // ===== CELL BIOLOGY (SWEEP-SPECIFIC) =====
+        // Use passed receptor density (varies in DoseReceptorSweep)
+        double receptorsPerCell = receptorDensity * AVOGADRO;
+        out.println("receptors_per_cell," + String.format("%.0f", receptorsPerCell) + ",,Number per cell");
+        out.println("receptors_per_cell_mol," + receptorDensity + ",mol/cell,ACTUAL USED IN THIS RUN");
+        
+        // Also export baseline for reference
+        out.println("receptors_baseline_mol," + RECEPTORS_PER_CELL_MOL + ",mol/cell,Default baseline value");
+        
+        out.println("vessel_influence_radius," + VESSEL_INFLUENCE_RADIUS + ",cells,For vessel occlusion");
+        
+        // ===== COMPUTATIONAL SETTINGS =====
+        out.println("export_tumour_ox_images," + EXPORT_TUMOUR_OX_IMAGES + ",,");
+        out.println("export_ox_images," + EXPORT_OX_IMAGES + ",,");
+        out.println("export_sf_images," + EXPORT_SF_IMAGES + ",,");
+        out.println("freeze_tumor," + FREEZE_TUMOR + ",,For PK testing");
+        out.println("enable_pbpk_logging," + ENABLE_PBPK_LOGGING + ",,");
+    }
+}
+
+/**
+ * Helper: Convert int array to string "[1, 2, 3]"
+ */
+private static String arrayToString(int[] array) {
+    StringBuilder sb = new StringBuilder("[");
+    for (int i = 0; i < array.length; i++) {
+        sb.append(array[i]);
+        if (i < array.length - 1) sb.append(", ");
+    }
+    sb.append("]");
+    return sb.toString();
+}
+
+/**
+ * Helper: Convert double array to string (in nmol) "[45.0, 55.0]"
+ */
+private static String arrayToString(double[] array) {
+    StringBuilder sb = new StringBuilder("[");
+    for (int i = 0; i < array.length; i++) {
+        sb.append(String.format("%.1f", array[i] * 1e9));  // Convert mol to nmol
+        if (i < array.length - 1) sb.append(", ");
+    }
+    sb.append("]");
+    return sb.toString();
+}
+
+/**
+ * Backward-compatible wrapper that uses SimParams defaults
+ * Use this only for single runs where SimParams values are actually used
+ */
+public static void exportParametersToCSV(String filepath) throws IOException {
+    // Create doses array from DOSE_PER_INJECTION
+    double[] doses = new double[INJECTION_SCHEDULE.length];
+    for (int i = 0; i < doses.length; i++) {
+        doses[i] = DOSE_PER_INJECTION;
+    }
+    
+    exportParametersToCSV(filepath, INJECTION_SCHEDULE, doses, HOT_FRACTION,
+                         RECEPTORS_PER_CELL_MOL);
+}
 
 
 }

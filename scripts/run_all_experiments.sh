@@ -3,13 +3,12 @@
 # Array of experiment names
 experiments=(
 #    "WatchGrow"
-    "Day5VerySmall"
-    "Day5Small"
-    "Day5Large"
-    "Day45VerySmall"
-    "Day45Small"
-    "Day45Large"
-#     "Reoxygenation"
+#    "NormoxicSmall"
+#    "NormoxicMedium"
+#    "NormoxicLarge"
+    "HypoxicSmall"
+    "HypoxicMedium"
+    "HypoxicLarge"
 )
 
 # Run each experiment

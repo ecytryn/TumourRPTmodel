@@ -1,12 +1,15 @@
 package TumorRPT;
 
 import HAL.Rand;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.IntStream;
 
 /**
  * Parameter sweep over dose and receptor density
@@ -27,32 +30,18 @@ public class DoseReceptorSweep {
     // SWEEP PARAMETERS - Edit these to define the parameter space
     // =======================================================================
     
-    private static final double[] DOSES = {
-    	50, 
-    	75, 
-    	100, 
-    	125, 
-    	150, 
-    	175, 
-    	200, 
-    	225, 
-    	250}; // nmol
+	private static final double[] DOSES = 
+		IntStream.range(0, 13)  // 13 points
+				 .mapToDouble(i -> (50 + i * 12.5))  // 50 --> 200 nmol
+				 .toArray();
     
     // RECEPTOR_DENSITIES: Receptors per cell (in moles)
-	private static final double BASELINE_RECEPTORS = 6.64e-19;  // mol/cell, from SimParams
-	private static final double[] RECEPTOR_DENSITIES = {
-		0.76 * BASELINE_RECEPTORS,   
-		0.84 * BASELINE_RECEPTORS,   
-		0.92 * BASELINE_RECEPTORS,  
-		1.0 * BASELINE_RECEPTORS,   // 100% (baseline)
-		1.08 * BASELINE_RECEPTORS, 
-		1.16 * BASELINE_RECEPTORS,  
-		1.24 * BASELINE_RECEPTORS, 
-		1.32 * BASELINE_RECEPTORS,
-		1.4 * BASELINE_RECEPTORS,
-		1.48 * BASELINE_RECEPTORS
-	};
-    
+	private static final double BASELINE_RECEPTORS = 5.0e-19;  // mol/cell, from SimParams
+	private static final double[] RECEPTOR_DENSITIES = 
+		IntStream.range(0, 17)  // 17 points
+				 .mapToDouble(i -> (0.76 + i * 0.02) * BASELINE_RECEPTORS)
+				 .toArray();
+                 
     // Output suffix - change this when refining to avoid overwriting
     private static final String OUTPUT_SUFFIX = "";
     
@@ -66,7 +55,7 @@ public class DoseReceptorSweep {
     private static final int NUM_INJECTIONS = 1;
     private static final double HOT_FRACTION = 0.1;
     private static final int FIRST_INJECTION_DAY = 5;
-    private static final int INJECTION_INTERVAL = 30;  // Fixed 30-day interval
+//    private static final int INJECTION_INTERVAL = 30;  // Fixed 30-day interval
     private static final int MIN_DAYS_AFTER_LAST_INJECTION = 60;
     
     // Output configuration
@@ -77,7 +66,7 @@ public class DoseReceptorSweep {
     
     public static void main(String[] args) throws IOException {
         
-		SimParams.INITIAL_TUMOR_RADIUS = 250e-6;  // Small vulnerable tumor just below treatment threshold
+		SimParams.INITIAL_TUMOR_RADIUS = 150e-6;  // Small vulnerable tumor just below treatment threshold
 
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
@@ -131,7 +120,7 @@ public class DoseReceptorSweep {
                                                  sweepDir, dose, receptorDensity, rep + 1);
                     new File(runDir).mkdirs();
 
-					saveGitInfo(outputDir);
+					saveGitInfo(runDir);
                     
                     System.out.printf("[%d/%d] Running: dose=%.0f nmol, receptors=%.2e mol/cell, replicate=%d/%d%n", 
                                      currentRun, totalRuns, dose, receptorDensity, rep + 1, NUM_REPLICATES);
@@ -246,6 +235,11 @@ public class DoseReceptorSweep {
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
 
+		// Develop hypoxia without growth
+		if (SimParams.HYPOXIA_DEV_DAYS > 0) {
+			model.developHypoxiaWithoutGrowth(SimParams.HYPOXIA_DEV_DAYS, false);
+		}
+
         // Print initial state
         int initialCells = model.countTumorCells();
         int numVessels = model.countVessels();
@@ -321,8 +315,12 @@ public class DoseReceptorSweep {
         
         // Save parameter info for this run
         SimParams.generateParameterReport(outputDir + "/parameters.md");
-        SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
-        
+        SimParams.exportParametersToCSV(outputDir + "/parameters.csv", 
+                                injectionTimes, 
+                                injectionDoses, 
+                                HOT_FRACTION,
+                                receptorDensity);
+                                
         // Report final viable tumor count
         int finalCount = (int)(model.CurrentCellsPops[SimParams.NORMAL] +
                                model.CurrentCellsPops[SimParams.HYPOXIC]);

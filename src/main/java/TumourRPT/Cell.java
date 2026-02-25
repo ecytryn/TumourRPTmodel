@@ -31,11 +31,9 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         this.ChangeType(type);
         this.fsmDiv = new FSM_DIVCHECK(this);
         this.cellBio = new CellBiology(this);
-        this.isAlive = true;
         this.divisionFlag = false;
         this.disposeFlag = false;
         this.howManyDaysDead = 0;
-//        this.age = 0;
         this.birthTime = currentTime;
         if (type== SimParams.VESSEL && currentTime == 0){
 
@@ -53,17 +51,23 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
     }
 
     void ChangeType(int type){
+        // Update population tracking
         if (this.type == -1){
+            // Brand new cell - just add to population count
             G.CurrentCellsPops[type] += 1;
         }else{
+            // Existing cell changing type - update counts
             G.CurrentCellsPops[this.type] -= 1;
             G.CurrentCellsPops[type] += 1;
         }
         this.type = type;
         this.color = SimParams.COLORLIST[type];
 
-        if (type == SimParams.NECROTIC || type==SimParams.APOPTOTIC){
+        // Set alive status based on type
+        if (type == SimParams.NECROTIC || type == SimParams.APOPTOTIC){
             this.isAlive = false;
+        } else {
+            this.isAlive = true;  // NORMAL, HYPOXIC, VESSEL, HEALTHY are alive
         }
     }
 

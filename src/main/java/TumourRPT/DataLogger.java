@@ -17,17 +17,29 @@ public class DataLogger {
     public DataLogger() {
     }
 
-    public void log(ArrayList<double[]> list, String fileName) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, false))) {
-            for (double[] element : list) {
-                writer.write(convertToCSV(element));
-                writer.newLine();
-            }
-            writer.flush();
-        } catch (IOException e) {
-            System.err.println("Error writing to log file: " + e.getMessage());
-        }
-    }
+	public void log(ArrayList<double[]> list, String fileName) {
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, false))) {
+			// Write header based on file type
+			if (fileName.contains("populations.csv")) {
+				writer.write("healthy,normal,hypoxic,necrotic,apoptotic,vessel");
+				writer.newLine();
+			} else if (fileName.contains("pkStateVariables.csv")) {
+				writer.write("N_cen_hot,N_cen_cold,N_v_hot,N_v_cold,N_ec_hot,N_ec_cold,N_b_hot,N_b_cold,N_ic_hot,N_ic_cold,A_blob");
+				writer.newLine();
+			} else if (fileName.contains("dose.csv")) {
+				writer.write("dose_rate_Gy_per_hr");
+				writer.newLine();
+			}
+			
+			for (double[] element : list) {
+				writer.write(convertToCSV(element));
+				writer.newLine();
+			}
+			writer.flush();
+		} catch (IOException e) {
+			System.err.println("Error writing to log file: " + e.getMessage());
+		}
+	}
 
     /**
      * Save figure with timestamp and optional legend

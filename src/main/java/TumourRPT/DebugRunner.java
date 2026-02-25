@@ -1,9 +1,16 @@
 package TumorRPT;
 
 import HAL.Rand;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Debug Runner - Investigate specific parameter combinations from sweeps
@@ -25,6 +32,9 @@ import java.util.ArrayList;
 
 public class DebugRunner {
     
+	// Class variables
+	private static double baselineReceptors = 5.0e-19;  // Default, can be loaded from file
+
     // Storage for doses when we need variable doses per injection
     private static double[] customDoses = null;
     private static int totalDays = 120;
@@ -46,7 +56,7 @@ public class DebugRunner {
         int secondInjectionDay = firstInjectionDay + interval;
         
         // Calculate doses
-        double baseDose = 100e-9;   // mol
+        double baseDose = 50e-9;   // mol
         double firstDose = baseDose + skew;
         double secondDose = baseDose - skew;
         
@@ -55,8 +65,7 @@ public class DebugRunner {
         String expDesc = String.format("interval=%d, skew=%.0fnmol", interval, skew * 1e9);
         SimParams.setExperiment(expName, expDesc,
                                new int[]{firstInjectionDay, secondInjectionDay},
-                               250e-6,    // Match sweep: 50 μm radius
-                               0.06, 0.019);  // Standard hypoxic radiosensitivity
+                               100e-6, 0.05, 0.02, SimParams.HYPOXIA_DEV_DAYS);
         
         // Store custom doses for injection
         customDoses = new double[]{firstDose, secondDose};
@@ -90,7 +99,7 @@ public class DebugRunner {
         SimParams.setExperiment(expName, expDesc,
                                new int[]{firstInjectionDay},
                                250e-6,   // Match sweep: 250 μm radius
-                               0.06, 0.019);
+                               0.06, 0.019, SimParams.HYPOXIA_DEV_DAYS);
         
         // Override receptor density
         SimParams.RECEPTORS_PER_CELL_MOL = receptorDensity;
@@ -121,7 +130,8 @@ public class DebugRunner {
         }
         
         String sweepType = null;
-        Integer interval = null;
+		String paramFile = null;
+		Integer interval = null;
         Double skew = null;
         Double dose = null;
         Double receptors = null;
@@ -130,7 +140,7 @@ public class DebugRunner {
         
         // Parse key=value pairs
         for (String arg : args) {
-            String[] parts = arg.split("=");
+            String[] parts = arg.split("=",2);
             if (parts.length != 2) continue;
             
             String key = parts[0].toLowerCase();
@@ -139,6 +149,9 @@ public class DebugRunner {
             switch (key) {
                 case "sweep":
                     sweepType = value.toLowerCase();
+                    break;
+                case "paramfile":
+                    paramFile = value;
                     break;
                 case "interval":
                     interval = Integer.parseInt(value);
@@ -163,7 +176,14 @@ public class DebugRunner {
                     break;
             }
         }
-        
+
+		// Load parameters if file specified
+		if (paramFile != null && !paramFile.isEmpty()) {
+			System.out.println("Loading configuration from: " + paramFile);
+			Map<String, String> params = loadParametersFromCSV(paramFile);
+			applyParametersFromFile(params);
+		}
+		
         // Handle sweep type with indices
         if (sweepType != null && xIndex != null && yIndex != null) {
             if (sweepType.contains("interval") || sweepType.contains("skew")) {
@@ -221,9 +241,10 @@ public class DebugRunner {
         
         String expName = String.format("Debug_I%d_S%.0f", interval, skew * 1e9);
         String expDesc = String.format("interval=%d, skew=%.0fnmol", interval, skew * 1e9);
-        SimParams.setExperiment(expName, expDesc,
-                               new int[]{firstInjectionDay, secondInjectionDay},
-                               50e-6, 0.06, 0.019);
+
+		SimParams.EXPERIMENT_NAME = expName;
+		SimParams.EXPERIMENT_DESCRIPTION = expDesc;
+		SimParams.INJECTION_SCHEDULE = new int[]{firstInjectionDay, secondInjectionDay};
         
         customDoses = new double[]{firstDose, secondDose};
         totalDays = secondInjectionDay + 60;
@@ -240,16 +261,17 @@ public class DebugRunner {
     }
     
     private static void configureDoseReceptor(double dose, double receptorMult) {
-        double baselineReceptors = 6.64e-19;
+//        double baselineReceptors = 6.64e-19;  // <-- this is now defined by reading parameters.csv
         double receptorDensity = receptorMult * baselineReceptors;
         int firstInjectionDay = 5;
         
         String expName = String.format("Debug_D%.0f_R%.2f", dose, receptorMult);
         String expDesc = String.format("dose=%.0fnmol, receptors=%.0f%%", dose, receptorMult*100);
-        SimParams.setExperiment(expName, expDesc,
-                               new int[]{firstInjectionDay},
-                               250e-6, 0.06, 0.019);
-        
+
+		SimParams.EXPERIMENT_NAME = expName;
+		SimParams.EXPERIMENT_DESCRIPTION = expDesc;
+		SimParams.INJECTION_SCHEDULE = new int[]{firstInjectionDay};
+            
         SimParams.RECEPTORS_PER_CELL_MOL = receptorDensity;
         customDoses = new double[]{dose * 1e-9};
         totalDays = firstInjectionDay + 90;
@@ -262,6 +284,103 @@ public class DebugRunner {
         System.out.println("Receptor density: " + (receptorMult * 100) + "% of baseline");
         System.out.println("===========================\n");
     }
+    
+	/**
+	 * Load parameters from a parameters.csv file
+	 * Returns map of parameter_name -> value
+	 */
+	private static Map<String, String> loadParametersFromCSV(String filepath) {
+		Map<String, String> params = new HashMap<>();
+		
+		try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+			String line;
+			boolean firstLine = true;
+			
+			while ((line = br.readLine()) != null) {
+				if (firstLine) {
+					firstLine = false;  // Skip header
+					continue;
+				}
+				
+				// Handle quoted values (arrays like "[1, 2]")
+				// Split on commas NOT inside quotes
+				String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+				
+				if (parts.length >= 2) {
+					String param = parts[0].trim();
+					String value = parts[1].trim();
+					
+					// Remove quotes if present
+					if (value.startsWith("\"") && value.endsWith("\"")) {
+						value = value.substring(1, value.length() - 1);
+					}
+					
+					params.put(param, value);
+				}
+			}
+		} catch (IOException e) {
+			System.err.println("ERROR loading parameters: " + e.getMessage());
+		}
+		
+		return params;
+	}
+	
+	/**
+	 * Apply loaded parameters to SimParams
+	 * Only applies FIXED parameters (not sweep-specific ones)
+	 */
+	private static void applyParametersFromFile(Map<String, String> params) {
+		System.out.println("\nLoading fixed parameters from file:");
+		
+		if (params.containsKey("hypoxia_dev_days")) {
+			SimParams.HYPOXIA_DEV_DAYS = Integer.parseInt(params.get("hypoxia_dev_days"));
+			System.out.println("  hypoxia_dev_days = " + SimParams.HYPOXIA_DEV_DAYS);
+		}
+		
+		if (params.containsKey("initial_tumor_radius")) {
+			double radius_um = Double.parseDouble(params.get("initial_tumor_radius"));
+			SimParams.INITIAL_TUMOR_RADIUS = radius_um * 1e-6;  // um -> m
+			System.out.println("  initial_tumor_radius = " + radius_um + " um");
+		}
+		
+		if (params.containsKey("vessel_density_config")) {
+			SimParams.VESSEL_DENSITY_CONFIG = params.get("vessel_density_config");
+			System.out.println("  vessel_density_config = " + SimParams.VESSEL_DENSITY_CONFIG);
+		}
+		
+		if (params.containsKey("alpha_normoxic")) {
+			SimParams.ALPHA_NORMAL = Double.parseDouble(params.get("alpha_normoxic"));
+			System.out.println("  alpha_normoxic = " + SimParams.ALPHA_NORMAL);
+		}
+		
+		if (params.containsKey("beta_normoxic")) {
+			SimParams.BETA_NORMAL = Double.parseDouble(params.get("beta_normoxic"));
+			System.out.println("  beta_normoxic = " + SimParams.BETA_NORMAL);
+		}
+		
+		if (params.containsKey("alpha_hypoxic")) {
+			SimParams.ALPHA_HYPOXIC = Double.parseDouble(params.get("alpha_hypoxic"));
+			System.out.println("  alpha_hypoxic = " + SimParams.ALPHA_HYPOXIC);
+		}
+		
+		if (params.containsKey("beta_hypoxic")) {
+			SimParams.BETA_HYPOXIC = Double.parseDouble(params.get("beta_hypoxic"));
+			System.out.println("  beta_hypoxic = " + SimParams.BETA_HYPOXIC);
+		}
+		
+		if (params.containsKey("hot_fraction")) {
+			SimParams.HOT_FRACTION = Double.parseDouble(params.get("hot_fraction"));
+			System.out.println("  hot_fraction = " + SimParams.HOT_FRACTION);
+		}
+		
+		// Get baseline receptors for calculating multipliers
+		if (params.containsKey("receptors_baseline_mol")) {
+			baselineReceptors = Double.parseDouble(params.get("receptors_baseline_mol"));
+			System.out.println("  receptors_baseline = " + baselineReceptors + " mol/cell");
+		}
+		
+		System.out.println();
+	}    
     
     private static void printUsage() {
         System.out.println("\n=== DEBUG RUNNER USAGE ===\n");
@@ -351,6 +470,11 @@ public class DebugRunner {
         // Initialize simulation
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
+
+		// Develop hypoxia without growth
+		if (SimParams.HYPOXIA_DEV_DAYS > 0) {
+			model.developHypoxiaWithoutGrowth(SimParams.HYPOXIA_DEV_DAYS, false);
+		}
         
         int initialPop = model.countTumorCells();
         System.out.println("Initial tumor cells: " + initialPop);
@@ -464,8 +588,19 @@ public class DebugRunner {
         
         // Generate parameter report
         SimParams.generateParameterReport(outputDir + "/parameters.md");
-        SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
+		SimParams.exportParametersToCSV(outputDir + "/parameters.csv",
+                                SimParams.INJECTION_SCHEDULE,
+                                customDoses != null ? customDoses : getDefaultDoses(),
+                                SimParams.HOT_FRACTION, SimParams.RECEPTORS_PER_CELL_MOL);
     }
+
+	private static double[] getDefaultDoses() {
+		double[] doses = new double[SimParams.INJECTION_SCHEDULE.length];
+		for (int i = 0; i < doses.length; i++) {
+			doses[i] = SimParams.DOSE_PER_INJECTION;
+		}
+		return doses;
+	}
 
 	private static void saveGitInfo(String outputDir) {
 		try {

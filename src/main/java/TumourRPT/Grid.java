@@ -262,6 +262,126 @@ public class Grid extends AgentGrid2D<Cell> {
         }
     }
 
+
+	/**
+	 * Develop hypoxia in tumor WITHOUT growth
+	 * Strategy: Freeze cell division/death, but run oxygen solver and cell type transitions
+	 * This allows vessels to occlude and hypoxia to develop based on existing tumor size
+	 * 
+	 * @param burnInDays Number of days to develop hypoxia (without growth)
+	 * @param verbose Print progress updates
+	 */
+	public void developHypoxiaWithoutGrowth(int burnInDays, boolean verbose) {
+		if (verbose) {
+			System.out.println("\n=== HYPOXIA DEVELOPMENT PHASE (NO GROWTH) ===");
+			System.out.println("Developing hypoxia for " + burnInDays + " days...");
+			System.out.println("Tumor size is FROZEN - only oxygen/hypoxia dynamics active");
+			
+			// Initial state
+			int normoxic = (int) CurrentCellsPops[SimParams.NORMAL];
+			int hypoxic = (int) CurrentCellsPops[SimParams.HYPOXIC];
+			int total = normoxic + hypoxic;
+			System.out.printf("Day 0: %d cells (%.1f%% hypoxic)%n", 
+							 total, total > 0 ? 100.0 * hypoxic / total : 0);
+		}
+		
+		// Freeze tumor dynamics
+		boolean originalFreezeSetting = SimParams.FREEZE_TUMOR;
+		SimParams.FREEZE_TUMOR = true;
+		
+		// Run simulation for burn-in period
+		// Even though FREEZE_TUMOR=true, we still need to:
+		// 1. Update oxygen field (vessels can occlude, oxygen changes)
+		// 2. Update cell types (normoxic -> hypoxic transitions)
+		// 3. NOT update PK (no drug yet)
+		
+		for (int day = 0; day < burnInDays; day++) {
+			// Manual hour loop (similar to Step() but without PK)
+			for (int hourCount = 0; hourCount < 24; hourCount++) {
+				SimParams.updateGlobalTime(day, hourCount);
+				
+				// Update oxygen field
+				double r_average = updatePKGeometry();
+				this.oxygen.UpdateSteadyStateOxygen(day, r_average);
+				
+				// Update cell oxygen levels and allow type transitions
+				for (Cell cell : this) {
+					if (cell != null && cell.type != SimParams.VESSEL) {
+						// Update oxygen level
+						cell.oxygen = this.oxygenGrid.Get(cell.Isq());
+						
+						// Allow normoxic <-> hypoxic transitions based on oxygen
+						if (cell.type == SimParams.NORMAL && 
+							cell.oxygen < SimParams.P_O2_HYPOXIC) {
+							// Become hypoxic
+							cell.ChangeType(SimParams.HYPOXIC);
+						} else if (cell.type == SimParams.HYPOXIC && 
+								   cell.oxygen >= SimParams.P_O2_HYPOXIC) {
+							// Reoxygenate
+							cell.ChangeType(SimParams.NORMAL);
+						} else if (cell.oxygen < SimParams.P_O2_NECROTIC &&
+								   cell.type != SimParams.NECROTIC &&
+								   cell.type != SimParams.APOPTOTIC) {
+							// Die from extreme hypoxia
+							cell.ChangeType(SimParams.NECROTIC);
+						}
+					}
+				}
+				
+				// Log populations (for tracking)
+//				PopsOverTime.add(copyArray(CurrentCellsPops));
+			}
+			
+			// Progress report
+			if (verbose && ((day + 1) % 5 == 0 || day == burnInDays - 1)) {
+				int normoxic = (int) CurrentCellsPops[SimParams.NORMAL];
+				int hypoxic = (int) CurrentCellsPops[SimParams.HYPOXIC];
+				int necrotic = (int) CurrentCellsPops[SimParams.NECROTIC];
+				int total = normoxic + hypoxic;
+				double hypoxicFrac = total > 0 ? (double)hypoxic / total : 0;
+				
+				// Count occluded vessels
+				int occluded = 0;
+				for (int idx : vesselsIndex) {
+					if (GetAgent(idx).blockedVessel) occluded++;
+				}
+				
+				System.out.printf("Day %d: %d viable cells (%.1f%% hypoxic, %d necrotic), %d/%d vessels occluded%n", 
+								 day + 1, total, hypoxicFrac * 100, necrotic,
+								 occluded, vesselsIndex.size());
+			}
+		}
+		
+		// Restore original freeze setting
+		SimParams.FREEZE_TUMOR = originalFreezeSetting;
+		
+		if (verbose) {
+			// Final summary
+			int normoxic = (int) CurrentCellsPops[SimParams.NORMAL];
+			int hypoxic = (int) CurrentCellsPops[SimParams.HYPOXIC];
+			int necrotic = (int) CurrentCellsPops[SimParams.NECROTIC];
+			int total = normoxic + hypoxic;
+			double hypoxicFrac = total > 0 ? (double)hypoxic / total : 0;
+			
+			int occluded = 0;
+			for (int idx : vesselsIndex) {
+				if (GetAgent(idx).blockedVessel) occluded++;
+			}
+			
+			System.out.println("\n=== HYPOXIA DEVELOPMENT COMPLETE ===");
+			System.out.printf("Final state after %d days (NO GROWTH):%n", burnInDays);
+			System.out.printf("  Viable tumor cells: %d (UNCHANGED)%n", total);
+			System.out.printf("  Normoxic: %d (%.1f%%)%n", normoxic, 100.0 * normoxic / total);
+			System.out.printf("  Hypoxic: %d (%.1f%%)%n", hypoxic, hypoxicFrac * 100);
+			System.out.printf("  Necrotic: %d%n", necrotic);
+			System.out.printf("  Occluded vessels: %d/%d (%.1f%%)%n", 
+							 occluded, vesselsIndex.size(), 
+							 100.0 * occluded / vesselsIndex.size());
+			System.out.println("Starting treatment phase...\n");
+		}
+	}
+
+
     /**
      * Generate vessels from configuration file
      * Uses vessel density setting from SimParams to select appropriate CSV

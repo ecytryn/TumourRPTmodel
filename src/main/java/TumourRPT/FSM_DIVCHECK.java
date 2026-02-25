@@ -89,10 +89,11 @@ public class FSM_DIVCHECK {
         // if some conditions are satisfied, then sets the divide flag to true
         // this.cell.divideFlag = true.
         if (this.cell.type != SimParams.VESSEL) {
-			if (this.cell.G.GetTick() % 240 == 0) {  // Every 10 days
-				System.out.printf("Cell divProb sample: %.3f (type=%d, O2=%.1f)\n", 
-					 this.cell.divisionProb, this.cell.type, this.cell.oxygen);
-			}
+//  Added to check range of divProb
+//			if (this.cell.G.GetTick() % 240 == 0) {  // Every 10 days
+//				System.out.printf("Cell divProb sample: %.3f (type=%d, O2=%.1f)\n", 
+//					 this.cell.divisionProb, this.cell.type, this.cell.oxygen);
+//			}
             if (this.cell.G.rng.Double()<this.cell.divisionProb){
                 this.cell.divisionFlag = true;
             }

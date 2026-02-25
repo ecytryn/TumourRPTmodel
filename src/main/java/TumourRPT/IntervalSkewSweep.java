@@ -1,6 +1,8 @@
 package TumorRPT;
 
 import HAL.Rand;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
@@ -8,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.IntStream;
 
 /**
  * Parameter sweep over TWO-INJECTION radiopharmaceutical therapy schedules
@@ -43,36 +46,20 @@ public class IntervalSkewSweep {
     // For a 2D sweep, each (interval, skew) combination will be run NUM_REPLICATES times
         
     // Current sweep - edit as needed:
-    private static final int[] INTERVALS = {
-//    	5, 
-//    	10, 
-//    	15, 
-    	20, 
-    	28, 
-    	36, 
-    	44, 
-	   	52,
-	   	60,
-		68,
-		76
-    	};
-    private static final double[] SKEWS = {
-    	-60e-9, 
-    	-40.0e-9, 
-    	-20.0e-9, 
-//    	-10.0e-9, 
-    	0, 
-//    	10.0e-9, 
-    	20.0e-9, 
-    	40.0e-9, 
-    	60e-9
-    	};
-    
+    private static final int[] INTERVALS = 
+    		IntStream.range(0, 8)  // 9 points
+				 .map(i -> (20 + i * 2))  // 20 --> 36 days
+				 .toArray();
+    private static final double[] SKEWS = 
+    		IntStream.range(0, 10)  // 11 points
+				 .mapToDouble(i -> (-25e-9 + i * 5e-9))  // -25 --> 25 nmol
+				 .toArray();
+
     // Output suffix - change this when refining to avoid overwriting (e.g., "_v2", "_fine")
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 1;
+    private static final int NUM_REPLICATES = 20;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -81,10 +68,10 @@ public class IntervalSkewSweep {
     //       Single-run mode (Main.java) uses SimParams values
     
     private static final int NUM_INJECTIONS = 2;
-    private static final double BASE_DOSE = 75.0e-9; // mol (nmol converted to mol)
+    private static final double BASE_DOSE = 50.0e-9; // mol (nmol converted to mol)
     private static final double HOT_FRACTION = 0.1;
-    private static final int FIRST_INJECTION_DAY = 5;
-    private static final int MIN_DAYS_AFTER_LAST_INJECTION = 30; // Days to observe after final injection
+	private static final int FIRST_INJECTION_DAY = 5;
+    private static final int MIN_DAYS_AFTER_LAST_INJECTION = 50; // Days to observe after final injection
     
     // Initial tumor size and radiosensitivity (from SimParams defaults)
     // These can be overridden if needed, but default to SimParams values
@@ -98,7 +85,7 @@ public class IntervalSkewSweep {
     
     public static void main(String[] args) throws IOException {
 
-		SimParams.INITIAL_TUMOR_RADIUS = 200e-6;  // Small vulnerable tumor just below treatment threshold
+		SimParams.INITIAL_TUMOR_RADIUS = 100e-6;  // Small vulnerable tumor just below treatment threshold
 
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
@@ -175,7 +162,7 @@ public class IntervalSkewSweep {
                                                  sweepDir, interval, skew * 1e9, rep + 1);
                     new File(runDir).mkdirs();
 					
-					saveGitInfo(outputDir);                      
+					saveGitInfo(runDir);                      
                     
                     System.out.printf("[%d/%d] Running: interval=%d days, skew=%.0f nmol, replicate=%d/%d%n", 
                                      currentRun, totalRuns, interval, skew * 1e9, rep + 1, NUM_REPLICATES);
@@ -285,6 +272,11 @@ public class IntervalSkewSweep {
         int dayCount = -1;
         model.Init(dayCount, drawer, logger);
 
+		// Develop hypoxia without growth
+		if (SimParams.HYPOXIA_DEV_DAYS > 0) {
+			model.developHypoxiaWithoutGrowth(SimParams.HYPOXIA_DEV_DAYS, false);
+		}
+
         // Print initial receptor count for verification
         int initialCells = model.countTumorCells();
         int numVessels = model.countVessels();
@@ -368,8 +360,12 @@ public class IntervalSkewSweep {
         
         // Save parameter info for this run
         SimParams.generateParameterReport(outputDir + "/parameters.md");
-        SimParams.exportParametersToCSV(outputDir + "/parameters.csv");
-        
+		SimParams.exportParametersToCSV(outputDir + "/parameters.csv", 
+                                injectionTimes, 
+                                injectionDoses, 
+                                HOT_FRACTION,
+                                SimParams.RECEPTORS_PER_CELL_MOL);
+                                        
         // Report final viable tumor count (exclude vessels, necrotic, and apoptotic)
         int finalCount =
             (int)(model.CurrentCellsPops[SimParams.NORMAL] +
