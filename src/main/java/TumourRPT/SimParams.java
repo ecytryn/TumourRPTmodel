@@ -44,12 +44,13 @@ public class SimParams {
     // Possibilities: 40, 50, 60 - these refer to the R_REPEL parameter used in GenerateUniformVessels.py
     // Density of vessels is "inversely" proportional to R_REPEL
     // Corresponds to CSV files in src/main/resources/vasculature/
-	// R_REPEL = 20 --> 624.5 vessels/mm^2 
-	// R_REPEL = 40 --> 616.1 vessels/mm^2 
-	// R_REPEL = 50 --> 604.8 vessels/mm^2 
-	// R_REPEL = 60 --> 591.9 vessels/mm^2 
-	// R_REPEL = 80 --> 566.3 vessels/mm^2 
-	public static String VESSEL_DENSITY_CONFIG = "50";  // Default configuration
+	// R_REPEL = 20 --> Density = 625 vessels/mm^2 
+	// R_REPEL = 40 --> Density = 616 vessels/mm^2 
+	// R_REPEL = 50 --> Density = 605 vessels/mm^2 
+	// R_REPEL = 60 --> Density = 592 vessels/mm^2 
+	// R_REPEL = 80 --> Density = 566 vessels/mm^2 
+	//                  Density = 291 vessels/mm^2 
+	public static String VESSEL_DENSITY_CONFIG = "291";  // Default configuration
 
 	
 	// Add setter method

@@ -59,7 +59,7 @@ public class IntervalSkewSweep {
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 20;
+    private static final int NUM_REPLICATES = 10;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs

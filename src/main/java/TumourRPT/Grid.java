@@ -419,7 +419,7 @@ public class Grid extends AgentGrid2D<Cell> {
      */
     private String getVesselConfigPath() {
         String density = SimParams.VESSEL_DENSITY_CONFIG;
-        return String.format("vasculature/Capillaries_Rrepel%s.csv", density);
+        return String.format("vasculature/Capillaries_Density%s.csv", density);
     }
 
     /**

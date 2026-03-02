@@ -15,17 +15,18 @@ VESSEL_TYPE         = 5
 # -----------------------------
 # Which parameter set to visualize
 # -----------------------------
-INTERVAL  = 30
-SKEW      = 0
-REPLICATE = 2
+INTERVAL  = 20
+SKEW      = 10
+REPLICATE = 1
 SUFFIX    = ""   # if you use one elsewhere
 
 # -----------------------------
 # Data loading helpers
 # -----------------------------
 def load_run_file(interval, skew, replicate, filename, suffix=""):
-    sweep_dir = f"Results/ParameterSweep{suffix}"
-    run_dir = f"{sweep_dir}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
+    sweep_dir = f"results/IntervalSkewSweep{suffix}"
+    timestamp = f"2026-02-26_10-56-10"
+    run_dir = f"{sweep_dir}/IntervalSkewSweep_{timestamp}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
     file_path = f"{run_dir}/{filename}"
 
     if not Path(file_path).exists():
@@ -44,12 +45,12 @@ def load_doses(interval, skew, replicate, suffix=""):
 
 def save_png(interval, skew, replicate):
     # Save figure
-    sweep_dir = f"Results/ParameterSweep"
-    run_dir = f"{sweep_dir}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
+    sweep_dir = f"results/IntervalSkewSweep{suffix}"
+    timestamp = f"2026-02-26_10-56-10"
+    run_dir = f"{sweep_dir}/IntervalSkewSweep_{timestamp}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
     output_file = f"{run_dir}/pop_dose_i{interval}_s{int(skew)}_r{replicate}.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"\nFigure saved to: {output_file}")
-
 
 # -----------------------------
 # Load data
