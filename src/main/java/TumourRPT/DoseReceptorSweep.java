@@ -36,10 +36,11 @@ public class DoseReceptorSweep {
 				 .toArray();
     
     // RECEPTOR_DENSITIES: Receptors per cell (in moles)
+
 	private static final double BASELINE_RECEPTORS = 5.0e-19;  // mol/cell, from SimParams
 	private static final double[] RECEPTOR_DENSITIES = 
-		IntStream.range(0, 17)  // 17 points
-				 .mapToDouble(i -> (0.76 + i * 0.02) * BASELINE_RECEPTORS)
+		IntStream.range(0, 21)  // 17 points
+				 .mapToDouble(i -> (0.68 + i * 0.02) * BASELINE_RECEPTORS)
 				 .toArray();
                  
     // Output suffix - change this when refining to avoid overwriting

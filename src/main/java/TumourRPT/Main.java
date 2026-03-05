@@ -316,7 +316,7 @@ public class Main {
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
 					"This case is for one-off runs to create specific plots for a figure.",
-					new int[]{5}, 100e-6, 0.05, 0.02, 40);
+					new int[]{0}, 333e-6, 0.05, 0.02, 40);
 				break;
 			default:
 				// Use defaults from SimParams

@@ -49,8 +49,9 @@ public class SimParams {
 	// R_REPEL = 50 --> Density = 605 vessels/mm^2 
 	// R_REPEL = 60 --> Density = 592 vessels/mm^2 
 	// R_REPEL = 80 --> Density = 566 vessels/mm^2 
+	//                  Density = 374 vessels/mm^2 
 	//                  Density = 291 vessels/mm^2 
-	public static String VESSEL_DENSITY_CONFIG = "291";  // Default configuration
+	public static String VESSEL_DENSITY_CONFIG = "605";  // Default configuration
 
 	
 	// Add setter method
@@ -83,7 +84,7 @@ public class SimParams {
     public static boolean EXPORT_CONSUMP_IMAGES = false;  // Set true for exporting consumption images
 	public static boolean EXPORT_SF_IMAGES = false;  // Set true for SF visualization    
     public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
-	public static boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
+	public static boolean FREEZE_TUMOR = true;          // Set true to test PK without cell dynamics    
 
 	// Likely to forever remain at these setting
 	public static final boolean PLOT_LIVE_IMAGES = false;  // Set true to pop up images during the run

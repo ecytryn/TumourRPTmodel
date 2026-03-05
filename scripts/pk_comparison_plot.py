@@ -76,8 +76,8 @@ else:
 
 print("\nLoading Java simulation data...")
 
-# Read CSV with NO header
-df_java = pd.read_csv(csv_path, header=None)
+# Read CSV with header
+df_java = pd.read_csv(csv_path)
 
 # Fixed column order in pkStateVariables.csv
 # (must match Java output exactly)
@@ -129,9 +129,11 @@ from scipy.integrate import odeint
 # Parameters (match SimParams.java exactly)
 lambda_bio = 1.6e-4 / 60.0
 lambda_decay = 7.14e-5 / 60.0
-k_on_mol = 0.046 * 1e6 / 60.0 # units m³/(mol·s) - in the Java simulation, it's m³/(mol·s)
+#k_on_mol = 0.046 * 1e6 / 60.0 # units m³/(mol·s) - in the Java simulation, it's m³/(mol·s)
+k_on_mol = 0.0015 * 1e6 / 60.0 # units m³/(mol·s) - in the Java simulation, it's m³/(mol·s)
 k_on_nmol = k_on_mol * 1e-9 # units m³/(nmol·s) , mol --> nmol conversion
-k_off = 0.368 / 60.0
+#k_off = 0.368 / 60.0
+k_off = 0.012 / 60.0
 k_int = 0.001 / 60.0
 k_rel = 2e-4 / 60.0
 beta_nmol = (k_off + k_int) / k_on_nmol
@@ -140,14 +142,14 @@ beta_nmol = (k_off + k_int) / k_on_nmol
 CELL_LENGTH = 1e-5
 INTERSTITIAL_FRACTION = 0.4
 AVOGADRO = 6.022e23
-RECEPTORS_PER_CELL = 4e5
+RECEPTORS_PER_CELL = 3e5
 
 radius_cells = np.sqrt(TUMOR_CELLS_2D / np.pi)
 radius_m = radius_cells * CELL_LENGTH
 height_m = 2.0 * radius_m
 tumourVolume_m3 = np.pi * radius_m**2 * height_m
 V_ec = INTERSTITIAL_FRACTION * tumourVolume_m3
-V_cen = 0.458e-3
+V_cen = 0.5e-3
 height_cells = height_m / CELL_LENGTH
 totalCells3D = TUMOR_CELLS_2D * height_cells
 R_total_mol = totalCells3D * RECEPTORS_PER_CELL / AVOGADRO

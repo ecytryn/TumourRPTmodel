@@ -40,7 +40,8 @@ mpl.rcParams.update({
 lambda_bio = 1.6e-4  # /min (biological clearance)
 lambda_decay = 7.14e-5  # /min (Lu-177 decay)
 #k_on = 0.046 * 1e6 * 1e-9 # m³/(nmol·min) (binding rate)
-k_off = 0.386   # /min
+#k_off = 0.386   # /min
+k_off = 0.012   # /min
 k_int = 0.001  # /min (internalization)
 k_rel = 2e-4  # /min (release from cells)
 
@@ -48,7 +49,7 @@ k_rel = 2e-4  # /min (release from cells)
 CELL_LENGTH = 1e-5  # m
 INTERSTITIAL_FRACTION = 0.4
 AVOGADRO = 6.022e23
-RECEPTORS_PER_CELL = 4e5
+RECEPTORS_PER_CELL = 3e5
 TUMOR_CELLS_2D = 3285
 
 radius_cells = np.sqrt(TUMOR_CELLS_2D / np.pi)
@@ -56,7 +57,7 @@ radius_m = radius_cells * CELL_LENGTH
 height_m = 2.0 * radius_m
 tumourVolume_m3 = np.pi * radius_m**2 * height_m
 V_ec = INTERSTITIAL_FRACTION * tumourVolume_m3  # m³
-V_cen = 0.458e-3  # m³
+V_cen = 0.5e-3  # m³
 print(f"  radius_m = {radius_m:.2e}")
 
 height_cells = height_m / CELL_LENGTH
@@ -141,7 +142,7 @@ print("="*70)
 
 # k_off range: Start below k_int (0.001 /min), go up to ~0.4 /min
 # Use log spacing (doubling)
-k_on_min = 0.00001  # /min (low affinity)
+k_on_min = 0.0000001  # /min (low affinity)
 k_on_max = 0.1     # /min (high affinity)
 
 # Generate log-spaced values (doubling)
@@ -149,7 +150,8 @@ num_doublings = int(np.log2(k_on_max / k_on_min)) + 1
 k_on_values = k_on_min * (2.0 ** np.arange(num_doublings))
 
 # Add baseline k_on value
-k_on_values = np.sort(np.append(k_on_values, 0.046))
+#k_on_values = np.sort(np.append(k_on_values, 0.046))
+k_on_values = np.sort(np.append(k_on_values, 0.0015))
 
 print(f"\nScanning {len(k_on_values)} k_on values from {k_on_min} to {k_on_max:.2f} m³/(nmol·min)")
 print(f"k_off = {k_off:.2e} 1/min")
@@ -214,7 +216,8 @@ ax1.semilogx(k_on_values, efficacy_values, 'o-', linewidth=2, markersize=6)
 #            label=f'Saturation = {saturation_pt} /min', alpha=0.7)
 #ax1.axhline(efficacy_values.max() * 0.95, color='gray', linestyle=':', 
 #            linewidth=1, alpha=0.5)
-ax1.axvline(0.000046, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
+#ax1.axvline(0.000046, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
+ax1.axvline(0.0000015, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
 ax1.set_xlabel('$k_{on}$ (binding rate, m³/(nmol·min))')
 #ax1.set_ylabel('Treatment Efficacy\n$\int(N_b^H + N_{ic}^H) dt$ (nmol·day)')
 #ax1.set_ylabel('Treatment Efficacy (nmol·day)')
@@ -243,7 +246,7 @@ print("DETAILED COMPARISON: Three Affinity Levels")
 print("="*70)
 
 # Select three representative k_on values
-k_on_low = 0.00001      # Low affinity 
+k_on_low = 0.0000001      # Low affinity 
 k_on_medium = k_int     # Medium affinity 
 k_on_high = 0.1          # High affinity 
 

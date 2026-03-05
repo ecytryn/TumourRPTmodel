@@ -16,7 +16,7 @@ DOMAIN_SIZE = 4000.0      # microns (square domain)
 #R_REPEL = 50.0            # repulsive radius --> 604.8 vessels/mm^2
 #R_REPEL = 60.0            # repulsive radius --> 591.9 vessels/mm^2 
 #R_REPEL = 80.0            # repulsive radius --> 566.3 vessels/mm^2 
-R_REPEL = 50.0            # repulsive radius -->  vessels/mm^2 
+R_REPEL = 30.0            # repulsive radius -->  vessels/mm^2 
 STEP_SIZE = 0.1           # smaller = slower but more stable relaxation
 ITERATIONS = 1000          # number of relaxation iterations
 PLOT_EVERY = 20           # show progress

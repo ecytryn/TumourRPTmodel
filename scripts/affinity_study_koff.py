@@ -41,7 +41,8 @@ mpl.rcParams.update({
 # Rate constants (converted to /min and nmol for numerical stability)
 lambda_bio = 1.6e-4  # /min (biological clearance)
 lambda_decay = 7.14e-5  # /min (Lu-177 decay)
-k_on = 0.046 * 1e6 * 1e-9 # m³/(nmol·min) (binding rate)
+#k_on = 0.046 * 1e6 * 1e-9 # m³/(nmol·min) (binding rate)
+k_on = 0.0015 * 1e6 * 1e-9 # m³/(nmol·min) (binding rate)
 # k_off will be varied
 k_int = 0.001  # /min (internalization)
 k_rel = 2e-4  # /min (release from cells)
@@ -50,7 +51,7 @@ k_rel = 2e-4  # /min (release from cells)
 CELL_LENGTH = 1e-5  # m
 INTERSTITIAL_FRACTION = 0.4
 AVOGADRO = 6.022e23
-RECEPTORS_PER_CELL = 4e5
+RECEPTORS_PER_CELL = 3e5
 TUMOR_CELLS_2D = 3285
 
 radius_cells = np.sqrt(TUMOR_CELLS_2D / np.pi)
@@ -58,7 +59,7 @@ radius_m = radius_cells * CELL_LENGTH
 height_m = 2.0 * radius_m
 tumourVolume_m3 = np.pi * radius_m**2 * height_m
 V_ec = INTERSTITIAL_FRACTION * tumourVolume_m3  # m³
-V_cen = 0.458e-3  # m³
+V_cen = 0.5e-3  # m³
 
 height_cells = height_m / CELL_LENGTH
 totalCells3D = TUMOR_CELLS_2D * height_cells
@@ -152,7 +153,8 @@ k_off_values = k_off_min * (2.0 ** np.arange(num_doublings))
 
 # Also add k_int for reference
 k_off_values = np.sort(np.append(k_off_values, k_int))
-k_off_values = np.sort(np.append(k_off_values, 0.386))
+#k_off_values = np.sort(np.append(k_off_values, 0.386))
+k_off_values = np.sort(np.append(k_off_values, 0.012))
 
 print(f"\nScanning {len(k_off_values)} k_off values from {k_off_min} to {k_off_max:.2f} /min")
 print(f"k_int = {k_int} /min (internalization rate - sets limiting timescale)")
@@ -220,7 +222,8 @@ ax1 = axes
 ax1.semilogx(k_off_values, efficacy_values, 'o-', linewidth=2, markersize=6)
 ax1.axvline(k_int, color='red', linestyle='--', linewidth=1.5, 
             label=f'$k_{int}$ = {k_int} /min', alpha=0.7)
-ax1.axvline(0.386, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
+#ax1.axvline(0.386, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
+ax1.axvline(0.012, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
 #ax1.axhline(efficacy_values.max() * 0.95, color='gray', linestyle=':', 
 #            linewidth=1, alpha=0.5)
 ax1.set_xlabel('$k_{off}$ (unbinding rate, min$^{-1}$)')

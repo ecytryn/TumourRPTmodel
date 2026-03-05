@@ -242,6 +242,9 @@ public class Grid extends AgentGrid2D<Cell> {
         double tumorVolume = SimParams.computeTumorVolume(totalCellCount);
         double receptorMoles = SimParams.computeReceptorMoles(totalCellCount, currentVesselCounts);        
         int vesselsNearTumor = countVesselsNearTumor();
+//		if (SimParams.globalTime == 0) {
+//			System.out.printf("Vessels near tumor (for PK): %d%n", vesselsNearTumor);
+//		}
 		this.PBPK.updateGeometry(tumorVolume, receptorMoles, vesselsNearTumor, h_tumor_m);
 
         return r_average_m;
