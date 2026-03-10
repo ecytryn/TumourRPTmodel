@@ -70,7 +70,7 @@ public class BetaRetention {
 	/**
 	 * Pick which table to use.
 	*/
-    private static final double[] RETENTION_FRACTIONS = RETENTION_FRACTIONS_BLEND;
+    private static final double[] RETENTION_FRACTIONS = RETENTION_FRACTIONS_TJ;
         
     /**
      * Get beta retention fraction for given tumor radius
@@ -94,20 +94,20 @@ public class BetaRetention {
         
         // Check bounds and extrapolate if needed
         if (R_mm <= R_VALUES_MM[0]) {
-            // Small tumor extrapolation: f ≈ (R/ℓ)³ for R << ℓ
-            // But table starts at 0.1 mm, so just use first value
+            // Inspired by the asymptotic behaviour of the uniform dep case : f ≈ (R/ℓ)³ for R << ℓ
+            // Match values at R=0.1 mm and drop cubically to 0.
             return RETENTION_FRACTIONS[0] * Math.pow(R_mm / R_VALUES_MM[0], 3);
         }
-        
-        if (R_mm >= R_VALUES_MM[R_VALUES_MM.length - 1]) {
-            // Large tumor extrapolation: f → 1 - 3ℓ/R for R >> ℓ
-            if (R_mm > 10.0 && SimParams.VERBOSE_ON) {
-                System.out.println("Warning: BetaRetention extrapolating for large R = " + R_mm + " mm");
-            }
-            // Use asymptotic formula
-            return 1.0 - 3.0 * ELL_MM / R_mm;
-        }
-        
+
+		if (R_mm >= R_VALUES_MM[R_VALUES_MM.length - 1]) {
+			// Asymptotic formula calibrated to match table at R = 5 mm
+			// f → 1 - C/R where C chosen so f(5mm) = 0.9734
+			// C = 5 * (1 - 0.9734) = 0.133 mm
+			double C = R_VALUES_MM[R_VALUES_MM.length - 1] 
+					   * (1.0 - RETENTION_FRACTIONS[RETENTION_FRACTIONS.length - 1]);
+			return 1.0 - C / R_mm;
+		}
+                
         // Linear interpolation
         for (int i = 0; i < R_VALUES_MM.length - 1; i++) {
             if (R_mm >= R_VALUES_MM[i] && R_mm <= R_VALUES_MM[i + 1]) {

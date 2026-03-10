@@ -269,54 +269,65 @@ public class Main {
 	private static void setupExperiment(String name) {
 		switch(name) {
 			case "WatchGrow":
-				SimParams.setExperiment("WatchATumourGrow", 
-					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
-					new int[]{195}, 100e-6, 0.06, 0.02, 0);
+				// No-treatment run: small tumour, no pre-sim, injection day far out so it never fires
+				SimParams.setExperiment("WatchATumourGrow",
+					"Watch a tumour grow: growth, vessel occlusion, and cell-type transitions.",
+					new int[]{195}, 100e-6, 0);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "WatchGrowLarge":
-				SimParams.setExperiment("WatchATumourGrowLarge", 
-					"Watch a tumour grow to see how growth, vessel occlusion, cell type transitions occur.",
-					new int[]{40}, 950e-6, 0.06, 0.02, 0);
+				SimParams.setExperiment("WatchATumourGrowLarge",
+					"Watch a large tumour grow.",
+					new int[]{400}, 950e-6, 0);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "NormoxicSmall":
 				SimParams.setExperiment("NormoxicSmallTumour",
-					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Small initial tumour.",
-					new int[]{5}, 100e-6, 0.05, 0.02, 0);
+					"Treatment of normoxic tumour, no pre-sim hypoxia. Small initial tumour (below cure threshold).",
+//					new int[]{5}, 100e-6, 0);
+					new int[]{5}, 10e-6, 0);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "NormoxicMedium":
 				SimParams.setExperiment("NormoxicMediumTumour",
-					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Medium initial tumour.",
-					new int[]{5}, 333e-6, 0.05, 0.02, 0);
+					"Treatment of normoxic tumour, no pre-sim hypoxia. Medium initial tumour (above cure threshold).",
+//					new int[]{5}, 333e-6, 0);
+					new int[]{5}, 20e-6, 0);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "NormoxicLarge":
 				SimParams.setExperiment("NormoxicLargeTumour",
-					"Treatment without pre-simulation hypoxia development to demonstrate what happens with treatment of a normoxic tumour. Large initial tumour.",
-					new int[]{5}, 950e-6, 0.05, 0.02, 0);
+					"Treatment of normoxic tumour, no pre-sim hypoxia. Large initial tumour (above cure threshold).",
+//					new int[]{5}, 950e-6, 0);
+					new int[]{5}, 50e-6, 0);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "HypoxicSmall":
 				SimParams.setExperiment("HypoxicSmallTumour",
-					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Small initial tumour.",
-					new int[]{5}, 100e-6, 0.05, 0.02, 40);
+					"Treatment of hypoxic tumour (40-day pre-sim). Small initial tumour.",
+//					new int[]{5}, 100e-6, 40);
+					new int[]{5}, 10e-6, 40);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "HypoxicMedium":
 				SimParams.setExperiment("HypoxicMediumTumour",
-					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Medium initial tumour.",
-					new int[]{5}, 333e-6, 0.05, 0.02, 40);
+					"Treatment of hypoxic tumour (40-day pre-sim). Medium initial tumour. Illustrates reoxygenation kill cycle.",
+//					new int[]{5}, 333e-6, 40);
+					new int[]{5}, 20e-6, 40);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "HypoxicLarge":
 				SimParams.setExperiment("HypoxicLargeTumour",
-					"Treatment with pre-simulation hypoxia development to demonstrate what happens with treatment of a hypoxic tumour. Large initial tumour",
-					new int[]{5}, 950e-6, 0.05, 0.02, 40);
-				break;
-			case "Reoxygenation":
-				SimParams.setExperiment("ReoxygenationExperiment",
-					"Set alpha_hypoxic = beta_hypoxic =0. This allows us to see how, once reoxygenated, hypoxic cells convert back to normoxic and die.",
-					new int[]{5}, 333e-6, 0.0, 0.0, 40);  // Zero hypoxic sensitivity!
+					"Treatment of hypoxic tumour (40-day pre-sim). Large initial tumour.",
+//					new int[]{5}, 950e-6, 40);
+					new int[]{5}, 50e-6, 40);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
-					"This case is for one-off runs to create specific plots for a figure.",
-					new int[]{0}, 333e-6, 0.05, 0.02, 40);
+					"One-off run for a specific figure. Edit parameters here as needed.",
+					new int[]{5}, 19e-6, 40);
+				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			default:
 				// Use defaults from SimParams

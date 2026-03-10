@@ -36,11 +36,11 @@ public class DoseReceptorSweep {
 				 .toArray();
     
     // RECEPTOR_DENSITIES: Receptors per cell (in moles)
+    // Expressed as multiples of SimParams.RECEPTORS_PER_CELL_MOL (the canonical baseline).
 
-	private static final double BASELINE_RECEPTORS = 5.0e-19;  // mol/cell, from SimParams
 	private static final double[] RECEPTOR_DENSITIES = 
-		IntStream.range(0, 21)  // 17 points
-				 .mapToDouble(i -> (0.68 + i * 0.02) * BASELINE_RECEPTORS)
+		IntStream.range(0, 21)  // 21 points
+				 .mapToDouble(i -> (0.68 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
 				 .toArray();
                  
     // Output suffix - change this when refining to avoid overwriting
@@ -66,8 +66,15 @@ public class DoseReceptorSweep {
     private static final boolean EXPORT_IMAGES = false;
     
     public static void main(String[] args) throws IOException {
-        
-		SimParams.INITIAL_TUMOR_RADIUS = 150e-6;  // Small vulnerable tumor just below treatment threshold
+
+        // ===================================================================
+        // RUN CONFIGURATION - edit here to switch between high/low cap density
+        // All other parameters come from SimParams canonical values.
+        // ===================================================================
+        SimParams.INITIAL_TUMOR_RADIUS = 18e-6;    // 150 um: small tumour near threshold
+        SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
+        SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
+        // ===================================================================
 
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));

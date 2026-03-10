@@ -33,7 +33,7 @@ import java.util.Map;
 public class DebugRunner {
     
 	// Class variables
-	private static double baselineReceptors = 5.0e-19;  // Default, can be loaded from file
+	private static double baselineReceptors = SimParams.RECEPTORS_PER_CELL_MOL;  // from SimParams canonical value
 
     // Storage for doses when we need variable doses per injection
     private static double[] customDoses = null;
@@ -65,7 +65,7 @@ public class DebugRunner {
         String expDesc = String.format("interval=%d, skew=%.0fnmol", interval, skew * 1e9);
         SimParams.setExperiment(expName, expDesc,
                                new int[]{firstInjectionDay, secondInjectionDay},
-                               100e-6, 0.05, 0.02, SimParams.HYPOXIA_DEV_DAYS);
+                               100e-6, SimParams.HYPOXIA_DEV_DAYS);
         
         // Store custom doses for injection
         customDoses = new double[]{firstDose, secondDose};
@@ -85,12 +85,13 @@ public class DebugRunner {
     }
     
     private static void setDebugParameters_DoseReceptor() {
-        // DOSE-RECEPTOR SWEEP DEBUG
-        double totalDose = 150;     // nmol
-        double receptorMultiplier = 0.8;
+		// DOSE-RECEPTOR SWEEP DEBUG
+		// Parameters must match DoseReceptorSweep.java fixed settings exactly.
+		// Edit totalDose and receptorMultiplier to match the point you want to investigate.
+		double totalDose = 150;           // nmol - pick a dose from the sweep's DOSES array
+		double receptorMultiplier = 0.8;  // pick a fraction of SimParams.RECEPTORS_PER_CELL_MOL
         
-        double baselineReceptors = 6.64e-19;  // mol/cell
-        double receptorDensity = receptorMultiplier * baselineReceptors;
+        double receptorDensity = receptorMultiplier * SimParams.RECEPTORS_PER_CELL_MOL;
         
         // Configure simulation
         int firstInjectionDay = 5;
@@ -98,25 +99,26 @@ public class DebugRunner {
         String expDesc = String.format("dose=%.0fnmol, receptors=%.0f%%", totalDose, receptorMultiplier*100);
         SimParams.setExperiment(expName, expDesc,
                                new int[]{firstInjectionDay},
-                               250e-6,   // Match sweep: 250 μm radius
-                               0.06, 0.019, SimParams.HYPOXIA_DEV_DAYS);
+                               150e-6,   // Match sweep: 150 μm radius
+                               SimParams.HYPOXIA_DEV_DAYS);
         
         // Override receptor density
         SimParams.RECEPTORS_PER_CELL_MOL = receptorDensity;
         
         // Store dose (convert nmol to mol)
         customDoses = new double[]{totalDose * 1e-9};
-        totalDays = firstInjectionDay + 90;
+        totalDays = firstInjectionDay + 60;
         
         // Enable visualization  
         SimParams.EXPORT_TUMOUR_OX_IMAGES = true;
         SimParams.EXPORT_OX_IMAGES = true;
         
-        System.out.println("=== DOSE-RECEPTOR DEBUG ===");
-        System.out.println("Dose: " + totalDose + " nmol");
-        System.out.println("Receptor density: " + (receptorMultiplier * 100) + "% of baseline");
-        System.out.println("Simulation: " + totalDays + " days");
-        System.out.println("===========================\n");
+		System.out.println("=== DOSE-RECEPTOR DEBUG ===");
+		System.out.printf("Dose: %.0f nmol%n", totalDose);
+		System.out.printf("Receptor multiplier: %.2f (%.3e mol/cell)%n", receptorMultiplier, receptorDensity);
+		System.out.printf("Tumour radius: 150 um, injection day %d%n", firstInjectionDay);
+		System.out.printf("Simulation: %d days%n", totalDays);
+		System.out.println("===========================\n");
     }
     
     // ===================================================================
@@ -347,7 +349,8 @@ public class DebugRunner {
 			SimParams.VESSEL_DENSITY_CONFIG = params.get("vessel_density_config");
 			System.out.println("  vessel_density_config = " + SimParams.VESSEL_DENSITY_CONFIG);
 		}
-		
+
+/**		
 		if (params.containsKey("alpha_normoxic")) {
 			SimParams.ALPHA_NORMAL = Double.parseDouble(params.get("alpha_normoxic"));
 			System.out.println("  alpha_normoxic = " + SimParams.ALPHA_NORMAL);
@@ -367,7 +370,7 @@ public class DebugRunner {
 			SimParams.BETA_HYPOXIC = Double.parseDouble(params.get("beta_hypoxic"));
 			System.out.println("  beta_hypoxic = " + SimParams.BETA_HYPOXIC);
 		}
-		
+*/		
 		if (params.containsKey("hot_fraction")) {
 			SimParams.HOT_FRACTION = Double.parseDouble(params.get("hot_fraction"));
 			System.out.println("  hot_fraction = " + SimParams.HOT_FRACTION);

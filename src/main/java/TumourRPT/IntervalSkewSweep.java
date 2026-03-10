@@ -46,9 +46,15 @@ public class IntervalSkewSweep {
     // For a 2D sweep, each (interval, skew) combination will be run NUM_REPLICATES times
         
     // Current sweep - edit as needed:
+/**
     private static final int[] INTERVALS = 
     		IntStream.range(0, 8)  // 9 points
 				 .map(i -> (20 + i * 2))  // 20 --> 36 days
+				 .toArray();
+*/
+    private static final int[] INTERVALS = 
+    		IntStream.range(0, 8)  // 9 points
+				 .map(i -> (2 + i * 3))  // 20 --> 36 days
 				 .toArray();
     private static final double[] SKEWS = 
     		IntStream.range(0, 10)  // 11 points
@@ -85,7 +91,14 @@ public class IntervalSkewSweep {
     
     public static void main(String[] args) throws IOException {
 
-		SimParams.INITIAL_TUMOR_RADIUS = 100e-6;  // Small vulnerable tumor just below treatment threshold
+        // ===================================================================
+        // RUN CONFIGURATION - edit here to switch between high/low cap density
+        // All other parameters come from SimParams canonical values.
+        // ===================================================================
+        SimParams.INITIAL_TUMOR_RADIUS = 10e-6;    // um: tumour size for sweep (used 100 previously - check)
+        SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
+        SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
+        // ===================================================================
 
         String timestamp = LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));

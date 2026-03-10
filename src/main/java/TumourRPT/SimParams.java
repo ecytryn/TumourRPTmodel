@@ -30,20 +30,21 @@ import java.util.Arrays;
  */
 public class SimParams {
     // =================================================================
-    // Default parameters that can be overwritten for different numerical experiments
+    // Per-experiment settings: vary these via setupExperiment() in Main.java
+    // or directly at the top of each sweep's main() method.
     // =================================================================
 
 	public static String EXPERIMENT_NAME = "default";
 	public static String EXPERIMENT_DESCRIPTION = "Default run";
 	public static int[] INJECTION_SCHEDULE = {45};
 	public static double INITIAL_TUMOR_RADIUS = 333e-6;
-	public static double ALPHA_HYPOXIC = 0.05;
-	public static double BETA_HYPOXIC = 0.02;
+
     // Vessel density configuration
     // Use scripts/GenerateVessels/GenerateUniformVessels.py to create new csv files.
-    // Possibilities: 40, 50, 60 - these refer to the R_REPEL parameter used in GenerateUniformVessels.py
+    // R_REPEL values refer to the repel radius parameter used in GenerateUniformVessels.py
     // Density of vessels is "inversely" proportional to R_REPEL
-    // Corresponds to CSV files in src/main/resources/vasculature/
+    // I switched to denoting csv files by the density of capillaries reported as output from
+    // GenerateUniformVessels.py. The csv files are in src/main/resources/vasculature/.
 	// R_REPEL = 20 --> Density = 625 vessels/mm^2 
 	// R_REPEL = 40 --> Density = 616 vessels/mm^2 
 	// R_REPEL = 50 --> Density = 605 vessels/mm^2 
@@ -53,16 +54,13 @@ public class SimParams {
 	//                  Density = 291 vessels/mm^2 
 	public static String VESSEL_DENSITY_CONFIG = "605";  // Default configuration
 
-	
-	// Add setter method
-	public static void setExperiment(String name, String desc, int[] injections, 
-									  double radius, double alphaH, double betaH, int hypoxiaDevDays) {
+	// Setter method:
+	public static void setExperiment(String name, String desc, int[] injections,
+									  double radius, int hypoxiaDevDays) {
 		EXPERIMENT_NAME = name;
 		EXPERIMENT_DESCRIPTION = desc;
 		INJECTION_SCHEDULE = injections;
 		INITIAL_TUMOR_RADIUS = radius;
-		ALPHA_HYPOXIC = alphaH;
-		BETA_HYPOXIC = betaH;
 		HYPOXIA_DEV_DAYS = hypoxiaDevDays;
 	}
 
@@ -84,7 +82,7 @@ public class SimParams {
     public static boolean EXPORT_CONSUMP_IMAGES = false;  // Set true for exporting consumption images
 	public static boolean EXPORT_SF_IMAGES = false;  // Set true for SF visualization    
     public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
-	public static boolean FREEZE_TUMOR = true;          // Set true to test PK without cell dynamics    
+	public static boolean FREEZE_TUMOR = false;          // Set true to test PK without cell dynamics    
 
 	// Likely to forever remain at these setting
 	public static final boolean PLOT_LIVE_IMAGES = false;  // Set true to pop up images during the run
@@ -115,8 +113,10 @@ public class SimParams {
     // All in 1/s (per second) - written as per minute values with conversion factors to SI units
     public static final double LAMBDA_BIO = 1.6e-4 / 60.0;    // 1/s (biological clearance)
     public static final double LAMBDA_DECAY = 7.14e-5 / 60.0; // 1/s (Lu-177 physical decay)
-    public static final double K_ON = 0.046 * 1e6 / 60.0;     // m^3/(mol s) (binding) (0.046 lit/nmol/min)
-    public static final double K_OFF = 0.368 / 60.0;          // 1/s (unbinding)
+	// Originally used K_ON=0.046 * ... and K_OFF=0.386 but updated based on literature search.
+	// The change should not make a noticeable difference because these are still in the QSS regime.
+    public static final double K_ON = 1.5e-3 * 1e6 / 60.0;     // m^3/(mol s) (binding) (1.5e-3 is in lit/nmol/min)
+    public static final double K_OFF = 1.2e-2 / 60.0;          // 1/s (unbinding) (1.2e-2 is in 1/min)
     public static final double K_INT = 0.001 / 60.0;          // 1/s (internalization)
     public static final double K_REL = 2e-4 / 60.0;           // 1/s (release from cells)
     
@@ -203,11 +203,10 @@ public class SimParams {
     // =================================================================
 
 	public static double ALPHA_NORMAL = 0.15;           // Gy^(-1)
-    public static double BETA_NORMAL = 0.06;           // Gy^(-2)
-/** These are now set in Main.
-    public static final double ALPHA_HYPOXIC = 0.05;          // Gy^(-1) (0.15/2.5, OER=2.5)
-    public static final double BETA_HYPOXIC = 0.02;          // Gy^(-2) (0.048/2.5, OER=2.5)
-*/
+    public static double BETA_NORMAL = 0.05;           // Gy^(-2)
+    public static final double ALPHA_HYPOXIC = 0.1;          // Gy^(-1) (0.15/2.5, OER=1.5 - consistent with clinic context)
+    public static final double BETA_HYPOXIC = 0.02;          // Gy^(-2) (0.048/2.5, OER=1.5)
+
 
     public static final double REPAIR_RATE = 0.7 / 3600.0;   // 1/s (0.7 per hour)    
 

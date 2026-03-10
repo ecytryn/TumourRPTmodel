@@ -2,10 +2,10 @@
 
 # Array of experiment names
 experiments=(
-#    "WatchGrow"
-#    "NormoxicSmall"
-#    "NormoxicMedium"
-#    "NormoxicLarge"
+    "WatchGrow"
+    "NormoxicSmall"
+    "NormoxicMedium"
+    "NormoxicLarge"
     "HypoxicSmall"
     "HypoxicMedium"
     "HypoxicLarge"
