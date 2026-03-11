@@ -313,122 +313,7 @@ public class SimParams {
 	// VISUALIZATION
     // =================================================================
 
-/**
-// My original colour-blind unfriendly colour scheme
-public static final int[] COLORLIST = {
-			0x88888888,  // 0: Healthy (gray)
-			0xFF90EE90,  // 1: Normal tumor (light green)
-			0xFF228B22,  // 2: Hypoxic (forest green)
-			0xFF006400,  // 3: Necrotic (dark green)
-//			0xFF800080,  // 4: Apoptotic (purple)
-			0xFFD0A000,  // 4: Apoptotic (orange)
-			0xFFFF6347,  // 5: Vessel (tomato red)
-			0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};	
-	
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFF90EE90,  // 1: Normal (light green - RGB 0.56, 0.93, 0.56)
-		0xFF3CB371,  // 2: Hypoxic (medium sea green - RGB 0.24, 0.70, 0.44)
-		0xFF006400,  // 3: Necrotic (dark green - RGB 0, 0.39, 0)
-		0xFFDA70D6,  // 4: Apoptotic (orchid/bright purple - RGB 0.85, 0.44, 0.84)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFF98FB98,  // 1: Normal (pale green - RGB 0.60, 0.98, 0.60)
-		0xFF2E8B57,  // 2: Hypoxic (sea green - RGB 0.18, 0.55, 0.34)
-		0xFF0B4F0B,  // 3: Necrotic (very dark green - RGB 0.04, 0.31, 0.04)
-		0xFFBF40BF,  // 4: Apoptotic (medium-bright purple - RGB 0.75, 0.25, 0.75)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFF7FFFD4,  // 1: Normal (aquamarine - RGB 0.50, 1.0, 0.83)
-		0xFF20B2AA,  // 2: Hypoxic (light sea green - RGB 0.13, 0.70, 0.67)
-		0xFF00695C,  // 3: Necrotic (teal green - RGB 0, 0.41, 0.36)
-		0xFFFF1493,  // 4: Apoptotic (deep pink/magenta - RGB 1.0, 0.08, 0.58)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFF66FF66,  // 1: Normal (RGB 0.4, 1.0, 0.4 - bright light green)
-		0xFF00CC00,  // 2: Hypoxic (RGB 0, 0.8, 0 - strong green)
-		0xFF004D00,  // 3: Necrotic (RGB 0, 0.3, 0 - dark forest green)
-		0xFFB266FF,  // 4: Apoptotic (RGB 0.7, 0.4, 1.0 - bright purple)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFD2B48C,  // 1: Normal tumor (light tan)
-		0xFFB87333,  // 2: Hypoxic (copper)
-		0xFF654321,  // 3: Necrotic (dark brown)
-		0xFFB8A8C8,  // 4: Apoptotic (soft lavender)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-
-
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFFFE87C,  // 1: Normal tumor (light yellow)
-		0xFFFF8C00,  // 2: Hypoxic (dark orange)
-		0xFF8B4513,  // 3: Necrotic (saddle brown)
-		0xFFFF00FF,  // 4: Apoptotic (magenta - highly distinct)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
-	};
-
-// A "flip" of 4th above
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFFFB3D9,  // 1: Normal (light pink - lightened deep pink)
-		0xFFFF1493,  // 2: Hypoxic (deep pink/magenta - your reference color)
-		0xFFC70069,  // 3: Necrotic (dark magenta - darkened deep pink)
-		0xFF20B2AA,  // 4: Apoptotic (light sea green/teal - your reference color)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark maroon)
-	};
-	
-// A "flip" of 4th above with a wider spacing between norm-hypo-necro
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFFFCCE5,  // 1: Normal (very light pink - more pastel)
-		0xFFFF1493,  // 2: Hypoxic (deep pink/magenta)
-		0xFF99004D,  // 3: Necrotic (very dark magenta)
-		0xFF20B2AA,  // 4: Apoptotic (light sea green/teal)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark maroon)
-	};
-// *** Slightly darker teal - apoptotic  cells compared to the previous scheme ^
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFFFCCE5,  // 1: Normal (very light pink)
-		0xFFFF1493,  // 2: Hypoxic (deep pink/magenta)
-		0xFF99004D,  // 3: Necrotic (very dark magenta)
-		0xFF008B8B,  // 4: Apoptotic (dark cyan - deeper than light sea green)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark maroon)
-	};
-
-// *** 
-	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
-		0xFFFFCCE5,  // 1: Normal (very light pink)
-		0xFFFF1493,  // 2: Hypoxic (deep pink/magenta)
-		0xFF99004D,  // 3: Necrotic (very dark magenta)
-		0xFFFFAC00,  // 4: Apoptotic (orange 0xFFFF8C00 - saddle brown 0xFF8B4513)
-		0xFFFF0000,  // 5: Open vessel (bright red)
-		0xFF8B0000   // 6: Occluded vessel (dark maroon)
-	};
-*/
+	// A colour-blind friendly upgrade:
 	public static final int[] COLORLIST = {
 		0x88888888,  // 0: Healthy (gray)
 		0xFFD2B48C,  // 1: Normal tumor (light tan)
@@ -439,7 +324,19 @@ public static final int[] COLORLIST = {
 		0xFF8B0000   // 6: Occluded vessel (dark red/maroon)
 	};
 
-
+	// =================================================================
+	// ZOOMED IMAGE EXPORT PARAMETERS
+	// Edit these to tune the zoomed figure images.
+	// ZOOM_HALF_WIDTH: half-side of the crop window in cells (centred on tumour)
+	//   e.g. 50 => 100x100 cell crop = 1mm x 1mm at 10um/cell
+	// ZOOM_PIXEL_SCALE: pixels per cell in the output image (upscaling factor)
+	//   e.g. 4 => each cell becomes a 4x4 pixel block
+	// =================================================================
+	public static final int ZOOM_HALF_WIDTH   = 50;   // cells (50 --> 500 um half-width)
+	public static final int ZOOM_PIXEL_SCALE  = 4;    // pixels per cell
+	public static final int ZOOM_FONT_SIZE       = 40;   // pt — day label and scale bar text
+	public static final int ZOOM_SCALE_BAR_HEIGHT = 8;   // pixels — height of scale bar rectangle
+	
 
 	public static final double FONT_SCALE_FACTOR = 2.0;  // Adjust this to scale all fonts
 

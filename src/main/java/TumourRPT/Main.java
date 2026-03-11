@@ -164,11 +164,17 @@ public class Main {
 					
 					// Save tumour image with day number in filename
 					String imageFile = String.format("%s/day_%03d.png", SimParams.OUTPUT_DIR_TUMOUR_IMAGES, dayCount);
+/**
 					if (day == 0 && experimentName.equals("WatchGrow")) {
 						logger.saveFigureTotal(imageFile, drawer, dayCount, false, true);
 					} else {
 						logger.saveFigureTotal(imageFile, drawer, dayCount, false, false);
 					}
+*/
+					boolean showLegend   = (day == 0 && experimentName.equals("WatchGrow"));
+					boolean showScaleBar = (day == 0 && experimentName.equals("WatchGrow"))
+										|| (dayCount == 5 && !experimentName.equals("WatchGrow"));
+					logger.saveFigureZoomed(imageFile, drawer, model, dayCount, showLegend, showScaleBar);
 
 					// Save SF visualization
 					if (SimParams.EXPORT_SF_IMAGES) {
@@ -272,7 +278,7 @@ public class Main {
 				// No-treatment run: small tumour, no pre-sim, injection day far out so it never fires
 				SimParams.setExperiment("WatchATumourGrow",
 					"Watch a tumour grow: growth, vessel occlusion, and cell-type transitions.",
-					new int[]{195}, 100e-6, 0);
+					new int[]{195}, 10e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
 			case "WatchGrowLarge":
@@ -280,6 +286,7 @@ public class Main {
 					"Watch a large tumour grow.",
 					new int[]{400}, 950e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "NormoxicSmall":
 				SimParams.setExperiment("NormoxicSmallTumour",
@@ -287,6 +294,7 @@ public class Main {
 //					new int[]{5}, 100e-6, 0);
 					new int[]{5}, 10e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "NormoxicMedium":
 				SimParams.setExperiment("NormoxicMediumTumour",
@@ -294,13 +302,15 @@ public class Main {
 //					new int[]{5}, 333e-6, 0);
 					new int[]{5}, 20e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "NormoxicLarge":
 				SimParams.setExperiment("NormoxicLargeTumour",
 					"Treatment of normoxic tumour, no pre-sim hypoxia. Large initial tumour (above cure threshold).",
 //					new int[]{5}, 950e-6, 0);
-					new int[]{5}, 50e-6, 0);
+					new int[]{5}, 300e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "HypoxicSmall":
 				SimParams.setExperiment("HypoxicSmallTumour",
@@ -308,6 +318,7 @@ public class Main {
 //					new int[]{5}, 100e-6, 40);
 					new int[]{5}, 10e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "HypoxicMedium":
 				SimParams.setExperiment("HypoxicMediumTumour",
@@ -315,19 +326,22 @@ public class Main {
 //					new int[]{5}, 333e-6, 40);
 					new int[]{5}, 20e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "HypoxicLarge":
 				SimParams.setExperiment("HypoxicLargeTumour",
 					"Treatment of hypoxic tumour (40-day pre-sim). Large initial tumour.",
 //					new int[]{5}, 950e-6, 40);
-					new int[]{5}, 50e-6, 40);
+					new int[]{5}, 300e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
 					"One-off run for a specific figure. Edit parameters here as needed.",
 					new int[]{5}, 19e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			default:
 				// Use defaults from SimParams

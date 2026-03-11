@@ -34,6 +34,9 @@ public class DoseReceptorSweep {
 		IntStream.range(0, 13)  // 13 points
 				 .mapToDouble(i -> (50 + i * 12.5))  // 50 --> 200 nmol
 				 .toArray();
+//		IntStream.range(0, 6)  // 13 points
+//				 .mapToDouble(i -> (50 + i * 25))  // 50 --> 200 nmol
+//				 .toArray();
     
     // RECEPTOR_DENSITIES: Receptors per cell (in moles)
     // Expressed as multiples of SimParams.RECEPTORS_PER_CELL_MOL (the canonical baseline).
@@ -42,6 +45,9 @@ public class DoseReceptorSweep {
 		IntStream.range(0, 21)  // 21 points
 				 .mapToDouble(i -> (0.68 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
 				 .toArray();
+//		IntStream.range(0, 10)  // 21 points
+//				 .mapToDouble(i -> (0.68 + i * 0.04) * SimParams.RECEPTORS_PER_CELL_MOL)
+//				 .toArray();
                  
     // Output suffix - change this when refining to avoid overwriting
     private static final String OUTPUT_SUFFIX = "";
@@ -71,7 +77,7 @@ public class DoseReceptorSweep {
         // RUN CONFIGURATION - edit here to switch between high/low cap density
         // All other parameters come from SimParams canonical values.
         // ===================================================================
-        SimParams.INITIAL_TUMOR_RADIUS = 18e-6;    // 150 um: small tumour near threshold
+        SimParams.INITIAL_TUMOR_RADIUS = 20e-6;    // 10 um: small tumour a bit below the cure threshold
         SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
         SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
         // ===================================================================

@@ -95,7 +95,7 @@ public class IntervalSkewSweep {
         // RUN CONFIGURATION - edit here to switch between high/low cap density
         // All other parameters come from SimParams canonical values.
         // ===================================================================
-        SimParams.INITIAL_TUMOR_RADIUS = 10e-6;    // um: tumour size for sweep (used 100 previously - check)
+        SimParams.INITIAL_TUMOR_RADIUS = 10e-6;    // 10 um (3 cells): small tumour a bit below cure threshold with TJ retention
         SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
         SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
         // ===================================================================

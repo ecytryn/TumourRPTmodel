@@ -133,6 +133,144 @@ public class DataLogger {
     public void saveFigureTotal(String fileName, DaVinci drawer, int dayCount) {
         saveFigureTotal(fileName, drawer, dayCount, false, false);
     }
+
+	/**
+	 * Save a zoomed, upscaled crop of the tumour centred on the grid centre.
+	 * Zoom parameters are controlled by SimParams.ZOOM_HALF_WIDTH and
+	 * SimParams.ZOOM_PIXEL_SCALE. Draws day label and a scale bar that
+	 * reflects the physical size of the zoomed region.
+	 *
+	 * @param fileName  Output PNG path
+	 * @param drawer    DaVinci with rendered pixel buffer
+	 * @param grid      Grid (for centre coordinates)
+	 * @param dayCount  Current simulation day (for label)
+	 */
+	public void saveFigureZoomed(String fileName, DaVinci drawer, Grid grid, 
+						int dayCount, boolean showLegend, boolean showScaleBar) {
+	
+		// ---------------------------------------------------------------
+		// Zoom geometry — derived from SimParams tuning constants
+		// ---------------------------------------------------------------
+		final int hw   = SimParams.ZOOM_HALF_WIDTH;   // half-width in cells
+		final int scale = SimParams.ZOOM_PIXEL_SCALE; // pixels per cell
+	
+		final int cx = grid.xDim / 2;  // grid centre x (cell coords)
+		final int cy = grid.yDim / 2;  // grid centre y
+	
+		final int outPx = (2 * hw) * scale;  // output image side in pixels
+	
+		BufferedImage img = new BufferedImage(outPx, outPx, BufferedImage.TYPE_INT_RGB);
+	
+		// ---------------------------------------------------------------
+		// Copy + upscale: each source cell -> scale x scale pixel block
+		// ---------------------------------------------------------------
+		for (int dy = -hw; dy < hw; dy++) {
+			for (int dx = -hw; dx < hw; dx++) {
+				int srcX = cx + dx;
+				int srcY = cy + dy;
+	
+				// Clamp to grid bounds (shouldn't trigger for reasonable hw)
+				srcX = Math.max(0, Math.min(grid.xDim - 1, srcX));
+				srcY = Math.max(0, Math.min(grid.yDim - 1, srcY));
+	
+				int color = drawer.GetPix(srcX, srcY);
+	
+				// Write to all pixels in the scaled block
+				int destX0 = (dx + hw) * scale;
+				int destY0 = (dy + hw) * scale;
+				for (int py = 0; py < scale; py++) {
+					for (int px = 0; px < scale; px++) {
+						img.setRGB(destX0 + px, destY0 + py, color);
+					}
+				}
+			}
+		}
+	
+		// ---------------------------------------------------------------
+		// Overlays: day label + scale bar
+		// ---------------------------------------------------------------
+		Graphics2D g2d = img.createGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+	
+		// --- Day label (top-left) ---
+		String timestamp = String.format("Day %d", dayCount);
+		if (MyUtils.isElementPresent(SimParams.INJECTION_SCHEDULE, dayCount)) {
+			timestamp += " (injection)";
+		}
+		int fontSize = SimParams.ZOOM_FONT_SIZE;
+		Font font = new Font("Arial", Font.BOLD, fontSize);
+		g2d.setFont(font);
+		FontMetrics fm = g2d.getFontMetrics();
+		int labelPad = 8;
+		int labelX = labelPad;
+		int labelY = labelPad + fm.getAscent();
+		// Black outline
+		g2d.setColor(Color.BLACK);
+		for (int ddx = -2; ddx <= 2; ddx++)
+			for (int ddy = -2; ddy <= 2; ddy++)
+				if (ddx != 0 || ddy != 0)
+					g2d.drawString(timestamp, labelX + ddx, labelY + ddy);
+		g2d.setColor(Color.WHITE);
+		g2d.drawString(timestamp, labelX, labelY);
+	
+		if (showScaleBar) {
+			// --- Scale bar (bottom-right) ---
+			// Choose a round physical length that fits comfortably in the image.
+			// We pick the largest of {50, 100, 200, 500} um that is <= 40% of the crop width.
+			double cropWidth_um = 2.0 * hw * SimParams.CELL_LENGTH * 1e6;  // um
+			int[] niceValues_um = {50, 100, 200, 500};
+			int barPhys_um = niceValues_um[0];
+			for (int v : niceValues_um) {
+				if (v <= 0.40 * cropWidth_um) barPhys_um = v;
+			}
+			// Convert physical length to output pixels
+			double umPerCell = SimParams.CELL_LENGTH * 1e6;
+			int barPx = (int) Math.round((barPhys_um / umPerCell) * scale);
+		
+			int barH   = SimParams.ZOOM_SCALE_BAR_HEIGHT;
+			int sbPad  = 12;
+			int barX   = outPx - barPx - sbPad - 20;
+			int barY   = outPx - barH  - sbPad - fontSize - 6;
+		
+			g2d.setColor(Color.WHITE);
+			g2d.fillRect(barX, barY, barPx, barH);
+			g2d.setColor(Color.BLACK);
+			g2d.drawRect(barX, barY, barPx, barH);
+		
+			// Scale bar label
+			String barLabel = barPhys_um >= 1000
+				? String.format("%.0f mm", barPhys_um / 1000.0)
+				: String.format("%d \u00b5m", barPhys_um);   // µm using unicode
+			Font scaleFont = new Font("Arial", Font.PLAIN, Math.max(9, fontSize - 2));
+			g2d.setFont(scaleFont);
+			FontMetrics sfm = g2d.getFontMetrics();
+			int barLabelX = barX + (barPx - sfm.stringWidth(barLabel)) / 2;
+			int barLabelY = barY + barH + 4 + sfm.getAscent();
+			g2d.setColor(Color.BLACK);
+			for (int ddx = -1; ddx <= 1; ddx++)
+				for (int ddy = -1; ddy <= 1; ddy++)
+					if (ddx != 0 || ddy != 0)
+						g2d.drawString(barLabel, barLabelX + ddx, barLabelY + ddy);
+			g2d.setColor(Color.WHITE);
+			g2d.drawString(barLabel, barLabelX, barLabelY);
+		}	
+		g2d.dispose();
+
+		if (showLegend) {
+			drawLegend(g2d, outPx, outPx);
+		}	
+
+		// ---------------------------------------------------------------
+		// Save
+		// ---------------------------------------------------------------
+		try {
+			ImageIO.write(img, "png", new File(fileName));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
     
     /**
      * Draw legend showing cell types and oxygen colors
