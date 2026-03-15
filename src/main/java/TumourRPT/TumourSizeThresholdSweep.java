@@ -104,7 +104,8 @@ public class TumourSizeThresholdSweep {
             for (int rep = 0; rep < NUM_REPLICATES; rep++) {
                 currentRun++;
 
-                int seed = 42 + rep;
+//                int seed = 42 + rep;
+				int seed = rep * 999983 + currentRun;
                 Rand rng = new Rand(seed);
 
                 String runDir = String.format("%s/radius_%.0fum_rep_%d",

@@ -145,7 +145,8 @@ public class DoseReceptorSweep {
                     System.out.printf("  Simulation length: %d days%n", simulationDays);
 
 					// Use replicate-based seed for reproducibility
-					int seed = 42 + rep;  // Seeds: 42, 43, 44, 45, 46 for reps 1-5
+//					int seed = 42 + rep;  // Seeds: 42, 43, 44, 45, 46 for reps 1-5
+					int seed = rep * 999983 + currentRun;
 					Rand rng = new Rand(seed);
                     
                     // Run simulation with this receptor density

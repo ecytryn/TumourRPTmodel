@@ -46,26 +46,11 @@ public class IntervalSkewSweep {
     // For a 2D sweep, each (interval, skew) combination will be run NUM_REPLICATES times
         
     // Current sweep - edit as needed:
-/**
+
     private static final int[] INTERVALS = 
-    		IntStream.range(0, 8)  // 9 points
-				 .map(i -> (20 + i * 2))  // 20 --> 36 days in steps of 2 days
+    		IntStream.range(0, 21)  // 21 points
+				 .map(i -> (2 + i * 1))  // 2 --> 24 days in steps of 1 day
 				 .toArray();
-    private static final int[] INTERVALS = 
-    		IntStream.range(0, 8)  // 9 points
-				 .map(i -> (2 + i * 3))  // 2 --> 23 days in steps of 3 days
-				 .toArray();
-*/ 
-	private static final int[] INTERVALS = 
-			new int[]{3, 7, 9, 13, 15, 19, 21};
-/**        
-    private static final int[] INTERVALS = 
-    		IntStream.range(0, 11)  // 11 points
-				 .map(i -> (2 + i * 2))  // 2 --> 23 days in steps of 3 days
-				 .toArray();
-	private static final double[] SKEWS = 
-			new double[]{25e-9};
-*/
     private static final double[] SKEWS = 
     		IntStream.range(0, 11)  // 11 points
 				 .mapToDouble(i -> (-25e-9 + i * 5e-9))  // -25 --> 25 nmol
@@ -198,7 +183,8 @@ public class IntervalSkewSweep {
 					// Use replicate-based seed for reproducibility across parameter combinations
 					// This means replicate 1 across all parameters uses seed 43, rep 2 uses 44, etc.
 					// This creates a "controlled experiment" where only parameters change, not stochasticity
-					int seed = 42 + rep;  // rep is 1-indexed, so seeds are 43, 44, 45, 46, 47
+//					int seed = 42 + rep;  // rep is 1-indexed, so seeds are 43, 44, 45, 46, 47
+					int seed = rep * 999983 + currentRun;
 					Rand rng = new Rand(seed);
                     
                     // Run simulation
