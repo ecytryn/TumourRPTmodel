@@ -49,15 +49,25 @@ public class IntervalSkewSweep {
 /**
     private static final int[] INTERVALS = 
     		IntStream.range(0, 8)  // 9 points
-				 .map(i -> (20 + i * 2))  // 20 --> 36 days
+				 .map(i -> (20 + i * 2))  // 20 --> 36 days in steps of 2 days
 				 .toArray();
-*/
     private static final int[] INTERVALS = 
     		IntStream.range(0, 8)  // 9 points
-				 .map(i -> (2 + i * 3))  // 20 --> 36 days
+				 .map(i -> (2 + i * 3))  // 2 --> 23 days in steps of 3 days
 				 .toArray();
+*/ 
+	private static final int[] INTERVALS = 
+			new int[]{3, 7, 9, 13, 15, 19, 21};
+/**        
+    private static final int[] INTERVALS = 
+    		IntStream.range(0, 11)  // 11 points
+				 .map(i -> (2 + i * 2))  // 2 --> 23 days in steps of 3 days
+				 .toArray();
+	private static final double[] SKEWS = 
+			new double[]{25e-9};
+*/
     private static final double[] SKEWS = 
-    		IntStream.range(0, 10)  // 11 points
+    		IntStream.range(0, 11)  // 11 points
 				 .mapToDouble(i -> (-25e-9 + i * 5e-9))  // -25 --> 25 nmol
 				 .toArray();
 
@@ -412,9 +422,17 @@ public class IntervalSkewSweep {
 class SimResult {
     int finalTumorCount;
     int injectionsUsed;
-    
+    int initialCellCount;
+
     SimResult(int finalTumorCount, int injectionsUsed) {
         this.finalTumorCount = finalTumorCount;
         this.injectionsUsed = injectionsUsed;
+        this.initialCellCount = 0;  // default for callers that don't set it
+    }
+
+    SimResult(int finalTumorCount, int injectionsUsed, int initialCellCount) {
+        this.finalTumorCount = finalTumorCount;
+        this.injectionsUsed = injectionsUsed;
+        this.initialCellCount = initialCellCount;
     }
 }

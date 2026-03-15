@@ -31,7 +31,7 @@ mpl.rcParams.update({
 # CONFIGURATION
 # =============================================================================
 
-ELL = 1.0  # mm, mean range of Lu-177 beta particles
+ELL = 0.125  # mm, mean range of Lu-177 beta particles
 
 # =============================================================================
 # BETA RETENTION MODEL
@@ -78,7 +78,7 @@ print("="*70)
 print(f"\nMean range: ℓ = {ELL} mm")
 
 # Tumor radius range (clinically relevant: 0.5 - 3 mm)
-R_values = np.linspace(0.1, 5.0, 100)
+R_values = np.linspace(0.01, 1.0, 100)
 
 print(f"\nComputing retention fractions for {len(R_values)} tumor radii...")
 
@@ -113,9 +113,9 @@ ax.plot(R_values, retention_uniform, '-',
 #       label=r'Geometric $R^3/(R+\ell)^3$', linewidth=1.5, color='#A23B72')
 
 # Mark mean range
-ax.axvline(ELL, color='gray', linestyle=':', linewidth=0.8, alpha=0.6, zorder=1)
-ax.text(ELL, 0.5, f'  $\ell$ = {ELL} mm', rotation=90, 
-       va='center', fontsize=7, color='gray')
+#ax.axvline(ELL, color='gray', linestyle=':', linewidth=0.8, alpha=0.6, zorder=1)
+#ax.text(ELL, 0.5, f'  $\ell$ = {ELL} mm', rotation=90, 
+#       va='center', fontsize=7, color='gray')
 
 # Formatting
 ax.set_xlabel('Tumor radius $R$ (mm)')
@@ -123,7 +123,7 @@ ax.set_ylabel('Fraction deposited in the tumour')
 ax.set_title('Intratumoral energy deposition fraction', fontweight='bold')
 #ax.legend(loc='lower right', framealpha=0.95)
 ax.grid(True, alpha=0.3, linewidth=0.5)
-ax.set_xlim([0, 5])
+ax.set_xlim([0, 1])
 ax.set_ylim([0, 1.0])
 
 # Add minor gridlines

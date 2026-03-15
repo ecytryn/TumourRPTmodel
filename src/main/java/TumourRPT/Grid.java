@@ -253,18 +253,86 @@ public class Grid extends AgentGrid2D<Cell> {
     /**
      * Seed initial tumor at center of domain
      */
-    public void SeedTumor() {
-        int[] hood = CircleHood(false, SimParams.getInitialTumorRadiusCells());
-        int seedCellCount = MapHood(hood, xDim / 2, yDim / 2);
-        
-        for (int i = 0; i < seedCellCount; i++) {
-            Cell c = GetAgent(hood[i]);
-            if (c == null) {
-                NewAgentSQ(hood[i]).Init(SimParams.NORMAL, 0);
-            }
-        }
-    }
+	public void SeedTumor() {
+		double r_m = SimParams.INITIAL_TUMOR_RADIUS;
+		double r_cells = r_m / SimParams.CELL_LENGTH;
+		
+		int cx = xDim / 2;
+		int cy = yDim / 2;
 
+		// For small radii, converting "a ball of that radius" into a set of cells seems 
+		// to be sensitive procedure for HAL generating inconsistent results for unclear 
+		// reasons. Possible large radii too but harder to see that in the results. So 
+		// for radii below 2*sqrt(2), we do it manually.
+		
+		// Thresholds in cell-length units
+		double R1      = 1.0;
+		double R_SQRT2 = Math.sqrt(2.0);
+		double R2      = 2.0;
+		double R_SQRT5 = Math.sqrt(5.0);
+		double R_2SQRT2 = 2.0 * Math.sqrt(2.0);
+		
+		if (r_cells < R_2SQRT2) {
+			// Hard-coded discrete shapes, centred on (cx, cy)
+			// Offsets from centre to include, in (dx, dy) pairs
+			int[][] offsets;
+			
+			if (r_cells < R1) {
+				// 1 cell: centre only
+				offsets = new int[][]{{0, 0}};
+			} else if (r_cells < R_SQRT2) {
+				// 5 cells: centre + 4 cardinal neighbours
+				offsets = new int[][]{
+					{0, 0},
+					{1, 0}, {-1, 0}, {0, 1}, {0, -1}
+				};
+			} else if (r_cells < R2) {
+				// 9 cells: 3x3 square
+				offsets = new int[][]{
+					{-1,-1}, {0,-1}, {1,-1},
+					{-1, 0}, {0, 0}, {1, 0},
+					{-1, 1}, {0, 1}, {1, 1}
+				};
+			} else if (r_cells < R_SQRT5) {
+				// 13 cells: 3x3 + 4 cardinal extensions
+				offsets = new int[][]{
+					{-1,-1}, {0,-1}, {1,-1},
+					{-1, 0}, {0, 0}, {1, 0},
+					{-1, 1}, {0, 1}, {1, 1},
+					{0, -2}, {0, 2}, {-2, 0}, {2, 0}
+				};
+			} else {
+				// 21 cells: 5x5 minus corners
+				offsets = new int[][]{
+							  {0,-2}, {1,-2}, {-1,-2},
+					{-2,-1}, {-1,-1}, {0,-1}, {1,-1}, {2,-1},
+					{-2, 0}, {-1, 0}, {0, 0}, {1, 0}, {2, 0},
+					{-2, 1}, {-1, 1}, {0, 1}, {1, 1}, {2, 1},
+							  {0, 2}, {1, 2}, {-1, 2}
+				};
+			}
+			
+			for (int[] offset : offsets) {
+				int idx = I(cx + offset[0], cy + offset[1]);
+				Cell c = GetAgent(idx);
+				if (c == null) {
+					NewAgentSQ(idx).Init(SimParams.NORMAL, 0);
+				}
+			}
+						
+		} else {
+			// Large tumour: use CircleHood with int radius
+			int r_int = (int) Math.round(r_cells);
+			int[] hood = CircleHood(true, r_int);
+			int seedCellCount = MapHood(hood, cx, cy);
+			for (int i = 0; i < seedCellCount; i++) {
+				Cell c = GetAgent(hood[i]);
+				if (c == null) {
+					NewAgentSQ(hood[i]).Init(SimParams.NORMAL, 0);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Develop hypoxia in tumor WITHOUT growth

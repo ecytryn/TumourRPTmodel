@@ -281,33 +281,23 @@ public class Main {
 					new int[]{195}, 10e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				break;
-			case "WatchGrowLarge":
-				SimParams.setExperiment("WatchATumourGrowLarge",
-					"Watch a large tumour grow.",
-					new int[]{400}, 950e-6, 0);
-				SimParams.VESSEL_DENSITY_CONFIG = "605";
-				SimParams.EXPORT_OX_IMAGES = false;
-				break;
 			case "NormoxicSmall":
 				SimParams.setExperiment("NormoxicSmallTumour",
 					"Treatment of normoxic tumour, no pre-sim hypoxia. Small initial tumour (below cure threshold).",
-//					new int[]{5}, 100e-6, 0);
-					new int[]{5}, 10e-6, 0);
+					new int[]{5}, 15e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "NormoxicMedium":
 				SimParams.setExperiment("NormoxicMediumTumour",
 					"Treatment of normoxic tumour, no pre-sim hypoxia. Medium initial tumour (above cure threshold).",
-//					new int[]{5}, 333e-6, 0);
-					new int[]{5}, 20e-6, 0);
+					new int[]{5}, 35e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "NormoxicLarge":
 				SimParams.setExperiment("NormoxicLargeTumour",
 					"Treatment of normoxic tumour, no pre-sim hypoxia. Large initial tumour (above cure threshold).",
-//					new int[]{5}, 950e-6, 0);
 					new int[]{5}, 300e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
@@ -315,23 +305,20 @@ public class Main {
 			case "HypoxicSmall":
 				SimParams.setExperiment("HypoxicSmallTumour",
 					"Treatment of hypoxic tumour (40-day pre-sim). Small initial tumour.",
-//					new int[]{5}, 100e-6, 40);
-					new int[]{5}, 10e-6, 40);
+					new int[]{5}, 15e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "HypoxicMedium":
 				SimParams.setExperiment("HypoxicMediumTumour",
 					"Treatment of hypoxic tumour (40-day pre-sim). Medium initial tumour. Illustrates reoxygenation kill cycle.",
-//					new int[]{5}, 333e-6, 40);
-					new int[]{5}, 20e-6, 40);
+					new int[]{5}, 35e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;
 			case "HypoxicLarge":
 				SimParams.setExperiment("HypoxicLargeTumour",
 					"Treatment of hypoxic tumour (40-day pre-sim). Large initial tumour.",
-//					new int[]{5}, 950e-6, 40);
 					new int[]{5}, 300e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
@@ -339,7 +326,7 @@ public class Main {
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
 					"One-off run for a specific figure. Edit parameters here as needed.",
-					new int[]{5}, 19e-6, 40);
+					new int[]{5}, 25e-6, 40);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;

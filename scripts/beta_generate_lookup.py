@@ -9,7 +9,7 @@ into the BetaRetention.java class.
 import numpy as np
 from scipy.integrate import quad
 
-ELL = 1.0  # mm, mean distance travelled
+ELL = 0.41  # mm, mean distance travelled, this is value that gives the best fit to TJ's retention table.
 
 def sphere_intersection_volume(r, R, ell):
     """Volume of intersection between tumor and deposition sphere"""

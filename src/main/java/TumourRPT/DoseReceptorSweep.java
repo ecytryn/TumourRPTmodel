@@ -42,18 +42,18 @@ public class DoseReceptorSweep {
     // Expressed as multiples of SimParams.RECEPTORS_PER_CELL_MOL (the canonical baseline).
 
 	private static final double[] RECEPTOR_DENSITIES = 
-		IntStream.range(0, 21)  // 21 points
+		IntStream.range(0, 31)  // 21 points
 				 .mapToDouble(i -> (0.68 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
 				 .toArray();
 //		IntStream.range(0, 10)  // 21 points
-//				 .mapToDouble(i -> (0.68 + i * 0.04) * SimParams.RECEPTORS_PER_CELL_MOL)
+//				 .mapToDouble(i -> (1.1 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
 //				 .toArray();
                  
     // Output suffix - change this when refining to avoid overwriting
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 20;
+    private static final int NUM_REPLICATES = 10;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -77,7 +77,7 @@ public class DoseReceptorSweep {
         // RUN CONFIGURATION - edit here to switch between high/low cap density
         // All other parameters come from SimParams canonical values.
         // ===================================================================
-        SimParams.INITIAL_TUMOR_RADIUS = 20e-6;    // 10 um: small tumour a bit below the cure threshold
+        SimParams.INITIAL_TUMOR_RADIUS = 21e-6;    // 10 um: small tumour a bit below the cure threshold
         SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
         SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
         // ===================================================================
@@ -145,7 +145,7 @@ public class DoseReceptorSweep {
                     System.out.printf("  Simulation length: %d days%n", simulationDays);
 
 					// Use replicate-based seed for reproducibility
-					int seed = 42 + rep;  // Seeds: 43, 44, 45, 46, 47 for reps 1-5
+					int seed = 42 + rep;  // Seeds: 42, 43, 44, 45, 46 for reps 1-5
 					Rand rng = new Rand(seed);
                     
                     // Run simulation with this receptor density

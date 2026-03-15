@@ -66,6 +66,13 @@ task runDoseReceptorSweep(type: JavaExec) {
     jvmArgs = ['-Xmx4g']
 }
 
+// Task to run parameter sweep - initial tumour radius
+task runTumourSizeThresholdSweep(type: JavaExec) {
+    mainClass = 'TumorRPT.TumourSizeThresholdSweep'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Xmx4g']
+}
+
 task runDebug(type: JavaExec) {
     main = 'TumorRPT.DebugRunner'
     classpath = sourceSets.main.runtimeClasspath

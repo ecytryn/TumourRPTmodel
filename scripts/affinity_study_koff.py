@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Study the effect of binding affinity on treatment efficacy
+Study the effect of binding affinity on cumulative activity
 
 Vary k_off (unbinding rate) to explore affinity landscape.
 Lower k_off = higher affinity (stronger binding)
 
-Efficacy metric: Integral of captive radioligand (N_b^H + N_ic^H) over 30 days
+Cumulative activity metric: Integral of captive radioligand (N_b^H + N_ic^H) over 30 days
 This represents cumulative radiation exposure to the tumor.
 
 Note: k_int sets a floor on benefit - once internalization becomes limiting,
@@ -130,16 +130,15 @@ def solve_pk_model(k_off_value):
     N_captive_H = N_b_H + N_ic_H
     
     # Integrate over time (convert time to days for the integral)
-    captive_integral = trapezoid(N_captive_H, t_days)  # nmol·day
-    
-    return N_b_H, N_ic_H, captive_integral
+    CumAct = lambda_decay * trapezoid(N_captive_H, t_min) * 1e-9 * AVOGADRO / 1e9  # GBq·s
+    return N_b_H, N_ic_H, CumAct
 
 # =============================================================================
 # SWEEP OVER k_off VALUES
 # =============================================================================
 
 print("\n" + "="*70)
-print("AFFINITY STUDY: k_off vs Treatment Efficacy")
+print("AFFINITY STUDY: k_off vs Cumulative activity")
 print("="*70)
 
 # k_off range: Start below k_int (0.001 /min), go up to ~0.4 /min
@@ -162,24 +161,24 @@ print(f"k_on = {k_on:.2e} m³/(nmol·min)")
 print(f"R_total = {R_total:.4e} nmol")
 
 # Storage for results
-efficacy_values = []
+CumAct_values = []
 K_d_values = []  # Dissociation constant (k_off / k_on)
 
 print("\nRunning simulations...")
 for i, k_off in enumerate(k_off_values):
-    N_b_H, N_ic_H, efficacy = solve_pk_model(k_off)
-    efficacy_values.append(efficacy)
+    N_b_H, N_ic_H, CumAct = solve_pk_model(k_off)
+    CumAct_values.append(CumAct)
     K_d_values.append(k_off / k_on)  # nmol/m³
     
 #    if i % 3 == 0 or k_off == k_int:  # Print every few values
     print(f"  k_off = {k_off:.4f} /min, K_d = {K_d_values[-1]:.2e} nmol/m³, "
-      f"Efficacy = {efficacy:.4f} nmol·day")
+      f"Cumulative Activity = {CumAct:.4f} GBq·s")
 
-efficacy_values = np.array(efficacy_values)
+CumAct_values = np.array(CumAct_values)
 K_d_values = np.array(K_d_values)
 
-# Normalize efficacy to [0, 1] for easier interpretation
-efficacy_norm = efficacy_values / efficacy_values.max()
+# Normalize cumulative activity to [0, 1] for easier interpretation
+CumAct_norm = CumAct_values / CumAct_values.max()
 
 print("\nSimulations complete!")
 
@@ -191,22 +190,22 @@ print("\n" + "="*70)
 print("ANALYSIS")
 print("="*70)
 
-# Find k_off that gives 95% of maximum efficacy
-idx_95 = np.argmin(np.abs(efficacy_norm - 0.95))
+# Find k_off that gives 95% of maximum cumulative activity
+idx_95 = np.argmin(np.abs(CumAct_norm - 0.95))
 k_off_95 = k_off_values[idx_95]
 K_d_95 = K_d_values[idx_95]
 
-print(f"\nMaximum efficacy: {efficacy_values.max():.4f} nmol·day")
-print(f"  Achieved at k_off = {k_off_values[np.argmax(efficacy_values)]:.4f} /min")
-print(f"  (K_d = {K_d_values[np.argmax(efficacy_values)]:.2e} nmol/m³)")
+print(f"\nMaximum cumulative activity: {CumAct_values.max():.4f} GBq·s")
+print(f"  Achieved at k_off = {k_off_values[np.argmax(CumAct_values)]:.4f} /min")
+print(f"  (K_d = {K_d_values[np.argmax(CumAct_values)]:.2e} nmol/m³)")
 
-print(f"\n95% of maximum efficacy achieved at:")
+print(f"\n95% of maximum cumulative activity achieved at:")
 print(f"  k_off = {k_off_95:.4f} /min")
 print(f"  K_d = {K_d_95:.2e} nmol/m³")
 print(f"  Affinity ratio (k_int/k_off) = {k_int/k_off_95:.2f}")
 
 print(f"\nDiminishing returns:")
-print(f"  When k_off << k_int ({k_int:.4f} /min), internalization is rate-limiting")
+print(f"  When k_off << k_int ({k_int:.4f} /min), internalization limits additional improvement")
 print(f"  Further affinity improvements provide minimal benefit")
 
 # =============================================================================
@@ -217,18 +216,18 @@ print("\nCreating plots...")
 
 fig, axes = plt.subplots(1, 1)
 
-# Plot 1: Efficacy vs k_off
+# Plot 1: Cumulative activity vs k_off
 ax1 = axes
-ax1.semilogx(k_off_values, efficacy_values, 'o-', linewidth=2, markersize=6)
+ax1.semilogx(k_off_values, CumAct_values, 'o-', linewidth=2, markersize=6)
 ax1.axvline(k_int, color='red', linestyle='--', linewidth=1.5, 
             label=f'$k_{int}$ = {k_int} /min', alpha=0.7)
 #ax1.axvline(0.386, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
 ax1.axvline(0.012, color='orange', linestyle='--', linewidth=1.5, alpha=0.7)
-#ax1.axhline(efficacy_values.max() * 0.95, color='gray', linestyle=':', 
+#ax1.axhline(CumAct_values.max() * 0.95, color='gray', linestyle=':', 
 #            linewidth=1, alpha=0.5)
 ax1.set_xlabel('$k_{off}$ (unbinding rate, min$^{-1}$)')
-ax1.set_ylabel('Treatment Efficacy (nmol·day)')
-ax1.set_title('Off rate vs Treatment Efficacy', fontweight='bold')
+ax1.set_ylabel('Cumulative Activity (GBq·s)')
+ax1.set_title('Off rate vs Cumulative Activity', fontweight='bold')
 ax1.legend
 ax1.grid(True, alpha=0.3)
 ax1.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
@@ -236,24 +235,24 @@ ax1.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
 
 # Add annotation
 #ax1.annotate('Internalization\nlimiting', 
-#             xy=(k_int/3, efficacy_values.max()*0.8),
+#             xy=(k_int/3, CumAct_values.max()*0.8),
 #              ha='center', color='red', alpha=0.7)
 
 '''
-# Plot 2: Efficacy vs K_d (dissociation constant)
+# Plot 2: Cumulative activity vs K_d (dissociation constant)
 ax2 = axes[1]
-ax2.loglog(K_d_values, efficacy_values, 'o-', linewidth=2, markersize=6, color='tab:orange')
+ax2.loglog(K_d_values, CumAct_values, 'o-', linewidth=2, markersize=6, color='tab:orange')
 ax2.set_xlabel('K_d (dissociation constant, nmol/m³)', fontsize=12)
-ax2.set_ylabel('Treatment Efficacy\n∫(N_b^H + N_ic^H) dt (nmol·day)', fontsize=12)
-ax2.set_title('Affinity (K_d) vs Treatment Efficacy', fontsize=13, fontweight='bold')
+ax2.set_ylabel('Cumulative Activity\n\lambda_decay∫(N_b^H + N_ic^H) dt (Bq·s)', fontsize=12)
+ax2.set_title('Affinity (K_d) vs Cumulative Activity', fontsize=13, fontweight='bold')
 ax2.grid(True, alpha=0.3)
 
 # Add annotation for "high affinity" and "low affinity" regions
 ax2.annotate('High affinity\n(diminishing returns)', 
-             xy=(K_d_values.min()*3, efficacy_values.max()*0.5),
+             xy=(K_d_values.min()*3, CumAct_values.max()*0.5),
              fontsize=10, ha='left', color='darkgreen', alpha=0.7)
 ax2.annotate('Low affinity\n(poor targeting)', 
-             xy=(K_d_values.max()/3, efficacy_values.min()*2),
+             xy=(K_d_values.max()/3, CumAct_values.min()*2),
              fontsize=10, ha='right', color='darkred', alpha=0.7)
 '''
 plt.tight_layout()
@@ -262,7 +261,7 @@ plt.tight_layout()
 import os
 output_dir = 'results/compare_models'
 os.makedirs(output_dir, exist_ok=True)
-output_file = os.path.join(output_dir, 'koff_vs_efficacy.png')
+output_file = os.path.join(output_dir, 'koff_vs_CumAct.png')
 plt.savefig(output_file, dpi=300, bbox_inches='tight')
 print(f"\nFigure saved to: {output_file}")
 
@@ -287,7 +286,7 @@ for i, (k_off, label, color) in enumerate([
     (k_off_low, 'Low affinity (k_off >> $k_{int}$)', 'tab:red')
 ]):
     
-    N_b_H, N_ic_H, efficacy = solve_pk_model(k_off)
+    N_b_H, N_ic_H, CumAct = solve_pk_model(k_off)
     N_captive = N_b_H + N_ic_H
     
     ax = axes2[i]
@@ -298,7 +297,7 @@ for i, (k_off, label, color) in enumerate([
     ax.set_xlabel('Time (days)', fontsize=11)
     ax.set_ylabel('Amount (nmol)', fontsize=11)
     ax.set_title(f'{label}\nk_off = {k_off:.4f} min$^{-1}$, '
-                 f'K_d = {k_off/k_on:.2e} nmol/m³, Efficacy = {efficacy:.4f} nmol·day',
+                 f'K_d = {k_off/k_on:.2e} nmol/m³, Cumulative activity = {CumAct:.4f} GBq·s',
                  fontsize=11, fontweight='bold')
     ax.legend(fontsize=9, loc='upper right')
     ax.grid(True, alpha=0.3)
@@ -309,7 +308,7 @@ for i, (k_off, label, color) in enumerate([
     print(f"  K_d = {k_off/k_on:.2e} nmol/m³")
     print(f"  Peak N_b^H = {N_b_H.max():.4e} nmol")
     print(f"  Peak N_ic^H = {N_ic_H.max():.4e} nmol")
-    print(f"  Total efficacy = {efficacy:.4f} nmol·day")
+    print(f"  Cumulative activity = {CumAct:.4f} GBq·s")
 
 plt.tight_layout()
 output_file2 = os.path.join(output_dir, 'affinity_comparison_timecourses_koff.png')

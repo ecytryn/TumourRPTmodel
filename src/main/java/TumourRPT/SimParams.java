@@ -102,10 +102,10 @@ public class SimParams {
     public static final int GRID_SIZE = 400;            // cells per side
     public static final double DOMAIN_SIZE = GRID_SIZE * CELL_LENGTH;  // m (4 mm)
     public static final double TIME_STEP = 3600.0;      // s (1 hour)
-    public static final double CELL_CYCLE = 86400.0;    // s (1 day)
+//    public static final double CELL_CYCLE = 86400.0;    // s (1 day) - this parameter is not used in the code; the rate is implicit in the daily check
 	public static int globalTime = 0;  // Current simulation time in hours (updated during run)    
 	// These are just rescalings that get used in a couple places.
-	public static final double CELL_CYCLE_IN_HRS = CELL_CYCLE / 3600.0;  // 86400 s -> 24 hours
+//	public static final double CELL_CYCLE_IN_HRS = CELL_CYCLE / 3600.0;  // 86400 s -> 24 hours
 	public static final double TIME_STEP_IN_HRS = TIME_STEP / 3600.0;    // 3600 s -> 1 hour
     // =================================================================
     // PHARMACOKINETICS - Rate Constants
@@ -449,7 +449,7 @@ public static void exportParametersToCSV(String filepath,
         out.println("cell_length," + (CELL_LENGTH * 1e6) + ",um,");
         out.println("domain_size," + (DOMAIN_SIZE * 1e3) + ",mm,");
         out.println("time_step," + (TIME_STEP / 3600) + ",hours,");
-        out.println("cell_cycle," + (CELL_CYCLE / 3600) + ",hours,");
+//        out.println("cell_cycle," + (CELL_CYCLE / 3600) + ",hours,");
         
         // ===== PHARMACOKINETICS =====
         out.println("lambda_bio," + (LAMBDA_BIO * 3600) + ",1/hr,Biological clearance");

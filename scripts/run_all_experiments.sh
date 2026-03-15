@@ -2,13 +2,13 @@
 
 # Array of experiment names
 experiments=(
-    "WatchGrow"
+#    "WatchGrow"
     "NormoxicSmall"
     "NormoxicMedium"
-    "NormoxicLarge"
+#    "NormoxicLarge"
     "HypoxicSmall"
     "HypoxicMedium"
-    "HypoxicLarge"
+#    "HypoxicLarge"
 )
 
 # Run each experiment

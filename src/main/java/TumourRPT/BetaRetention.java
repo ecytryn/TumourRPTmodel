@@ -16,8 +16,8 @@ package TumorRPT;
  */
 public class BetaRetention {
     
-    /** Mean free path for Lu-177 beta particles in tissue (mm) */
-    private static final double ELL_MM = 1.0;
+    /** Value of the sphere radius in the uniform sphere model that best fits TJ's monte carlo model (mm) */
+    private static final double ELL_MM = 0.41;
     
     /** 
      * Lookup table: tumor radii in mm
@@ -47,30 +47,20 @@ public class BetaRetention {
 
     /**
      * Lookup table: retention fractions corresponding to R_VALUES_MM
-     * Computed using uniform deposition sphere model with ℓ = 1.0 mm
+     * Computed using uniform deposition sphere model with ℓ = 0.41 mm
      */
-    private static final double[] RETENTION_FRACTIONS_UNIFORM_DEPOSITION = {
-        0.0010, 0.0080, 0.0270, 0.0640, 0.1250, 0.2072,
-        0.2875, 0.3579, 0.4179, 0.4688, 0.5493, 0.6096,
-        0.6561, 0.6929, 0.7227, 0.7770, 0.8137, 0.8400,
-        0.8599, 0.8753, 0.8878
-    };
-
-    /**
-     * Lookup table: retention fractions corresponding to R_VALUES_MM
-     * A blend of the uniform sphere at low R and TJ's table at higher R
-     */
-    private static final double[] RETENTION_FRACTIONS_BLEND = {
-		0.011956, 0.03932, 0.083183, 0.1447778, 0.2253056, 0.3184,
-		0.405956, 0.484167, 0.55385, 0.61624, 0.725567, 0.8168,
-		0.889522, 0.9449, 0.9593, 0.9701, 0.97, 0.9695,
-		0.97, 0.9714, 0.9734
+    private static final double[] RETENTION_FRACTIONS_BEST_FIT_UNIFORM_DEPOSITION = {
+        0.0141, 0.1127, 0.3059, 0.4525, 0.5520, 0.6221,
+        0.6738, 0.7132, 0.7443, 0.7693, 0.8072, 0.8345,
+        0.8550, 0.8710, 0.8838, 0.9070, 0.9225, 0.9335,
+        0.9418, 0.9483, 0.9534
     };
 
 	/**
 	 * Pick which table to use.
 	*/
     private static final double[] RETENTION_FRACTIONS = RETENTION_FRACTIONS_TJ;
+//    private static final double[] RETENTION_FRACTIONS = RETENTION_FRACTIONS_BEST_FIT_UNIFORM_DEPOSITION;
         
     /**
      * Get beta retention fraction for given tumor radius
