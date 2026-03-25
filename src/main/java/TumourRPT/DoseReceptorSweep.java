@@ -42,8 +42,8 @@ public class DoseReceptorSweep {
     // Expressed as multiples of SimParams.RECEPTORS_PER_CELL_MOL (the canonical baseline).
 
 	private static final double[] RECEPTOR_DENSITIES = 
-		IntStream.range(0, 31)  // 21 points
-				 .mapToDouble(i -> (0.68 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
+		IntStream.range(0, 16)  // 16 points
+				 .mapToDouble(i -> (0.68 + i * 0.04) * SimParams.RECEPTORS_PER_CELL_MOL)
 				 .toArray();
 //		IntStream.range(0, 10)  // 21 points
 //				 .mapToDouble(i -> (1.1 + i * 0.02) * SimParams.RECEPTORS_PER_CELL_MOL)
@@ -53,7 +53,7 @@ public class DoseReceptorSweep {
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 10;
+    private static final int NUM_REPLICATES = 20;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs

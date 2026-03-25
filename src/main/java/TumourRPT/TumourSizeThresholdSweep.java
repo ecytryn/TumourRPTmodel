@@ -33,15 +33,15 @@ public class TumourSizeThresholdSweep {
     // =======================================================================
 
     // Initial radii in um to be converted below into metres. 11 and 21 are to avoid floating point issues at edge cases.
-    private static final double[] INITIAL_RADII_UM = {11, 15, 21, 25, 30, 35, 40, 45, 50, 55};
+    private static final double[] INITIAL_RADII_UM = {11, 15, 21, 25, 30, 40, 50};
 
-    private static final int NUM_REPLICATES = 20;
+    private static final int NUM_REPLICATES = 40;
 
     // =======================================================================
     // FIXED PARAMETERS - match figure runs exactly
     // =======================================================================
 
-    private static final double DOSE_NMOL      = 100.0;       // nmol
+    private static final double DOSE_NMOL      = 50.0;       // nmol
     private static final double HOT_FRACTION   = 0.1;
     private static final int    INJECTION_DAY  = 5;
     private static final int    FOLLOW_UP_DAYS = 40;
@@ -101,7 +101,8 @@ public class TumourSizeThresholdSweep {
 
             int cellCountObserved = -1;  // will be set from first replicate
 
-            for (int rep = 0; rep < NUM_REPLICATES; rep++) {
+//            for (int rep = 0; rep < NUM_REPLICATES; rep++) {
+            for (int rep = 10; rep < 10 + NUM_REPLICATES; rep++) {
                 currentRun++;
 
 //                int seed = 42 + rep;
