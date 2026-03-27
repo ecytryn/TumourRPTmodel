@@ -143,6 +143,7 @@ def main():
 
     ax.set_xlabel("Tumour size at injection (cells)")
     ax.set_ylabel("Cure Rate")
+    ax.set_xlim(10, 125)
     ax.set_ylim(-0.05, 1.05)
     #    ax.set_xticks(grouped["median_size_at_inj"])
     ax.axhline(0.5, color="gray", linewidth=0.8, linestyle="--", zorder=1)

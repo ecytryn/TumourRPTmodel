@@ -117,7 +117,7 @@ def create_heatmap(df, output_path):
 
     # Labels - updated terminology
     ax.set_xlabel("Total Injected Amount (nmol)")
-    ax.set_ylabel("Receptor Density (mol/cell)")
+    ax.set_ylabel("Receptor Density, $R_C$ (nmol/cell)")
 
     # Format y-axis labels with mantissa only, exponent as offset
 
@@ -127,6 +127,7 @@ def create_heatmap(df, output_path):
     # Determine common exponent (assuming all values have similar order of magnitude)
     if len(ytick_values) > 0:
         common_exponent = int(np.floor(np.log10(np.abs(ytick_values[0]))))
+        display_exponent = -10  # display in units of 1e-10 nmol/cell
 
         # Create labels with just the mantissa (scaled by the common exponent)
         # Show only wanted ticks to reduce crowding
@@ -144,7 +145,7 @@ def create_heatmap(df, output_path):
         ax.text(
             0.12,
             1.05,
-            f"$\\times 10^{{{common_exponent}}}$",
+            f"$\\times 10^{{{display_exponent}}}$",
             transform=ax.transAxes,
             fontsize=7,
             ha="right",

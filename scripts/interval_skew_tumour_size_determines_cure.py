@@ -312,13 +312,13 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
         color=COLOUR_TST,
         capsize=2,
         zorder=3,
-        label="Size sweep",
+        label="Tumour size sweep",
     )
 
     ax.axhline(0.5, color="gray", linewidth=0.8, linestyle="--", zorder=1)
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(-0.05, 1.05)
-    ax.set_xlabel("Tumour size at injection (cells)")
+    ax.set_xlabel("Tumour size at last injection (cells)")
     ax.set_ylabel("Cure rate")
     filter_str = f", interval ≥ {min_interval} d" if min_interval > 0 else ""
     ax.set_title(f"Cure rate vs tumour size at injection{filter_str}", pad=3)

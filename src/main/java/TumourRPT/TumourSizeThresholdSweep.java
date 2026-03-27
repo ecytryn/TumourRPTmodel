@@ -35,7 +35,7 @@ public class TumourSizeThresholdSweep {
     // Initial radii in um to be converted below into metres. 11 and 21 are to avoid floating point issues at edge cases.
     private static final double[] INITIAL_RADII_UM = {11, 15, 21, 25, 30, 40, 50};
 
-    private static final int NUM_REPLICATES = 40;
+    private static final int NUM_REPLICATES = 150;
 
     // =======================================================================
     // FIXED PARAMETERS - match figure runs exactly
@@ -60,7 +60,8 @@ public class TumourSizeThresholdSweep {
         // RUN CONFIGURATION
         // ===================================================================
         SimParams.HYPOXIA_DEV_DAYS     = 40;
-        SimParams.VESSEL_DENSITY_CONFIG = "605";
+//        SimParams.VESSEL_DENSITY_CONFIG = "605";
+        SimParams.VESSEL_DENSITY_CONFIG = "625";
         // ===================================================================
 
         String timestamp = LocalDateTime.now().format(
@@ -101,11 +102,9 @@ public class TumourSizeThresholdSweep {
 
             int cellCountObserved = -1;  // will be set from first replicate
 
-//            for (int rep = 0; rep < NUM_REPLICATES; rep++) {
-            for (int rep = 10; rep < 10 + NUM_REPLICATES; rep++) {
+            for (int rep = 0; rep < NUM_REPLICATES; rep++) {
                 currentRun++;
 
-//                int seed = 42 + rep;
 				int seed = rep * 999983 + currentRun;
                 Rand rng = new Rand(seed);
 
