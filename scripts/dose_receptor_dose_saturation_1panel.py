@@ -37,16 +37,14 @@ mpl.rcParams.update(
 )
 
 # Receptor densities to plot (mol/cell)
-# TARGET_RECEPS = [4.4e-19, 5.4e-19, 6.4e-19]
-TARGET_RECEPS = [3.4e-19, 4.98e-19, 6.4e-19]
+TARGET_RECEPS = [3.4e-19, 5.4e-19, 7.4e-19]
 RECEP_TOL = 0.05e-19
 RECEP_COLOURS = ["#4477AA", "#228833", "#EE6677"]
-# RECEP_PEAK_REFS = [8.48e-8, 1.045e-7, 1.168e-7]
-RECEP_PEAK_REFS = [6.65e-8, 9.4e-8, 1.16e-7]
+RECEP_PEAK_REFS = [6.611e-8, 0.988e-7, 1.308e-7]
 RECEP_LABELS = [
     "$R_C=3.4\\times10^{-10}$ nmol/cell",
-    "$R_C=4.9\\times10^{-10}$ nmol/cell",
-    "$R_C=6.4\\times10^{-10}$ nmol/cell",
+    "$R_C=5.4\\times10^{-10}$ nmol/cell",
+    "$R_C=7.4\\times10^{-10}$ nmol/cell",
 ]
 
 INJECTION_DAY = 5
@@ -102,6 +100,15 @@ def load_runs_for_recep(all_runs, target_recep):
     ]
 
 
+def smooth_daily(arr, window=24):
+    """Apply 24-point rolling mean to remove daily update artefacts."""
+    if arr.ndim == 1:
+        return np.convolve(arr, np.ones(window) / window, mode="same")
+    return np.apply_along_axis(
+        lambda x: np.convolve(x, np.ones(window) / window, mode="same"), 0, arr
+    )
+
+
 def main():
     timestamp = sys.argv[1] if len(sys.argv) > 1 else None
     sweep_dir = find_sweep_dir(timestamp)
@@ -152,6 +159,7 @@ def main():
             mask = t_days >= 0
             t_plot = t_days[mask]
             cap_plot = mean_captive[mask]
+            cap_plot = smooth_daily(cap_plot)
 
             ax.plot(
                 t_plot,
@@ -178,7 +186,7 @@ def main():
     ax.set_xlabel("Time since injection (days)")
     ax.set_ylabel("$N_\\mathrm{captive}^H$ ($\\times 10^{-7}$ nmol)")
     ax.set_xlim(left=0, right=40)
-    ax.set_ylim(bottom=0, top=1.2e-7)
+    ax.set_ylim(bottom=0, top=1.4e-7)
     ax.yaxis.get_offset_text().set_visible(False)
     ax.yaxis.set_major_formatter(
         mpl.ticker.FuncFormatter(lambda x, _: f"{x * 1e7:.1f}")

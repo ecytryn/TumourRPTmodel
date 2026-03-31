@@ -33,7 +33,9 @@ public class TumourSizeThresholdSweep {
     // =======================================================================
 
     // Initial radii in um to be converted below into metres. 11 and 21 are to avoid floating point issues at edge cases.
-    private static final double[] INITIAL_RADII_UM = {11, 15, 21, 25, 30, 40, 50};
+//    private static final double[] INITIAL_RADII_UM = {11, 15, 21, 25, 30, 40, 50};
+//    private static final double[] INITIAL_RADII_UM = {120, 130, 140};
+    private static final double[] INITIAL_RADII_UM = {70, 90, 110, 130, 160, 200};
 
     private static final int NUM_REPLICATES = 150;
 
@@ -61,7 +63,7 @@ public class TumourSizeThresholdSweep {
         // ===================================================================
         SimParams.HYPOXIA_DEV_DAYS     = 40;
 //        SimParams.VESSEL_DENSITY_CONFIG = "605";
-        SimParams.VESSEL_DENSITY_CONFIG = "625";
+        SimParams.VESSEL_DENSITY_CONFIG = "420";
         // ===================================================================
 
         String timestamp = LocalDateTime.now().format(

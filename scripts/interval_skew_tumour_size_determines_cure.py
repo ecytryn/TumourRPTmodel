@@ -276,8 +276,8 @@ def load_tst_data(sweep_dir):
 
 def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
 
-    COLOUR_IS = "#4477AA"  # blue
-    COLOUR_TST = "#EE6677"  # rose
+    COLOUR_IS = "#EE6677"  # rose
+    COLOUR_TST = "#4477AA"  # blue
 
     x_min = max(is_binned["bin_centre"].min(), tst_grouped["median_size"].min()) * 0.92
     x_max = min(is_binned["bin_centre"].max(), tst_grouped["median_size"].max()) * 1.08
@@ -297,7 +297,7 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
         color=COLOUR_IS,
         capsize=2,
         zorder=3,
-        label="Interval-skew sweep (|skew|<15)",
+        label="Interval-skew sweep (|S|<15)",
     )
 
     # Threshold sweep
@@ -316,7 +316,7 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
     )
 
     ax.axhline(0.5, color="gray", linewidth=0.8, linestyle="--", zorder=1)
-    ax.set_xlim(x_min, x_max)
+    ax.set_xlim(20, 170)
     ax.set_ylim(-0.05, 1.05)
     ax.set_xlabel("Tumour size at last injection (cells)")
     ax.set_ylabel("Cure rate")

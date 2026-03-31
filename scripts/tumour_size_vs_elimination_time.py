@@ -36,7 +36,8 @@ mpl.rcParams.update(
 )
 
 # CB-safe colours for the three cap densities
-COLOURS = ["#4477AA", "#228833", "#EE6677", "#CCBB44", "#AA3377", "#66CCEE"]
+# COLOURS = ["#4477AA", "#228833", "#EE6677", "#CCBB44", "#AA3377", "#66CCEE"]
+COLOURS = ["#CCBB44", "#4477AA"]
 
 # populations.csv column indices
 NORMAL = 1
@@ -171,6 +172,7 @@ def main():
             .reset_index()
             .sort_values("radius_um")
         )
+        grouped["sem_elim"] = grouped["sd_elim"] / np.sqrt(grouped["n"])
 
         # Only plot radii with at least 3 cured runs for stable stats
         grouped = grouped[grouped["n"] >= 3]
@@ -186,7 +188,7 @@ def main():
         ax.errorbar(
             grouped["median_size"],
             grouped["mean_elim"] - INJECTION_DAY,  # days after injection
-            yerr=grouped["sd_elim"],
+            yerr=grouped["sem_elim"],
             fmt="o-",
             color=colour,
             capsize=2,
@@ -196,9 +198,12 @@ def main():
         )
 
     ax.set_xlabel("Tumour size at injection (cells)")
+    ax.set_xscale("log")
+    ax.set_xticks([10, 20, 50, 100, 200, 500, 1000])
+    ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
     ax.set_ylabel("Days to elimination\n(after injection)")
     ax.set_ylim(bottom=0)
-    ax.legend(framealpha=0.9)
+    #   ax.legend(framealpha=0.9)
     ax.grid(True, alpha=0.3, linewidth=0.5)
 
     plt.tight_layout()

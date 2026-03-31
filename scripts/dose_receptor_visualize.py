@@ -116,7 +116,7 @@ def create_heatmap(df, output_path):
     )
 
     # Labels - updated terminology
-    ax.set_xlabel("Total Injected Amount (nmol)")
+    ax.set_xlabel("Injected Amount (nmol)")
     ax.set_ylabel("Receptor Density, $R_C$ (nmol/cell)")
 
     # Format y-axis labels with mantissa only, exponent as offset

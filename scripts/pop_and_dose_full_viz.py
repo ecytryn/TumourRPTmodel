@@ -1,131 +1,154 @@
-import numpy as np
-import matplotlib.pyplot as plt
+#!/usr/bin/env python3
+"""
+Plot tumour population and dose rate over time for a single simulation run.
+
+Usage:
+    python pop_and_dose_full_viz.py <run_dir>
+    python pop_and_dose_full_viz.py <run_dir> --title "My plot"
+
+Example:
+    python pop_and_dose_full_viz.py results/TumourSizeThresholdSweep/TumourSizeThresholdSweep_2026-03-27_02-05-53/radius_50um_rep_1
+"""
+
+import argparse
+import sys
 from pathlib import Path
 
-# -----------------------------
-# Cell type indices (from code)
-# -----------------------------
-HEALTHY_CELL_TYPE   = 0
-NORMAL_TCELL_TYPE   = 1
-HYPO_TCELL_TYPE     = 2
-NECRO_TCELL_TYPE    = 3
-APOP_TCELL_TYPE     = 4
-VESSEL_TYPE         = 5
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 
-# -----------------------------
-# Which parameter set to visualize
-# -----------------------------
-INTERVAL  = 20
-SKEW      = 10
-REPLICATE = 1
-SUFFIX    = ""   # if you use one elsewhere
-
-# -----------------------------
-# Data loading helpers
-# -----------------------------
-def load_run_file(interval, skew, replicate, filename, suffix=""):
-    sweep_dir = f"results/IntervalSkewSweep{suffix}"
-    timestamp = f"2026-02-26_10-56-10"
-    run_dir = f"{sweep_dir}/IntervalSkewSweep_{timestamp}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
-    file_path = f"{run_dir}/{filename}"
-
-    if not Path(file_path).exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    data = np.loadtxt(file_path, delimiter=',')
-    print(f"Loaded {filename}: shape = {data.shape}")
-    return data
-
-def load_populations(interval, skew, replicate, suffix=""):
-    return load_run_file(interval, skew, replicate, "populations.csv", suffix)
-
-
-def load_doses(interval, skew, replicate, suffix=""):
-    return load_run_file(interval, skew, replicate, "doses.csv", suffix)
-
-def save_png(interval, skew, replicate):
-    # Save figure
-    sweep_dir = f"results/IntervalSkewSweep{suffix}"
-    timestamp = f"2026-02-26_10-56-10"
-    run_dir = f"{sweep_dir}/IntervalSkewSweep_{timestamp}/interval_{interval}_skew_{int(skew)}_rep_{replicate}"
-    output_file = f"{run_dir}/pop_dose_i{interval}_s{int(skew)}_r{replicate}.png"
-    plt.savefig(output_file, dpi=300, bbox_inches='tight')
-    print(f"\nFigure saved to: {output_file}")
-
-# -----------------------------
-# Load data
-# -----------------------------
-populations = load_populations(INTERVAL, SKEW, REPLICATE, SUFFIX)
-doses       = load_doses(INTERVAL, SKEW, REPLICATE, SUFFIX)
-
-# Time axis (hours → days)
-t_hours = np.arange(populations.shape[0])
-t_days  = t_hours / 24.0
-
-# -----------------------------
-# Tumour population definition
-# -----------------------------
-# Easy to modify which cell types contribute
-tumour_cell_types = [
-    NORMAL_TCELL_TYPE,
-    HYPO_TCELL_TYPE,
-    # NECRO_TCELL_TYPE,  # uncomment if desired
-    # APOP_TCELL_TYPE,   # uncomment if desired
-]
-
-tumour_population = populations[:, tumour_cell_types].sum(axis=1)
-
-# -----------------------------
-# Plot
-# -----------------------------
-fig, ax1 = plt.subplots(figsize=(8, 5))
-
-# Tumour population curve
-ax1.plot(
-    t_days,
-    tumour_population,
-    color="C0",
-    lw=2,
-    label="Tumour cells (normoxic + hypoxic)"
+mpl.rcParams.update(
+    {
+        "figure.figsize": (3.35, 2.4),
+        "font.size": 10,
+        "axes.labelsize": 10,
+        "axes.titlesize": 10,
+        "legend.fontsize": 8,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "lines.linewidth": 1.2,
+        "axes.linewidth": 0.8,
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+    }
 )
 
-ax1.set_xlabel("Time (days)")
-ax1.set_ylabel("Tumour cell count")
-ax1.tick_params(axis="y", labelcolor="C0")
+# Cell type indices
+NORMAL = 1
+HYPOXIC = 2
+NECROTIC = 3
+APOPTOTIC = 4
 
-# Secondary axis for dose
-ax2 = ax1.twinx()
 
-ax2.fill_between(
-    t_days,
-    doses,
-    step="pre",
-    alpha=0.3,
-    color="C1",
-    label="Delivered dose"
-)
+def smooth_daily(arr, window=24):
+    """Apply 24-point rolling mean to remove daily update artefacts."""
+    if arr.ndim == 1:
+        return np.convolve(arr, np.ones(window) / window, mode="same")
+    return np.apply_along_axis(
+        lambda x: np.convolve(x, np.ones(window) / window, mode="same"), 0, arr
+    )
 
-ax2.set_ylabel("Dose")
-ax2.tick_params(axis="y", labelcolor="C1")
 
-# -----------------------------
-# Combined legend
-# -----------------------------
-lines_1, labels_1 = ax1.get_legend_handles_labels()
-lines_2, labels_2 = ax2.get_legend_handles_labels()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("run_dir", help="Path to simulation run directory")
+    parser.add_argument(
+        "--title", default=None, help="Figure title (default: run directory name)"
+    )
+    args = parser.parse_args()
 
-ax1.legend(
-    lines_1 + lines_2,
-    labels_1 + labels_2,
-    loc="upper right"
-)
+    run_dir = Path(args.run_dir)
+    title = args.title if args.title else run_dir.name
 
-plt.title(
-    f"Interval={INTERVAL}, Skew={SKEW}, Replicate={REPLICATE}"
-)
+    # Load populations
+    pop_file = run_dir / "populations.csv"
+    if not pop_file.exists():
+        print(f"ERROR: populations.csv not found in {run_dir}")
+        sys.exit(1)
+    populations = np.loadtxt(pop_file, delimiter=",", skiprows=1)
+    print(f"Loaded populations: shape = {populations.shape}")
 
-plt.tight_layout()
+    # Load dose
+    dose_file = run_dir / "dose.csv"
+    if not dose_file.exists():
+        print(f"ERROR: dose.csv not found in {run_dir}")
+        sys.exit(1)
+    doses = np.loadtxt(dose_file, delimiter=",", skiprows=1)
+    if doses.ndim > 1:
+        doses = doses[:, 0]
+    print(f"Loaded dose: shape = {doses.shape}")
 
-save_png(INTERVAL, SKEW, REPLICATE)
+    # Align lengths
+    n = min(len(populations), len(doses))
+    populations = populations[:n]
+    doses = doses[:n]
+    doses = smooth_daily(doses)
 
-plt.show()
+    # Time axis
+    t_days = np.arange(n) / 24.0
+
+    # Cell populations
+    normoxic = populations[:, NORMAL]
+    hypoxic = populations[:, HYPOXIC]
+    necrotic = populations[:, NECROTIC]
+    apoptotic = populations[:, APOPTOTIC]
+    viable = normoxic + hypoxic
+
+    # Plot
+    fig, ax1 = plt.subplots()
+
+    ax1.plot(
+        t_days, normoxic, color="#C7AD84", linewidth=1.2, label="Normoxic", zorder=4
+    )
+    ax1.plot(t_days, hypoxic, color="#A76D34", linewidth=1.2, label="Hypoxic", zorder=3)
+    ax1.plot(
+        t_days,
+        apoptotic,
+        color="#82AC5D",
+        linewidth=1.5,
+        #        linestyle="--",
+        label="Apoptotic",
+        zorder=2,
+    )
+
+    ax1.set_xlabel("Time (days)")
+    ax1.set_ylabel("Cell count")
+    ax1.set_ylim(bottom=0)
+
+    # Secondary axis for dose rate
+    ax2 = ax1.twinx()
+    ax2.fill_between(t_days, doses, alpha=0.2, color="#4477AA", step="pre")
+    ax2.plot(
+        t_days,
+        doses,
+        color="#4477AA",
+        linewidth=1.2,
+        alpha=0.6,
+        drawstyle="steps-pre",
+        label="Dose rate",
+        zorder=1,
+    )
+    ax2.set_ylabel("Dose rate (Gy/h)")
+    ax2.set_ylim(bottom=0)
+
+    # Combined legend
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right", framealpha=0.9)
+
+    #    ax1.set_title(title, fontsize=10, pad=3)
+    ax1.grid(True, alpha=0.3, linewidth=0.5)
+
+    plt.tight_layout()
+
+    out_pdf = run_dir / "pop_dose.pdf"
+    out_png = run_dir / "pop_dose.png"
+    plt.savefig(out_pdf, bbox_inches="tight")
+    plt.savefig(out_png, dpi=300, bbox_inches="tight")
+    print(f"Saved to: {out_pdf}")
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
