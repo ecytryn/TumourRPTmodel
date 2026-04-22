@@ -18,7 +18,8 @@ print(f"Target density: {TARGET_DENSITY} vessels/mm²  →  N = {N} vessels")
 
 R_REPEL = 60.0  # repulsive radius (microns) — controls spacing uniformity
 # doesn't need tuning for density; just affects how uniform
-# the pattern is. 30 works well for most densities.
+# the pattern is. 30 works well for most densities. R_repel too high or
+# run for too long and the vessel develop patches of regular arrays (avoid).
 STEP_SIZE = 0.3
 ITERATIONS = 200
 PLOT_EVERY = 20

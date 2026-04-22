@@ -261,9 +261,11 @@ public class Grid extends AgentGrid2D<Cell> {
 		int cy = yDim / 2;
 
 		// For small radii, converting "a ball of that radius" into a set of cells seems 
-		// to be sensitive procedure for HAL generating inconsistent results for unclear 
+		// to be sensitive procedure for HAL, generating inconsistent results for unclear 
 		// reasons. Possible large radii too but harder to see that in the results. So 
-		// for radii below 2*sqrt(2), we do it manually.
+		// for radii below 2*sqrt(2), we do it manually. Recall that the cells designated 
+		// here might not end up in the actual initial configuration if there's already a 
+		// vessel in that node.
 		
 		// Thresholds in cell-length units
 		double R1      = 1.0;

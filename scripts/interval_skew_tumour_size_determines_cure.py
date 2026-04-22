@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Side-by-side comparison of cure rate vs tumour size at injection:
-  Left panel:  IS sweep (skew=0) — binned cure rate with Wilson CI
-  Right panel: TumourSizeThresholdSweep — cure rate vs median size at injection
+  Red curve:  IS sweep (skew=0) — binned cure rate with Wilson CI
+  Blue curve: TumourSizeThresholdSweep — cure rate vs median size at injection
 
 Usage:
     python cure_rate_vs_size_comparison.py
@@ -105,6 +105,7 @@ def load_is_data(sweep_dir, min_interval):
         except (IndexError, ValueError):
             continue
 
+        # if skew not in (-5, 0, 5):
         if skew not in (-15, -10, -5, 0, 5, 10, 15):
             continue
         if interval < min_interval:
@@ -297,7 +298,7 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
         color=COLOUR_IS,
         capsize=2,
         zorder=3,
-        label="Interval-skew sweep (|S|<15)",
+        label="From interval-skew sweep (|S|<15)",
     )
 
     # Threshold sweep
@@ -312,7 +313,7 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
         color=COLOUR_TST,
         capsize=2,
         zorder=3,
-        label="Tumour size sweep",
+        label="From tumour size sweep",
     )
 
     ax.axhline(0.5, color="gray", linewidth=0.8, linestyle="--", zorder=1)
@@ -321,7 +322,7 @@ def make_comparison_plot(is_binned, tst_grouped, min_interval, out_dir):
     ax.set_xlabel("Tumour size at last injection (cells)")
     ax.set_ylabel("Cure rate")
     filter_str = f", interval ≥ {min_interval} d" if min_interval > 0 else ""
-    ax.set_title(f"Cure rate vs tumour size at injection{filter_str}", pad=3)
+    ax.set_title(f"Cure rate vs tumour size at last injection{filter_str}", pad=3)
     ax.legend(framealpha=0.95)
     ax.grid(True, alpha=0.3, linewidth=0.5)
 

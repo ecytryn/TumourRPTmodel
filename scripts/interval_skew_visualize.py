@@ -14,11 +14,11 @@ import sys
 from pathlib import Path
 
 import matplotlib as mpl
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.colors import LinearSegmentedColormap
 
 mpl.rcParams.update(
     {
@@ -96,7 +96,17 @@ def create_custom_colormap():
     ]
     positions = [0.0, 0.3, 0.5, 0.7, 1.0]
 
-    cmap = LinearSegmentedColormap.from_list("cure_rate", list(zip(positions, colors)))
+    # Warp cividis to emphasise the 50% transition
+    x = np.linspace(0, 1, 256)
+    steepness = 7  # increase for sharper transition, try 6-10
+    warped = 1 / (1 + np.exp(-steepness * (x - 0.5)))
+    warped = (warped - warped.min()) / (warped.max() - warped.min())
+    new_colors = plt.cm.cividis(warped)
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "cividis_warped", new_colors, N=256
+    )
+
+    # cmap = LinearSegmentedColormap.from_list("cure_rate", list(zip(positions, colors)))
     return cmap
 
 
@@ -125,8 +135,8 @@ def create_cure_rate_heatmap(df, output_path):
     sns.heatmap(
         pivot_cure,
         annot=False,  # Changed from annot=annot_data
-        #                cmap=cmap,
-        cmap="cividis",
+        cmap=cmap,
+        # cmap="cividis",
         cbar_kws={"label": "Cure Rate"},
         linewidths=0.0,
         linecolor="white",
