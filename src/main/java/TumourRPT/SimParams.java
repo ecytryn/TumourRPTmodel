@@ -144,7 +144,7 @@ public class SimParams {
 		return INITIAL_TUMOR_RADIUS / CELL_LENGTH;
 	}    
     // Cell removal times
-    public static final double NECROTIC_REMOVAL_TIME = 10.0 * 86400.0;  // s (10 days)
+    // public static final double NECROTIC_REMOVAL_TIME = 10.0 * 86400.0;  // s (10 days)
     public static final double APOPTOTIC_REMOVAL_TIME = 2.0 * 86400.0;  // s (2 days)
 	public static final double ApopRemovalTime = APOPTOTIC_REMOVAL_TIME / 86400.0;  // Convert s->days
 	public static final double APOP_REMOVAL_PROB_PER_HOUR = // <-- needs to be fixed if time step is ever changed!!

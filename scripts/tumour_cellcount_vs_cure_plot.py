@@ -47,6 +47,17 @@ APOPTOTIC = 4
 INJECTION_DAY = 5
 
 
+def wilson_ci(n_cure, n_total, z=1.96):
+    """Wilson score 95% confidence interval for a proportion."""
+    if n_total == 0:
+        return np.nan, np.nan
+    p = n_cure / n_total
+    denom = 1 + z**2 / n_total
+    centre = (p + z**2 / (2 * n_total)) / denom
+    half = z * np.sqrt(p * (1 - p) / n_total + z**2 / (4 * n_total**2)) / denom
+    return centre - half, centre + half
+
+
 def find_sweep_dirs(timestamps):
     base = "results/TumourSizeThresholdSweep/TumourSizeThresholdSweep"
     if not timestamps:
@@ -101,15 +112,23 @@ def load_sweep(sweep_dir):
     df["tumour_size_at_injection"] = sizes
 
     df["is_cure"] = df["outcome"].str.contains("CURE").astype(int)
+
     grouped = (
         df.groupby("radius_um")
         .agg(
             cure_rate=("is_cure", "mean"),
             n=("is_cure", "count"),
+            n_cure=("is_cure", "sum"),
             median_size=("tumour_size_at_injection", "median"),
         )
         .reset_index()
         .sort_values("radius_um")
+    )
+    grouped["ci_lo"] = grouped.apply(
+        lambda r: wilson_ci(r["n_cure"], r["n"])[0], axis=1
+    )
+    grouped["ci_hi"] = grouped.apply(
+        lambda r: wilson_ci(r["n_cure"], r["n"])[1], axis=1
     )
     return grouped
 
@@ -146,11 +165,16 @@ def main():
 
         print(f"  {len(grouped)} radius groups")
 
-        ax.plot(
+        ax.errorbar(
             grouped["median_size"],
             grouped["cure_rate"],
-            "o-",
+            yerr=[
+                np.maximum(0, grouped["cure_rate"] - grouped["ci_lo"]),
+                np.maximum(0, grouped["ci_hi"] - grouped["cure_rate"]),
+            ],
+            fmt="o-",
             color=colour,
+            capsize=2,
             zorder=3,
             label=f"{label} cap/mm²",
         )

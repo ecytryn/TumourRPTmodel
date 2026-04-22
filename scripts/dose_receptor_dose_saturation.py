@@ -21,7 +21,7 @@ import pandas as pd
 
 mpl.rcParams.update(
     {
-        "figure.figsize": (3.35, 2.4),
+        "figure.figsize": (6.7, 2.4),
         "font.size": 8,
         "axes.labelsize": 8,
         "axes.titlesize": 8,
@@ -37,15 +37,17 @@ mpl.rcParams.update(
 )
 
 # Receptor densities to plot (mol/cell)
-TARGET_RECEPS = [4.0e-19, 6.0e-19, 8.0e-19]
+# TARGET_RECEPS = [4.4e-19, 5.4e-19, 6.4e-19]
+TARGET_RECEPS = [3.4e-19, 4.9e-19, 6.4e-19]
 RECEP_TOL = 0.05e-19
-# RECEP_PEAK_REFS = [7.35e-8, 1.12e-7, 1.375e-7]
-RECEP_LABELS = [
-    "$R_C=4.0\\times10^{-10}$ nmol/cell",
-    "$R_C=6.0\\times10^{-10}$ nmol/cell",
-    "$R_C=8.0\\times10^{-10}$ nmol/cell",
-]
 RECEP_COLOURS = ["#4477AA", "#228833", "#EE6677"]
+# RECEP_PEAK_REFS = [8.48e-8, 1.045e-7, 1.168e-7]
+RECEP_PEAK_REFS = [6.8e-8, 9e-8, 1.168e-7]
+RECEP_LABELS = [
+    "$R_C=3.4\\times10^{-10}$ nmol/cell",
+    "$R_C=4.9\\times10^{-10}$ nmol/cell",
+    "$R_C=6.4\\times10^{-10}$ nmol/cell",
+]
 
 INJECTION_DAY = 5
 MIN_PER_DAY = 1440.0
@@ -100,15 +102,6 @@ def load_runs_for_recep(all_runs, target_recep):
     ]
 
 
-def smooth_daily(arr, window=24):
-    """Apply 24-point rolling mean to remove daily update artefacts."""
-    if arr.ndim == 1:
-        return np.convolve(arr, np.ones(window) / window, mode="same")
-    return np.apply_along_axis(
-        lambda x: np.convolve(x, np.ones(window) / window, mode="same"), 0, arr
-    )
-
-
 def main():
     timestamp = sys.argv[1] if len(sys.argv) > 1 else None
     sweep_dir = find_sweep_dir(timestamp)
@@ -130,12 +123,13 @@ def main():
 
     inj_hour = INJECTION_DAY * 24
 
-    fig, ax = plt.subplots()
+    fig, axes = plt.subplots(1, 3, sharey=True, sharex=True)
 
-    colour_max = {colour: 0.0 for colour in RECEP_COLOURS}
+    # Compute global y-max across all three groups for shared scale
+    # (sharey handles this automatically, but we print it for reference)
 
-    for target_recep, colour, label in zip(
-        reversed(TARGET_RECEPS), reversed(RECEP_COLOURS), reversed(RECEP_LABELS)
+    for ax, target_recep, colour, label in zip(
+        axes, TARGET_RECEPS, RECEP_COLOURS, RECEP_LABELS
     ):
         runs = load_runs_for_recep(all_runs, target_recep)
         if not runs:
@@ -143,73 +137,58 @@ def main():
             continue
 
         doses = sorted(set(r[0] for r in runs))
+        print(
+            f"recep={target_recep:.1e}: {len(doses)} dose levels, "
+            f"{len(runs)} total runs"
+        )
 
-        first_dose = True
         for dose in doses:
-            # if dose % 100 and dose % 200:
-            if dose < 50:
-                continue
             rep_data = []
             for dv, rv, rep, run_dir in runs:
                 if dv == dose:
                     arr = load_captive_rl(run_dir)
                     if arr is not None:
                         rep_data.append(arr)
+
             if not rep_data:
                 continue
 
             mean_captive = mean_with_nan_padding(rep_data)
+
             t_hours = np.arange(len(mean_captive)) - inj_hour
             t_days = t_hours / 24.0
             mask = t_days >= 0
             t_plot = t_days[mask]
             cap_plot = mean_captive[mask]
-            cap_plot = smooth_daily(cap_plot)
 
-            colour_max[colour] = max(colour_max[colour], np.nanmax(cap_plot))
+            ax.plot(t_plot, cap_plot, color=colour, linewidth=0.8, alpha=0.85, zorder=3)
 
-            ax.plot(
-                t_plot,
-                cap_plot,
-                color=colour,
+        # Draw peak reference lines for all three receptor densities
+        # (zorder=1 puts them behind the curves)
+        for ref_peak, ref_colour in zip(RECEP_PEAK_REFS, RECEP_COLOURS):
+            ax.axhline(
+                ref_peak,
+                color=ref_colour,
                 linewidth=0.8,
-                alpha=0.85,
-                zorder=3,
-                label=label if first_dose else None,
+                linestyle="--",
+                alpha=0.7,
+                zorder=1,
             )
-            first_dose = False
 
-    # Auto-computed reference lines from data maxima
-    print("\nPer-receptor captive RL peak values (nmol):")
-    for ref_colour, label in zip(RECEP_COLOURS, RECEP_LABELS):
-        peak = colour_max[ref_colour]
-        print(f"  {label}: {peak:.4e} nmol")
-        ax.axhline(
-            peak,
-            color=ref_colour,
-            linewidth=0.8,
-            linestyle="--",
-            alpha=0.7,
-            zorder=1,
-        )
-
-    ax.set_xlabel("Time since injection (days)")
-    ax.set_ylabel("$N_\\mathrm{captive}^H$ ($\\times 10^{-7}$ nmol)")
-    ax.set_xlim(left=0, right=40)
-    #    ax.set_ylim(bottom=0, top=1.4e-7)
-    global_max = max(colour_max.values())
-    ax.set_ylim(bottom=0, top=1.05 * global_max)
-
-    ax.yaxis.get_offset_text().set_visible(False)
-    ax.yaxis.set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda x, _: f"{x * 1e7:.1f}")
-    )
-    ax.legend(framealpha=0.9)
-    ax.grid(True, alpha=0.3, linewidth=0.5)
+        # Panel label as title
+        ax.set_title(label, pad=3)
+        ax.set_xlabel("Time since injection (days)")
+        ax.grid(True, alpha=0.3, linewidth=0.5)
+        ax.set_xlim(left=0, right=40)
+        ax.set_ylim(bottom=0, top=1.2e-7)
 
     # Only leftmost panel gets y-axis label
-    ax.set_ylabel("$N_\\mathrm{captive}^H$ ($\\times 10^{-7}$ nmol)")
-    ax.yaxis.get_offset_text().set_visible(False)
+    axes[0].set_ylabel("$N_\\mathrm{captive}^H$ (nmol)")
+
+    # Remove redundant y tick labels from middle and right panels
+    # (sharey keeps the scale identical; just suppress the numbers)
+    for ax in axes[1:]:
+        ax.tick_params(labelleft=False)
 
     plt.tight_layout()
 
