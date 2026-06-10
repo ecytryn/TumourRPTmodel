@@ -164,7 +164,7 @@ def main():
             mask = t_days >= 0
             t_plot = t_days[mask]
             cap_plot = mean_captive[mask]
-            cap_plot = smooth_daily(cap_plot)
+            # cap_plot = smooth_daily(cap_plot)
 
             colour_max[colour] = max(colour_max[colour], np.nanmax(cap_plot))
 

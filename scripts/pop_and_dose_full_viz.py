@@ -83,7 +83,7 @@ def main():
     n = min(len(populations), len(doses))
     populations = populations[:n]
     doses = doses[:n]
-    doses = smooth_daily(doses)
+    # doses = smooth_daily(doses)
 
     # Time axis
     t_days = np.arange(n) / 24.0
