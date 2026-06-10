@@ -146,13 +146,14 @@ public class SimParams {
     // Cell removal times
     // public static final double NECROTIC_REMOVAL_TIME = 10.0 * 86400.0;  // s (10 days)
     public static final double APOPTOTIC_REMOVAL_TIME = 2.0 * 86400.0;  // s (2 days)
-	public static final double ApopRemovalTime = APOPTOTIC_REMOVAL_TIME / 86400.0;  // Convert s->days
+	public static final double ApopRemovalTime = APOPTOTIC_REMOVAL_TIME / 3600;  // Convert s->hours
 	public static final double APOP_REMOVAL_PROB_PER_HOUR = // <-- needs to be fixed if time step is ever changed!!
 		(1.0 / APOPTOTIC_REMOVAL_TIME) * 3600.0;  // (1/s) * (s/hour) = 1/hour 
 	public static final double strictRemovalCoeff = 1.0;
 
 
-	public static final double DIVISION_PROB_MAX = 0.5;  // per day
+	// public static final double DIVISION_PROB_MAX = 0.5;  // per day
+    public static final double DIVISION_PROB_MAX = 1.0 - Math.pow(2.0, -1.0/24.0);  // per hour (equivalent to the old 0.5 per day rate above - changed for the time step fix)
 	public static final int[] divHood = HAL.Util.CircleHood(true, 1);  // immediate neighbors    
 
     // =================================================================

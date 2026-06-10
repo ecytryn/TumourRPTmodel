@@ -153,7 +153,6 @@ public class Grid extends AgentGrid2D<Cell> {
 		int oxygenCalls = 0, pkCalls = 0;
 		
 		// ===== GUARANTEED 24 HOURLY UPDATES =====
-		// Do NOT tie this to cell iteration - must be exactly 24 times
 		for (int hourCount = 0; hourCount < 24; hourCount++) {
 			SimParams.updateGlobalTime(currentDay, hourCount);
 			
@@ -178,22 +177,20 @@ public class Grid extends AgentGrid2D<Cell> {
 			radioBioTime += System.nanoTime() - t3;
 			
 			PopsOverTime.add(copyArray(CurrentCellsPops));
-		}
 		
-		// ===== CELL UPDATES =====
-		// Cells still get stepped, but not tied to hour boundary
-		for (Cell cell : this) {
-			long t4 = System.nanoTime();
-			if (!SimParams.FREEZE_TUMOR) {
-				// Note: hourCount is now 23 (from the loop above)
-				// Each cell experiences the full day's progression
-				cell.Step(23, currentDay);  
+			// ===== CELL UPDATES =====
+			for (Cell cell : this) {
+				long t4 = System.nanoTime();
+				if (!SimParams.FREEZE_TUMOR) {
+					cell.Step(hourCount, currentDay);  
+				}
+				cellIterTime += System.nanoTime() - t4;
 			}
-			cellIterTime += System.nanoTime() - t4;
+			
+			CleanAgents();
+			ShuffleAgents(this.rng);
 		}
-		
-		CleanAgents();
-		ShuffleAgents(this.rng);
+
 		
 		// Timing report (if enabled)
 		if (SimParams.VERBOSE_ON && currentDay % 10 == 0) {

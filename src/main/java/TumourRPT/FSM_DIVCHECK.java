@@ -23,12 +23,14 @@ public class FSM_DIVCHECK {
         // oxygen parameters. Then, based on the updated type, (which is in fact the type of the cell that the cell was
         // in for the entire duration of the last day)
         if (this.cell.isAlive == true && this.cell.type != SimParams.VESSEL){
-            double NecroThreshold = SimParams.P_O2_NECROTIC * this.cell.G.rng.Gaussian(1,0.2);
+            // double NecroThreshold = SimParams.P_O2_NECROTIC * this.cell.G.rng.Gaussian(1,0.2);
+            double NecroThreshold = SimParams.P_O2_NECROTIC * this.cell.G.rng.Gaussian(1,0.04); // decreased from 0.2 with the time step fix.
             if (this.cell.oxygen < NecroThreshold ){
                 this.cell.ChangeType(SimParams.NECROTIC);
             }else {
 //                double hypoThreshold = SimParams.P_O2_HYPOXIC * Math.abs(this.cell.G.rng.Gaussian(1,0.1));
-                double hypoThreshold = SimParams.P_O2_HYPOXIC * this.cell.G.rng.Gaussian(1,0.2);
+                // double hypoThreshold = SimParams.P_O2_HYPOXIC * this.cell.G.rng.Gaussian(1,0.2);
+                double hypoThreshold = SimParams.P_O2_HYPOXIC * this.cell.G.rng.Gaussian(1,0.04); // decreased from 0.2 with the time step fix.
 //                double hypoThreshold = SimParams.P_O2_HYPOXIC  + this.cell.G.rng.Gaussian(0,0.1* SimParams.P_O2_HYPOXIC);
                 if (this.cell.oxygen < hypoThreshold) {
                     this.cell.ChangeType(SimParams.HYPOXIC);
@@ -63,7 +65,7 @@ public class FSM_DIVCHECK {
             if(this.cell.G.rng.Double()<SimParams.APOP_REMOVAL_PROB_PER_HOUR){
                 this.cell.disposeFlag = true;
             }else{
-                if (this.cell.howManyDaysDead >= SimParams.strictRemovalCoeff * SimParams.ApopRemovalTime){
+                if (this.cell.howManyHoursDead >= SimParams.strictRemovalCoeff * SimParams.ApopRemovalTime){
                     this.cell.disposeFlag = true;
                 }else{
                     this.cell.disposeFlag = false;

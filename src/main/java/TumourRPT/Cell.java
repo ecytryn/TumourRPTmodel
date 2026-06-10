@@ -19,7 +19,7 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
     public int age; // in T units.
     public int birthTime;
 
-    public int howManyDaysDead;
+    public int howManyHoursDead; // changed from howManyDaysDead with the time step fix
 
 
     public FSM_DIVCHECK fsmDiv;
@@ -33,7 +33,7 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         this.cellBio = new CellBiology(this);
         this.divisionFlag = false;
         this.disposeFlag = false;
-        this.howManyDaysDead = 0;
+        this.howManyHoursDead = 0;
         this.birthTime = currentTime;
         if (type== SimParams.VESSEL && currentTime == 0){
 
@@ -81,7 +81,7 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         if (this.isAlive == false){
             // For the forced removal of the dead cells that are not removed because of the
             // high standard deviation of the geometric random variable
-            this.howManyDaysDead += 1;
+            this.howManyHoursDead += 1;
         }
     }
 
