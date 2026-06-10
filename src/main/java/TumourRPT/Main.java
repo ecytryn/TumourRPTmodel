@@ -284,7 +284,7 @@ public class Main {
 			case "NormoxicSmall":
 				SimParams.setExperiment("NormoxicSmallTumour",
 					"Treatment of normoxic tumour, no pre-sim hypoxia. Small initial tumour (below cure threshold).",
-					new int[]{5}, 15e-6, 0);
+					new int[]{5}, 14e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
 				break;
