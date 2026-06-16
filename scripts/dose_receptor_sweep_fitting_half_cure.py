@@ -76,9 +76,18 @@ def fit_boundary(pivot):
             )  # logistic goes 0→1 over roughly 4/k, so this spans the data
             p0 = [R_mid, k_init]
             bounds = ([recep_asc.min(), 0], [recep_asc.max(), np.inf])
+            mask = np.isfinite(col)
+            if mask.sum() < 3:  # not enough points to fit
+                return None, None, None
+            recep_asc_clean = recep_asc[mask]
+            col_clean = col[mask]
             popt, _ = curve_fit(
-                logistic, recep_asc, col, p0=p0, bounds=bounds, maxfev=5000
+                logistic, recep_asc_clean, col_clean, p0=p0, bounds=bounds, maxfev=5000
             )
+            # popt, _ = curve_fit(
+            #    logistic, recep_asc, col, p0=p0, bounds=bounds, maxfev=5000
+            # )
+
             R_half_fit = popt[0]
 
             # Only accept if the fitted R_half is within the receptor range
@@ -288,7 +297,8 @@ def create_heatmap(df, output_path):
     # Format y-axis labels with mantissa only, exponent as offset
 
     # Desired y-axis ticks in mol/cell (actual stored units ~e-19)
-    desired_yticks_mol = [4e-19, 5e-19, 6e-19, 7e-19, 8e-19]
+    # desired_yticks_mol = [4e-19, 5e-19, 6e-19, 7e-19, 8e-19]
+    desired_yticks_mol = [3e-19, 4e-19, 5e-19, 6e-19, 7e-19]
     recep_rows = np.array(pivot.index)  # descending, in mol/cell
 
     wanted_positions_y = []
