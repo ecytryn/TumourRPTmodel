@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 // File I/O for writing reports
 import java.io.FileWriter;

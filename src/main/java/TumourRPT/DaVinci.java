@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import HAL.Gui.GridWindow;
 import HAL.Gui.PlotLine;

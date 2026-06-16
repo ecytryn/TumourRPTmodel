@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import HAL.GridsAndAgents.AgentSQ2Dunstackable;
 

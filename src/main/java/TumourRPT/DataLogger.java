@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;

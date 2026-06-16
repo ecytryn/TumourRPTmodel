@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

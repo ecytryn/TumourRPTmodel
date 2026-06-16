@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import HAL.GridsAndAgents.Grid2Ddouble;
 import java.awt.FontMetrics;

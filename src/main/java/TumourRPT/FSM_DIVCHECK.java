@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 import java.util.ArrayList;
 

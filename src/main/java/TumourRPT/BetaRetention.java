@@ -1,4 +1,4 @@
-package TumorRPT;
+package TumourRPT;
 
 /**
  * Intratumoural energy deposition fraction calculator
