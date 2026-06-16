@@ -48,19 +48,25 @@ public class IntervalSkewSweep {
     // Current sweep - edit as needed:
 
     private static final int[] INTERVALS = 
-    		IntStream.range(0, 21)  // 21 points
-				 .map(i -> (2 + i * 1))  // 2 --> 24 days in steps of 1 day
+    		IntStream.range(0, 16)  // 16 points
+				 .map(i -> (5 + i * 1))  // 5 --> 20 days in steps of 1 day
 				 .toArray();
+    //		IntStream.range(0, 6)  // 21 points
+	//			 .map(i -> (5 + i * 3))  // 2 --> 20 days in steps of 3 days
+	//			 .toArray();
     private static final double[] SKEWS = 
-    		IntStream.range(0, 11)  // 11 points
-				 .mapToDouble(i -> (-25e-9 + i * 5e-9))  // -25 --> 25 nmol
+    		IntStream.range(0, 7)  // 11 points
+				 .mapToDouble(i -> (-30e-9 + i * 1e-8))  // -25 --> 25 nmol
 				 .toArray();
+    //		IntStream.range(0, 4)  // 11 points
+	//			 .mapToDouble(i -> (-25e-9 + i * 15e-9))  // -25 --> 25 nmol
+	//			 .toArray();
 
     // Output suffix - change this when refining to avoid overwriting (e.g., "_v2", "_fine")
     private static final String OUTPUT_SUFFIX = "";
     
     // Number of replicates per parameter combination
-    private static final int NUM_REPLICATES = 20;
+    private static final int NUM_REPLICATES = 1;
     
     // =======================================================================
     // FIXED PARAMETERS - Constant across all sweep runs
@@ -90,7 +96,7 @@ public class IntervalSkewSweep {
         // RUN CONFIGURATION - edit here to switch between high/low cap density
         // All other parameters come from SimParams canonical values.
         // ===================================================================
-        SimParams.INITIAL_TUMOR_RADIUS = 10e-6;    // 10 um (3 cells): small tumour a bit below cure threshold with TJ retention
+        SimParams.INITIAL_TUMOR_RADIUS = 8e-6;    // 8 um (1 cell1): small tumour a bit below cure threshold with TJ retention
         SimParams.HYPOXIA_DEV_DAYS = 40;            // Pre-sim steps to establish hypoxia
         SimParams.VESSEL_DENSITY_CONFIG = "605";    // "605" = high density; "374" = low density
         // ===================================================================
