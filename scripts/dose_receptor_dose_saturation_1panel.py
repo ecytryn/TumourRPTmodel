@@ -37,7 +37,8 @@ mpl.rcParams.update(
 )
 
 # Receptor densities to plot (mol/cell)
-TARGET_RECEPS = [4.0e-19, 6.0e-19, 8.0e-19]
+# TARGET_RECEPS = [4.0e-19, 6.0e-19, 8.0e-19]
+TARGET_RECEPS = [3.0e-19, 5.0e-19, 7.0e-19]
 RECEP_TOL = 0.05e-19
 # RECEP_PEAK_REFS = [7.35e-8, 1.12e-7, 1.375e-7]
 RECEP_LABELS = [

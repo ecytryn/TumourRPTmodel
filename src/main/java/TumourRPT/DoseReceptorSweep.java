@@ -44,11 +44,11 @@ public class DoseReceptorSweep {
     // Per-cell receptor content: expressed as multiples of SimParams.RECEPTORS_PER_CELL_MOL
     private static final double[] RECEPTOR_DENSITIES =
         IntStream.range(0, 25)
-                 .mapToDouble(i -> (0.68 + i * 0.04) * SimParams.RECEPTORS_PER_CELL_MOL)
+                 .mapToDouble(i -> (0.48 + i * 0.04) * SimParams.RECEPTORS_PER_CELL_MOL)
                  .toArray();
 
     // Number of replicates to add per run (new folder: reps 1..N; append: next N reps)
-    private static final int NUM_REPLICATES = 1;
+    private static final int NUM_REPLICATES = 20;
 
     // =======================================================================
     // FIXED PARAMETERS
@@ -66,7 +66,8 @@ public class DoseReceptorSweep {
         // ===================================================================
         // RUN CONFIGURATION
         // ===================================================================
-        SimParams.INITIAL_TUMOR_RADIUS = 21e-6;
+        // SimParams.INITIAL_TUMOR_RADIUS = 21e-6; // pre time step fix
+        SimParams.INITIAL_TUMOR_RADIUS = 19e-6;
         SimParams.HYPOXIA_DEV_DAYS = 40;
         SimParams.VESSEL_DENSITY_CONFIG = "605";
         // ===================================================================
