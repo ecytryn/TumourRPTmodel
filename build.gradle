@@ -48,12 +48,12 @@ dependencies {
 }
 
 application {
-    mainClass = 'TumorRPT.Main'
+    mainClass = 'TumourRPT.Main'
 }
 
 // Task to run parameter sweep - interval-skew
 task runIntervalSkewSweep(type: JavaExec) {
-    mainClass = 'TumorRPT.IntervalSkewSweep'
+    mainClass = 'TumourRPT.IntervalSkewSweep'
     classpath = sourceSets.main.runtimeClasspath
     // Increase heap size for large sweeps if needed
     jvmArgs = ['-Xmx4g']
@@ -61,20 +61,20 @@ task runIntervalSkewSweep(type: JavaExec) {
 
 // Task to run parameter sweep - dose-receptor
 task runDoseReceptorSweep(type: JavaExec) {
-    mainClass = 'TumorRPT.DoseReceptorSweep'
+    mainClass = 'TumourRPT.DoseReceptorSweep'
     classpath = sourceSets.main.runtimeClasspath
     jvmArgs = ['-Xmx4g']
 }
 
 // Task to run parameter sweep - initial tumour radius
 task runTumourSizeThresholdSweep(type: JavaExec) {
-    mainClass = 'TumorRPT.TumourSizeThresholdSweep'
+    mainClass = 'TumourRPT.TumourSizeThresholdSweep'
     classpath = sourceSets.main.runtimeClasspath
     jvmArgs = ['-Xmx4g']
 }
 
 task runDebug(type: JavaExec) {
-    main = 'TumorRPT.DebugRunner'
+    main = 'TumourRPT.DebugRunner'
     classpath = sourceSets.main.runtimeClasspath
     if (project.hasProperty('args')) {
         args project.property('args').split()
