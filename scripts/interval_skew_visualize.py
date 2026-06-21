@@ -149,11 +149,13 @@ def create_cure_rate_heatmap(df, output_path):
     ax.set_xlabel("Inter-injection Interval (days)")
     ax.set_ylabel("Injection Skew (nmol)")
 
-    # Y-axis: show only -20, -10, 0, 10, 20
+    # Y-axis: show only -30, -20, -10, 0, 10, 20, 30
     skew_vals = pivot_cure.index.tolist()  # already sorted descending
     ax.set_yticks(range(len(skew_vals)))
     ytick_labels = [
-        str(int(v)) if int(v) in (-20, -10, 0, 10, 20) else "" for v in skew_vals
+        # str(int(v)) if int(v) in (-25, -20, -10, 0, 10, 20, 25) else ""
+        str(int(v)) if int(v) in (-30, -20, -10, 0, 10, 20, 30) else ""
+        for v in skew_vals
     ]
     ax.set_yticklabels(ytick_labels, rotation=0)
 

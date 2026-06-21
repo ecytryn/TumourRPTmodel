@@ -18,7 +18,7 @@ public class CellBiology {
 		this.cell.divisionProb = 0.0;
 
         if (this.cell.type == SimParams.HYPOXIC){
-            this.cell.divisionProb = SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
+            this.cell.divisionProb = 3*SimParams.DIVISION_PROB_MAX * this.cell.oxygen/SimParams.P_O2_VESSEL;
         }
         if (this.cell.type == SimParams.NORMAL){
             // The 3* ensures division when oxygen is not suppressed.
