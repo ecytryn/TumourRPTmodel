@@ -118,11 +118,11 @@ def main():
 
     # Secondary axis for dose rate
     ax2 = ax1.twinx()
-    ax2.fill_between(t_days, doses, alpha=0.2, color="#4477AA", step="pre")
+    ax2.fill_between(t_days, doses, alpha=0.2, color="#8855AA", step="pre")
     ax2.plot(
         t_days,
         doses,
-        color="#4477AA",
+        color="#8855AA",
         linewidth=1.2,
         alpha=0.6,
         drawstyle="steps-pre",

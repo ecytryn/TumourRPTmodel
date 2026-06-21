@@ -271,7 +271,225 @@ public class DataLogger {
 		}
 	}
 
-    
+	/**
+	 * Save zoomed tumour image for the schematic figure panel.
+	 * Healthy tissue shown as green (via gridDrawSchematic), no timestamp,
+	 * no scale bar. Uses the same crop geometry as saveFigureZoomed.
+	 */
+	public void saveSchematicTumour(String fileName, DaVinci drawer, Grid grid) {
+		final int hw    = SimParams.ZOOM_HALF_WIDTH;
+		final int scale = SimParams.ZOOM_PIXEL_SCALE;
+		final int cx    = grid.xDim / 2;
+		final int cy    = grid.yDim / 2;
+		final int outPx = (2 * hw) * scale;
+
+		BufferedImage img = new BufferedImage(outPx, outPx, BufferedImage.TYPE_INT_RGB);
+
+		for (int dy = -hw; dy < hw; dy++) {
+			for (int dx = -hw; dx < hw; dx++) {
+				int srcX = Math.max(0, Math.min(grid.xDim - 1, cx + dx));
+				int srcY = Math.max(0, Math.min(grid.yDim - 1, cy + dy));
+				int color = drawer.GetPix(srcX, srcY);
+				int destX0 = (dx + hw) * scale;
+				int destY0 = (dy + hw) * scale;
+				for (int py = 0; py < scale; py++)
+					for (int px = 0; px < scale; px++)
+						img.setRGB(destX0 + px, destY0 + py, color);
+			}
+		}
+
+		try {
+			ImageIO.write(img, "png", new File(fileName));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Save zoomed oxygen heatmap for the schematic figure panel.
+	 * Uses the same crop geometry as saveFigureZoomed. No timestamp.
+	 * Includes a colour bar (0-15 kPa) to the right of the image.
+	 */
+	public void saveSchematicOxygen(String fileName, Grid grid) {
+		final int hw    = SimParams.ZOOM_HALF_WIDTH;
+		final int scale = SimParams.ZOOM_PIXEL_SCALE;
+		final int cx    = grid.xDim / 2;
+		final int cy    = grid.yDim / 2;
+		final int cropPx = (2 * hw) * scale;
+
+		final int barMargin = 100; // extra width for colour bar + labels
+		final int outW = cropPx + barMargin;
+		final int outH = cropPx;
+
+		BufferedImage img = new BufferedImage(outW, outH, BufferedImage.TYPE_INT_RGB);
+
+		// White background (covers the bar margin area cleanly)
+		Graphics2D bg = img.createGraphics();
+		bg.setColor(Color.WHITE);
+		bg.fillRect(0, 0, outW, outH);
+		bg.dispose();
+
+		final double minScale = 0.0;
+		final double maxScale = 15000.0; // Pa
+
+		for (int dy = -hw; dy < hw; dy++) {
+			for (int dx = -hw; dx < hw; dx++) {
+				int srcX = Math.max(0, Math.min(grid.xDim - 1, cx + dx));
+				int srcY = Math.max(0, Math.min(grid.yDim - 1, cy + dy));
+				int idx  = grid.I(srcY, srcX);
+				double oxygenConc = grid.oxygenGrid.Get(idx);
+				double normalized = Math.max(0.0, Math.min(1.0,
+					(oxygenConc - minScale) / (maxScale - minScale)));
+				int color = HAL.Util.HeatMapBGR(normalized, 0, 1);
+				int destX0 = (dx + hw) * scale;
+				int destY0 = (dy + hw) * scale;
+				for (int py = 0; py < scale; py++)
+					for (int px = 0; px < scale; px++)
+						img.setRGB(destX0 + px, destY0 + py, color);
+			}
+		}
+
+		// ---- Colour bar ----
+		int barX = cropPx + 20;
+		int barWidth = 25;
+		int barY = 30;
+		int barHeight = outH - 60;
+
+		for (int i = 0; i < barHeight; i++) {
+			double normalized = 1.0 - (double) i / barHeight; // top = high
+			int color = HAL.Util.HeatMapBGR(normalized, 0, 1);
+			for (int j = 0; j < barWidth; j++) {
+				img.setRGB(barX + j, barY + i, color);
+			}
+		}
+
+		Graphics2D g2d = img.createGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g2d.setColor(Color.BLACK);
+		g2d.drawRect(barX, barY, barWidth, barHeight);
+
+		int labelSize = 14;
+		g2d.setFont(new Font("Arial", Font.PLAIN, labelSize));
+		g2d.drawString(String.format("%.0f kPa", maxScale / 1000.0), barX + barWidth + 5, barY + 10);
+		g2d.drawString(String.format("%.1f", (minScale + maxScale) / 2000.0), barX + barWidth + 5, barY + barHeight / 2);
+		g2d.drawString("0 kPa", barX + barWidth + 5, barY + barHeight + 3);
+
+		try {
+			ImageIO.write(img, "png", new File(fileName));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Save zoomed SF (survival fraction) heatmap for the schematic figure panel.
+	 * Colour ramp: white (SF=1) -> yellow (SF=0.5) -> deep red (SF=0).
+	 * Necrotic cells: flat gray. Empty/healthy/vessel cells: green.
+	 * Uses the same crop geometry as the other schematic methods.
+	 * Includes a colour bar (SF 0-1) to the right of the image.
+	 */
+	public void saveSchematicDamage(String fileName, Grid grid) {
+		final int hw    = SimParams.ZOOM_HALF_WIDTH;
+		final int scale = SimParams.ZOOM_PIXEL_SCALE;
+		final int cx    = grid.xDim / 2;
+		final int cy    = grid.yDim / 2;
+		final int cropPx = (2 * hw) * scale;
+
+		final int barMargin = 100;
+		final int outW = cropPx + barMargin;
+		final int outH = cropPx;
+
+		BufferedImage img = new BufferedImage(outW, outH, BufferedImage.TYPE_INT_RGB);
+
+		Graphics2D bg = img.createGraphics();
+		bg.setColor(Color.WHITE);
+		bg.fillRect(0, 0, outW, outH);
+		bg.dispose();
+
+		for (int dy = -hw; dy < hw; dy++) {
+			for (int dx = -hw; dx < hw; dx++) {
+				int srcX = Math.max(0, Math.min(grid.xDim - 1, cx + dx));
+				int srcY = Math.max(0, Math.min(grid.yDim - 1, cy + dy));
+				int idx  = grid.I(srcY, srcX);
+				Cell cell = grid.GetAgent(idx);
+
+				int color;
+				if (cell == null || cell.type == SimParams.HEALTHY || cell.type == SimParams.VESSEL) {
+					color = SimParams.COLORLIST[SimParams.HEALTHY];
+				} else if (cell.type == SimParams.NECROTIC) {
+					color = 0xFF606060;
+				} else {
+					double sf = grid.radioBio.calculateSF(cell.birthTime, cell.type);
+					sf = Math.max(0.0, Math.min(1.0, sf));
+					color = sfToColor(sf);
+				}
+
+				int destX0 = (dx + hw) * scale;
+				int destY0 = (dy + hw) * scale;
+				for (int py = 0; py < scale; py++)
+					for (int px = 0; px < scale; px++)
+						img.setRGB(destX0 + px, destY0 + py, color);
+			}
+		}
+
+		// ---- Colour bar ----
+		int barX = cropPx + 20;
+		int barWidth = 25;
+		int barY = 30;
+		int barHeight = outH - 60;
+
+		for (int i = 0; i < barHeight; i++) {
+			double sf = 1.0 - (double) i / barHeight; // top = SF 1
+			int color = sfToColor(sf);
+			for (int j = 0; j < barWidth; j++) {
+				img.setRGB(barX + j, barY + i, color);
+			}
+		}
+
+		Graphics2D g2d = img.createGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g2d.setColor(Color.BLACK);
+		g2d.drawRect(barX, barY, barWidth, barHeight);
+
+		int labelSize = 14;
+		g2d.setFont(new Font("Arial", Font.PLAIN, labelSize));
+		g2d.drawString("SF = 1", barX + barWidth + 5, barY + 10);
+		g2d.drawString("0.5", barX + barWidth + 5, barY + barHeight / 2);
+		g2d.drawString("SF = 0", barX + barWidth + 5, barY + barHeight + 3);
+
+		try {
+			ImageIO.write(img, "png", new File(fileName));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Map survival fraction [0,1] to a white→yellow→red colour ramp.
+	 * SF=1.0 : white  (255, 255, 255)
+	 * SF=0.5 : yellow (255, 220,  50)
+	 * SF=0.0 : red    (180,  20,  20)
+	 */
+	private int sfToColor(double sf) {
+		int r, g, b;
+		if (sf >= 0.5) {
+			// White → Yellow  (upper half)
+			double t = (sf - 0.5) / 0.5;   // t=1 at SF=1, t=0 at SF=0.5
+			r = 255;
+			g = (int)(220 + t * 35);        // 220 → 255
+			b = (int)(t * 255);             // 0   → 255
+		} else {
+			// Yellow → Red  (lower half)
+			double t = sf / 0.5;            // t=1 at SF=0.5, t=0 at SF=0
+			r = (int)(180 + t * 75);        // 180 → 255
+			g = (int)(t * 220);             // 0   → 220
+			b = 0;
+		}
+		return HAL.Util.RGB(r / 255.0, g / 255.0, b / 255.0);
+	}
+
     /**
      * Draw legend showing cell types and oxygen colors
      */

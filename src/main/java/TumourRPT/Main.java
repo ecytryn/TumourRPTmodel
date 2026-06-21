@@ -62,6 +62,10 @@ public class Main {
 		SimParams.OUTPUT_DIR_TUMOUR_IMAGES = outputDir + "/tumour_images";
 		SimParams.OUTPUT_DIR_OXYGEN_IMAGES = outputDir + "/oxygen_images";
 		SimParams.OUTPUT_DIR_SF_IMAGES = outputDir + "/sf_images";		
+		SimParams.OUTPUT_DIR_SCHEMATIC_IMAGES = outputDir + "/schematic_images";
+		if (SimParams.EXPORT_SCHEMATIC_IMAGES) {
+			new File(SimParams.OUTPUT_DIR_SCHEMATIC_IMAGES).mkdirs();
+		}
 
 		new File(SimParams.OUTPUT_DIR_TUMOUR_IMAGES).mkdirs();
 		new File(SimParams.OUTPUT_DIR_OXYGEN_IMAGES).mkdirs();
@@ -172,7 +176,7 @@ public class Main {
 					}
 */
 					boolean showLegend   = (day == 0 && experimentName.equals("WatchGrow"));
-					boolean showScaleBar = (day == 0 && experimentName.equals("WatchGrow"))
+					boolean showScaleBar = (day == 40 && experimentName.equals("WatchGrow"))
 										|| (dayCount == 5 && !experimentName.equals("WatchGrow"));
 					logger.saveFigureZoomed(imageFile, drawer, model, dayCount, showLegend, showScaleBar);
 
@@ -184,6 +188,22 @@ public class Main {
 				}
 			}
 
+			if (SimParams.EXPORT_SCHEMATIC_IMAGES &&
+                    (day % 5 == 0 || (day >= 4 && day <= 10) || (day >= 44 && day <= 50))) {
+                drawer.gridDrawSchematic(visualizationMaskList);
+
+                String sTumour = String.format("%s/schematic_tumour_day_%03d.png",
+                    SimParams.OUTPUT_DIR_SCHEMATIC_IMAGES, dayCount);
+                logger.saveSchematicTumour(sTumour, drawer, model);
+
+                String sOxygen = String.format("%s/schematic_oxygen_day_%03d.png",
+                    SimParams.OUTPUT_DIR_SCHEMATIC_IMAGES, dayCount);
+                logger.saveSchematicOxygen(sOxygen, model);
+
+                String sDamage = String.format("%s/schematic_damage_day_%03d.png",
+                    SimParams.OUTPUT_DIR_SCHEMATIC_IMAGES, dayCount);
+                logger.saveSchematicDamage(sDamage, model);
+            }
 
             // Step simulation (tumor frozen, only PK evolves)
             model.Step(dayCount);
@@ -280,6 +300,8 @@ public class Main {
 					"Watch a tumour grow: growth, vessel occlusion, and cell-type transitions.",
 					new int[]{195}, 10e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
+				SimParams.EXPORT_SCHEMATIC_IMAGES = true;
+				SimParams.SCHEMATIC_DAY = 55;
 				break;
 			case "NormoxicSmall":
 				SimParams.setExperiment("NormoxicSmallTumour",
@@ -326,9 +348,12 @@ public class Main {
 			case "CustomRun":
 				SimParams.setExperiment("CustomRunToMakeAFig",
 					"One-off run for a specific figure. Edit parameters here as needed.",
-					new int[]{5}, 25e-6, 40);
+					new int[]{45}, 10e-6, 0);
 				SimParams.VESSEL_DENSITY_CONFIG = "605";
 				SimParams.EXPORT_OX_IMAGES = false;
+				SimParams.EXPORT_SCHEMATIC_IMAGES = true;
+				SimParams.SCHEMATIC_DAY = 55;
+				SimParams.DOSE_PER_INJECTION = 0.5e-9;   // mol
 				break;
 			default:
 				// Use defaults from SimParams

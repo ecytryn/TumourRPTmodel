@@ -89,6 +89,59 @@ class DaVinci {
         }
     }
     
+/**
+     * Draw schematic visualization: healthy tissue shown as green,
+     * tumour/vessel cells coloured normally, no oxygen background.
+     * Used for the manuscript schematic figure.
+     */
+    public void gridDrawSchematic(boolean[] maskList) {
+        if (SimParams.PLOT_LIVE_IMAGES) {
+            gridWin.Clear(BLACK);
+            drawToGridWindowSchematic(maskList);
+        } else {
+            clearBuffer();
+            drawToBufferSchematic(maskList);
+        }
+    }
+
+    private void drawToGridWindowSchematic(boolean[] maskList) {
+        for (int i = 0; i < gridWin.length; i++) {
+            Cell c = grid.GetAgent(i);
+            if (c == null) {
+                gridWin.SetPix(i, SimParams.COLORLIST[SimParams.HEALTHY]);
+                continue;
+            }
+            if (c.type == SimParams.VESSEL) {
+                if (c.blockedVessel) {
+                    if (maskList[6]) gridWin.SetPix(i, SimParams.COLORLIST[6]);
+                } else {
+                    if (maskList[SimParams.VESSEL]) gridWin.SetPix(i, SimParams.COLORLIST[5]);
+                }
+                continue;
+            }
+            if (maskList[c.type]) gridWin.SetPix(i, c.color);
+        }
+    }
+
+    private void drawToBufferSchematic(boolean[] maskList) {
+        for (int i = 0; i < pixelBuffer.length; i++) {
+            Cell c = grid.GetAgent(i);
+            if (c == null) {
+                pixelBuffer[i] = SimParams.COLORLIST[SimParams.HEALTHY];
+                continue;
+            }
+            if (c.type == SimParams.VESSEL) {
+                if (c.blockedVessel) {
+                    if (maskList[6]) pixelBuffer[i] = SimParams.COLORLIST[6];
+                } else {
+                    if (maskList[SimParams.VESSEL]) pixelBuffer[i] = SimParams.COLORLIST[5];
+                }
+                continue;
+            }
+            if (maskList[c.type]) pixelBuffer[i] = c.color;
+        }
+    }
+
     /**
      * Draw visualization to GridWindow (live mode)
      */

@@ -77,8 +77,11 @@ public class SimParams {
 	// For generating manuscript figures
     public static boolean EXPORT_OX_IMAGES = true;  // Set true for exporting oxygen images
     public static boolean EXPORT_TUMOUR_OX_IMAGES = true; // Set true for exporting tumour/oxygen images
+    public static boolean EXPORT_SCHEMATIC_IMAGES = false; // Set true to export schematic panel images (tumour + O2, zoomed, no timestamp)
+	public static String OUTPUT_DIR_SCHEMATIC_IMAGES = "";
+    public static int SCHEMATIC_DAY = 55; // Day to export schematic images
 
-	// for testing and debugging
+    // for testing and debugging
     public static boolean EXPORT_CONSUMP_IMAGES = false;  // Set true for exporting consumption images
 	public static boolean EXPORT_SF_IMAGES = false;  // Set true for SF visualization    
     public static final boolean VERBOSE_ON = false;  // Set true for reporting to the terminal
@@ -236,7 +239,7 @@ public class SimParams {
     //                           or DoseReceptorSweep.java (injected amount and receptor density)
     // Main.java uses these values for single-run mode
     
-    public static final double DOSE_PER_INJECTION = 100e-9;   // mol (100 nmol per injection is baseline)
+    public static double DOSE_PER_INJECTION = 100e-9;   // mol (100 nmol per injection is baseline)
     public static double HOT_FRACTION = 0.1;            // Fraction that is radioactive (0.1 = 10%)
 /**	Moved to Main
     public static final int[] INJECTION_SCHEDULE = {5};  // Days to inject (e.g., {5, 35, 65, 95})
@@ -316,7 +319,7 @@ public class SimParams {
 
 	// A colour-blind friendly upgrade:
 	public static final int[] COLORLIST = {
-		0x88888888,  // 0: Healthy (gray)
+		0xFF2F6B52,  // 0: Healthy (deep teal-green — for schematic figure)
 		0xFFD2B48C,  // 1: Normal tumor (light tan)
 		0xFFB87333,  // 2: Hypoxic (copper)
 		0xFF654321,  // 3: Necrotic (dark brown)
